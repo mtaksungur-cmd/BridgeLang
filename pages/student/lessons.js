@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import StudentLayout from '../../components/StudentLayout';
 
 export default function StudentLessons() {
   const [bookings, setBookings] = useState([]);
@@ -25,7 +26,6 @@ export default function StudentLessons() {
   const confirmLesson = async (booking) => {
     const updates = { studentConfirmed: true };
 
-    // Eğer öğretmen zaten onayladıysa → status: approved
     if (booking.teacherApproved) updates.status = 'approved';
     else updates.status = 'student_approved';
 
@@ -38,7 +38,24 @@ export default function StudentLessons() {
     alert('You confirmed the lesson.');
   };
 
+  const parseTimeTo24h = (timeStr) => {
+    const [_, time, modifier] = timeStr.match(/(\d{1,2}:\d{2})\s?(AM|PM)/i) || [];
+    if (!time || !modifier) return timeStr;
+    let [hours, minutes] = time.split(":");
+    hours = parseInt(hours);
+    if (modifier.toUpperCase() === "PM" && hours !== 12) hours += 12;
+    if (modifier.toUpperCase() === "AM" && hours === 12) hours = 0;
+    return `${String(hours).padStart(2, '0')}:${minutes}`;
+  };
+
+  const isPastLesson = (dateStr, timeStr) => {
+    const cleanTime = parseTimeTo24h(timeStr);
+    const dateTime = new Date(`${dateStr}T${cleanTime}`);
+    return new Date() > dateTime;
+  };
+
   return (
+    <StudentLayout>
     <div style={{ padding: 40 }}>
       <h2>📘 Your Lessons</h2>
       {bookings.map(b => (
@@ -46,7 +63,7 @@ export default function StudentLessons() {
           <p>{b.date} – {b.startTime} to {b.endTime}</p>
           <p><strong>Status:</strong> {b.status}</p>
 
-          {!b.studentConfirmed && (
+          {isPastLesson(b.date, b.endTime) && !b.studentConfirmed && (
             <button onClick={() => confirmLesson(b)}>✅ I attended</button>
           )}
           {b.status === 'approved' && (
@@ -55,5 +72,6 @@ export default function StudentLessons() {
         </div>
       ))}
     </div>
+    </StudentLayout>
   );
 }

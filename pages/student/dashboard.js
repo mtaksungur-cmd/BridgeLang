@@ -3,6 +3,7 @@ import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { onAuthStateChanged } from 'firebase/auth';
+import StudentLayout from '../../components/StudentLayout';
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
@@ -93,6 +94,7 @@ export default function StudentDashboard() {
   if (loading) return <p>Loading...</p>;
 
   return (
+    <StudentLayout>
     <div style={{ padding: 40, maxWidth: 600, margin: 'auto' }}>
       <div style={{ textAlign: 'center' }}>
         {data.profilePhotoUrl ? (
@@ -172,5 +174,6 @@ export default function StudentDashboard() {
         )}
       </div>
     </div>
+    </StudentLayout>
   );
 }

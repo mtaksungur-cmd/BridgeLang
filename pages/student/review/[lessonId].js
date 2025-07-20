@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '../../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import StudentLayout from '../../../components/StudentLayout';
 
 export default function ReviewLesson() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function ReviewLesson() {
 
     if (res.ok) {
       alert('Thanks for your feedback!');
-      router.push('/student/lessons');
+      router.push('/student/dashboard');
     } else {
       alert('Failed to submit review.');
     }
@@ -65,6 +66,7 @@ export default function ReviewLesson() {
   if (!lesson || !teacher) return <p>Loading...</p>;
 
   return (
+    <StudentLayout>
     <div style={{ padding: 40 }}>
       <h2>Leave a Review for Your Lesson</h2>
 
@@ -102,5 +104,6 @@ export default function ReviewLesson() {
         {submitting ? 'Submitting...' : 'Submit Review'}
       </button>
     </div>
+    </StudentLayout>
   );
 }

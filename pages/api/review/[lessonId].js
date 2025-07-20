@@ -1,6 +1,8 @@
 import { db } from '../../../lib/firebase';
 import { doc, getDoc, setDoc, collection, getDocs, query, where, updateDoc } from 'firebase/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import '../../../lib/firebaseAdmin';
+import { updateBadgesForTeacher } from '../../../lib/badgeUtils';
 
 if (!getApps().length) {
   initializeApp({
@@ -55,6 +57,8 @@ export default async function handler(req, res) {
       avgRating: avg,
       reviewCount: all.length,
     });
+
+    await updateBadgesForTeacher(teacherId);
 
     res.status(200).json({ success: true });
   } catch (err) {

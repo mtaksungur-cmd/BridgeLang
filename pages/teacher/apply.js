@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { db, auth, storage } from '../../lib/firebase';
-import { setDoc, doc } from 'firebase/firestore';
+import { setDoc, doc, Timestamp } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { updateBadgesForTeacher } from '../../lib/badgeUtils';
 
 export default function TeacherApply() {
   const [form, setForm] = useState({
@@ -96,8 +97,9 @@ export default function TeacherApply() {
             introVideoUrl,
             certificationUrls,
             status: 'pending',
-            createdAt: Date.now()
+            createdAt: Timestamp.now()
       });
+      await updateBadgesForTeacher(newTeacherId);
       setSuccess('✅ Your application has been submitted. You will be contacted within 3–5 business days.');
       setForm({});
     } catch (err) {

@@ -2,6 +2,30 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { updateBadgesForTeacher } from '../../lib/badgeUtils';
+import TeacherLayout from '../../components/TeacherLayout';
+
+const parseTimeTo24h = (timeStr) => {
+  const [_, hourStr, minuteStr, period] = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i) || [];
+  if (!hourStr) return null;
+
+  let hour = parseInt(hourStr);
+  const minute = parseInt(minuteStr);
+
+  if (period.toUpperCase() === 'PM' && hour !== 12) hour += 12;
+  if (period.toUpperCase() === 'AM' && hour === 12) hour = 0;
+
+  return { hour, minute };
+};
+
+const isPastLesson = (dateStr, timeStr) => {
+  const time = parseTimeTo24h(timeStr);
+  if (!time) return false;
+
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const dateTime = new Date(year, month - 1, day, time.hour, time.minute);
+  return new Date() > dateTime;
+};
 
 export default function TeacherLessons() {
   const [bookings, setBookings] = useState([]);
@@ -37,14 +61,12 @@ export default function TeacherLessons() {
     setBookings(prev => prev.map(r =>
       r.id === booking.id ? { ...r, ...updates } : r
     ));
-  };
 
-  const isPastLesson = (dateStr, timeStr) => {
-    const dateTime = new Date(`${dateStr}T${timeStr}`);
-    return new Date() > dateTime;
+    await updateBadgesForTeacher(booking.teacherId);
   };
 
   return (
+    <TeacherLayout>
     <div style={{ padding: 40 }}>
       <h2>📩 Your Lessons</h2>
       {bookings.length === 0 ? <p>No lessons found.</p> : (
@@ -69,5 +91,6 @@ export default function TeacherLessons() {
         ))
       )}
     </div>
+    </TeacherLayout>
   );
 }

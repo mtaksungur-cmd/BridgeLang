@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import StudentLayout from '../../../components/StudentLayout';
 
 export default function BookLessonPage() {
   const router = useRouter();
@@ -48,33 +49,46 @@ export default function BookLessonPage() {
     fetchBookings();
   }, [selectedDate, teacherId]);
 
+  const convertToMinutes = (time) => {
+    const [timePart, modifier] = time.split(' ');
+    let [hours, minutes] = timePart.split(':').map(Number);
+    if (modifier === 'PM' && hours !== 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  };
+
+  const formatToAmPm = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(mins);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
   const generateSlots = () => {
     if (!teacher || !selectedDate) return [];
     const day = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
-    const daySlots = Object.entries(teacher.availability || {})
-      .filter(([d]) => d === day)
-      .flatMap(([_, slots]) => slots || []);
-    if (!daySlots || daySlots.length === 0) {
-      setAvailableSlots([]);
-      return;
-    }
+    const daySlots = teacher.availability?.[day] || [];
 
     const result = [];
     daySlots.forEach(({ start, end }) => {
-      let [startH, startM] = start.split(':').map(Number);
-      let [endH, endM] = end.split(':').map(Number);
-      const startMinutes = startH * 60 + startM;
-      const endMinutes = endH * 60 + endM;
+      const startMinutes = convertToMinutes(start);
+      const endMinutes = convertToMinutes(end);
 
       for (let t = startMinutes; t + duration <= endMinutes; t += 15) {
-        const sH = String(Math.floor(t / 60)).padStart(2, '0');
-        const sM = String(t % 60).padStart(2, '0');
-        const eH = String(Math.floor((t + duration) / 60)).padStart(2, '0');
-        const eM = String((t + duration) % 60).padStart(2, '0');
-        const slot = `${sH}:${sM}-${eH}:${eM}`;
-
-        const isTaken = bookedSlots.some(b => b.startTime === `${sH}:${sM}`);
-        if (!isTaken) result.push({ start: `${sH}:${sM}`, end: `${eH}:${eM}` });
+        const isTaken = bookedSlots.some(b => convertToMinutes(b.startTime) === t);
+        if (!isTaken) {
+          result.push({
+            start: formatToAmPm(t),
+            end: formatToAmPm(t + duration),
+            rawStart: t,
+          });
+        }
       }
     });
     setAvailableSlots(result);
@@ -125,6 +139,7 @@ export default function BookLessonPage() {
   };
 
   return (
+    <StudentLayout>
     <div style={{ padding: 40 }}>
       <h2>Book a Lesson</h2>
       {teacher && <p>Teacher: <strong>{teacher.name}</strong></p>}
@@ -160,5 +175,6 @@ export default function BookLessonPage() {
 
       {msg && <p style={{ marginTop: 20, color: 'green' }}>{msg}</p>}
     </div>
+    </StudentLayout>
   );
 }

@@ -4,14 +4,16 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import Busboy from 'busboy';
 
+// ✅ Doğru JSON'dan servis hesabını oku
 const serviceAccount = JSON.parse(
   readFileSync(path.join(process.cwd(), 'serviceAccountKey.json'), 'utf8')
 );
 
+// ✅ Sadece bir kere initialize
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount),
-    storageBucket: 'bridgelang-3f27c.firebasestorage.app', // ✅ corrected
+    storageBucket: 'bridgelang-3f27c.firebasestorage.app', // 🔧 düzeltildi
   });
 }
 

@@ -2,6 +2,23 @@ import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import Link from 'next/link';
+import StudentLayout from '../../components/StudentLayout';
+
+// Badge priority and label
+const badgePriority = [
+  { key: '🌟 5-Star Teacher', label: '🌟 5-Star Teacher' },
+  { key: '💼 Active Teacher', label: '💼 Active Teacher' },
+  { key: '🆕 New Teacher', label: '🆕 New Teacher' }
+];
+
+// Returns the highest badge (or null)
+function getHighestBadge(badges = []) {
+  if (!badges || !badges.length) return null;
+  for (const b of badgePriority) {
+    if (badges.includes(b.label) || badges.includes(b.key)) return b.label;
+  }
+  return null;
+}
 
 export default function TeachersList() {
   const [teachers, setTeachers] = useState([]);
@@ -16,7 +33,6 @@ export default function TeachersList() {
         .filter(user => user.role === 'teacher' && user.status === 'approved');
       setTeachers(data);
 
-      // her öğretmen için yorumları çek ve ortalamayı hesapla
       const ratingMap = {};
       for (let teacher of data) {
         const rSnap = await getDocs(
@@ -30,17 +46,16 @@ export default function TeachersList() {
           reviewCount: reviews.length,
         };
       }
-
       setRatings(ratingMap);
       setLoading(false);
     };
-
     fetchTeachers();
   }, []);
 
   if (loading) return <p>Loading teachers...</p>;
 
   return (
+    <StudentLayout>
     <div style={{ padding: 40 }}>
       <h2>Browse Our Teachers</h2>
       {teachers.length === 0 ? (
@@ -68,8 +83,9 @@ export default function TeachersList() {
                   ? `⭐ ${ratings[t.id].avgRating.toFixed(1)} (${ratings[t.id].reviewCount} reviews)`
                   : 'No ratings yet'}
               </p>
-              {Array.isArray(t.badges) && t.badges.length > 0 && (
-                <p><strong>Badges:</strong> {t.badges.join(', ')}</p>
+              {/* En yüksek badge */}
+              {getHighestBadge(t.badges) && (
+                <p><strong>Badge:</strong> {getHighestBadge(t.badges)}</p>
               )}
               <Link href={`/student/book/${t.id}`}>
                 <button style={{ marginTop: 10 }}>📅 Book Lesson</button>
@@ -79,5 +95,6 @@ export default function TeachersList() {
         </div>
       )}
     </div>
+    </StudentLayout>
   );
 }

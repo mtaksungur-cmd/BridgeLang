@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db } from '../../../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import StudentLayout from '../../../components/StudentLayout';
+
+const badgeDescriptions = {
+  '🆕 New Teacher': '🆕 New Teacher – Granted automatically during the first 30 days after registration.',
+  '💼 Active Teacher': '💼 Active Teacher – Taught at least 8 approved lessons in the last 3 months.',
+  '🌟 5-Star Teacher': '🌟 5-Star Teacher – Average rating of 4.8 or higher in the last 20 lessons.'
+};
 
 export default function TeacherProfilePage() {
   const [teacher, setTeacher] = useState(null);
@@ -44,7 +51,9 @@ export default function TeacherProfilePage() {
   if (loading) return <p>Loading...</p>;
   if (!teacher) return <p>Teacher not found.</p>;
 
+  // Profilde tüm rozetleri ve açıklamalarını göster
   return (
+    <StudentLayout>
     <div style={{ padding: 40 }}>
       <h2>{teacher.name}</h2>
       {teacher.profilePhotoUrl && (
@@ -63,9 +72,20 @@ export default function TeacherProfilePage() {
       {teacher.avgRating && (
         <p><strong>Rating:</strong> ⭐ {teacher.avgRating.toFixed(1)} ({teacher.reviewCount || 0} reviews)</p>
       )}
-      {Array.isArray(teacher.badges) && teacher.badges.length > 0 && (
-        <p><strong>Badges:</strong> {teacher.badges.join(', ')}</p>
-      )}
+
+      {/* Rozetler ve açıklamaları */}
+      <div style={{ marginTop: 20 }}>
+        <h3>🎖 Badges</h3>
+        {Array.isArray(teacher.badges) && teacher.badges.length > 0 ? (
+          <ul>
+            {teacher.badges.map((badge, index) => (
+              <li key={index}>{badgeDescriptions[badge] || badge}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>No badges earned yet.</p>
+        )}
+      </div>
 
       <div style={{ marginTop: 30 }}>
         <h3>Weekly Availability</h3>
@@ -102,5 +122,6 @@ export default function TeacherProfilePage() {
         )}
       </div>
     </div>
+    </StudentLayout>
   );
 }
