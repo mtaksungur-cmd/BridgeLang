@@ -8,7 +8,6 @@ const handleLogout = () => {
   });
 };
 
-
 export default function StudentNavbar() {
   return (
     <nav>
@@ -16,6 +15,8 @@ export default function StudentNavbar() {
         <li><Link href="/student/dashboard">Dashboard</Link></li>
         <li><Link href="/student/teachers">Teachers</Link></li>
         <li><Link href="/student/lessons">My Lessons</Link></li>
+        <li><Link href="/student/chats">Chats</Link></li>
+        <li><Link href="/student/credits">Buy Credits</Link></li> {/* << EKLENDİ */}
         <li><button onClick={handleLogout}>Logout</button></li>
       </ul>
     </nav>

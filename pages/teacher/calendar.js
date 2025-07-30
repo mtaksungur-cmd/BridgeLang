@@ -18,6 +18,7 @@ export default function CalendarPage() {
   const [endAMPM, setEndAMPM] = useState('AM');
   const [msg, setMsg] = useState('');
   const [userId, setUserId] = useState('');
+  const [userData, setUserData] = useState(null); // EKLEDİK
   const router = useRouter();
 
   useEffect(() => {
@@ -31,6 +32,9 @@ export default function CalendarPage() {
       if (snap.exists()) {
         const data = snap.data();
         setAvailability(data.availability || {});
+        setUserData(data); // EKLEDİK
+        // Kontrol burada!
+        if (!data?.stripeOnboarded) return router.push('/teacher/stripe-connect');
       }
     });
     return () => unsubscribe();

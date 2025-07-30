@@ -54,6 +54,12 @@ export default function ReviewLesson() {
     });
 
     if (res.ok) {
+      // Bonus API çağrısı (async, beklemeden)
+      fetch('/api/apply-review-bonus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: lesson.studentId }),
+      });
       alert('Thanks for your feedback!');
       router.push('/student/dashboard');
     } else {

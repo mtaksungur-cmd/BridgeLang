@@ -1,15 +1,42 @@
 import Stripe from 'stripe';
-import { db } from '../../../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { lessonId, price, studentEmail } = req.body;
+  // Tüm verileri logla
+  const {
+    teacherId,
+    studentId,
+    date,
+    startTime,
+    endTime,
+    duration,
+    location,
+    meetingLink,
+    price,
+    studentEmail
+  } = req.body;
+
+  // Eksik alan var mı?
+  if (
+    !teacherId ||
+    !studentId ||
+    !date ||
+    !startTime ||
+    !endTime ||
+    !duration ||
+    !location ||
+    !price ||
+    !studentEmail
+  ) {
+    console.error('Missing required fields:', req.body);
+    return res.status(400).json({ error: 'Missing required booking or payment fields.' });
+  }
 
   try {
+    // Stripe Checkout session oluştur
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -21,23 +48,27 @@ export default async function handler(req, res) {
             product_data: {
               name: 'BridgeLang Lesson',
             },
-            unit_amount: price * 100,
+            unit_amount: Math.round(price * 100), // Pence cinsinden
           },
           quantity: 1,
         },
       ],
       metadata: {
-        lessonId
+        bookingType: 'lesson',
+        teacherId,
+        studentId,
+        date,
+        startTime,
+        endTime,
+        duration: String(duration),
+        location,
+        meetingLink
       },
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
     });
 
-    // Stripe session ID'yi Firestore'a kaydet
-    await updateDoc(doc(db, 'lessons', lessonId), {
-      stripeSessionId: session.id
-    });
-
+    // Frontende checkout linkini dön
     res.status(200).json({ url: session.url });
   } catch (err) {
     console.error('Stripe error:', err.message);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import StudentLayout from '../../../components/StudentLayout';
 
@@ -11,6 +11,7 @@ export default function BookLessonPage() {
 
   const [teacher, setTeacher] = useState(null);
   const [studentId, setStudentId] = useState(null);
+  const [studentCredits, setStudentCredits] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [duration, setDuration] = useState(30);
   const [location, setLocation] = useState('');
@@ -18,9 +19,17 @@ export default function BookLessonPage() {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [msg, setMsg] = useState('');
 
+  // Öğrenci bilgisi ve kredileri çek
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) setStudentId(user.uid);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setStudentId(user.uid);
+        // Öğrencinin mevcut kredisi
+        const sSnap = await getDoc(doc(db, 'users', user.uid));
+        if (sSnap.exists()) {
+          setStudentCredits(sSnap.data().credits);
+        }
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -113,25 +122,54 @@ export default function BookLessonPage() {
       setMsg('❌ Please select a lesson location.');
       return;
     }
+    if (studentCredits !== null && studentCredits <= 0) {
+      setMsg('❌ You have no lesson credits left. Please purchase more credits.');
+      return;
+    }
+
     try {
+      // Rezervasyon başlamadan kredi eksilt
+      const dec = await fetch('/api/decrement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: studentId, type: 'credit' }),
+      });
+      const decResult = await dec.json();
+      if (decResult.credits <= 0) {
+        setMsg('❌ No credits left.');
+        return;
+      }
+      setStudentCredits(decResult.credits);
+
       let meetingLink = '';
       if (location === 'Online') {
         meetingLink = await createDailyMeeting();
       }
 
-      await addDoc(collection(db, 'bookings'), {
-        studentId,
-        teacherId,
-        date: selectedDate,
-        startTime: slot.start,
-        endTime: slot.end,
-        duration,
-        location,
-        meetingLink,
-        status: 'requested',
-        createdAt: Timestamp.now()
+      const res = await fetch('/api/payment/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teacherId,
+          studentId,
+          date: selectedDate,
+          startTime: slot.start,
+          endTime: slot.end,
+          duration,
+          location,
+          meetingLink,
+          price: teacher[`pricing${duration}`],
+          studentEmail: auth.currentUser.email
+        })
       });
-      setMsg('✅ Lesson booked successfully!');
+      const data = await res.json();
+      console.log('Stripe response:', data);
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setMsg(data.error ? `❌ ${data.error}` : '❌ Payment initiation failed.');
+      }
     } catch (err) {
       console.error(err);
       setMsg('❌ Booking failed.');
@@ -167,11 +205,28 @@ export default function BookLessonPage() {
         <p>No available time slots for selected day.</p>
       ) : (
         availableSlots.map((slot, i) => (
-          <button key={i} onClick={() => handleBooking(slot)} style={{ margin: 5 }}>
+          <button
+            key={i}
+            onClick={() => handleBooking(slot)}
+            disabled={
+              !teacher ||
+              !studentId ||
+              !duration ||
+              !location ||
+              !teacher[`pricing${duration}`] ||
+              !auth.currentUser ||
+              studentCredits !== null && studentCredits <= 0
+            }
+            style={{ margin: 5 }}
+          >
             {slot.start} – {slot.end}
           </button>
         ))
       )}
+
+      <p style={{ marginTop: 16 }}>
+        <strong>Lesson Credits Left: {studentCredits !== null ? studentCredits : '-'}</strong>
+      </p>
 
       {msg && <p style={{ marginTop: 20, color: 'green' }}>{msg}</p>}
     </div>

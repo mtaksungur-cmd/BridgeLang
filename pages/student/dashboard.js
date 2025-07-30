@@ -4,6 +4,8 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'fireb
 import { useRouter } from 'next/router';
 import { onAuthStateChanged } from 'firebase/auth';
 import StudentLayout from '../../components/StudentLayout';
+import SubscriptionBanner from '../../components/SubscriptionBanner';
+import LoyaltyBadge from '../../components/LoyaltyBadge';
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
@@ -26,16 +28,22 @@ export default function StudentDashboard() {
         router.push('/login');
         return;
       }
-
+      
       const userData = snap.data();
       if (userData.role !== 'student') {
         router.push('/teacher/dashboard');
         return;
       }
-
+      
       setData({ ...userData, uid: user.uid });
       setLoading(false);
       fetchBookings(user.uid);
+      
+      fetch('/api/loyalty-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid }),
+      });
     });
 
     return () => unsubscribe();
@@ -93,9 +101,29 @@ export default function StudentDashboard() {
 
   if (loading) return <p>Loading...</p>;
 
+  // ---- SIRALAMA ----
+  let sortedBookings = [...bookings];
+  const getTime = (b) => new Date(b.date + ' ' + (b.startTime || '00:00')).getTime();
+  sortedBookings.sort((a, b) => {
+    const aReviewed = reviews[a.id];
+    const bReviewed = reviews[b.id];
+    if (aReviewed && !bReviewed) return 1;
+    if (!aReviewed && bReviewed) return -1;
+    return getTime(b) - getTime(a);
+  });
+
   return (
     <StudentLayout>
-    <div style={{ padding: 40, maxWidth: 600, margin: 'auto' }}>
+    <SubscriptionBanner />         
+    {data && data.subscriptionPlan !== 'starter' && (
+      <LoyaltyBadge
+        plan={data.subscriptionPlan}
+        loyaltyMonths={data.loyaltyMonths}
+        loyaltyBonusGiven={data.loyaltyBonusGiven}
+        discountEligible={data.discountEligible}
+      />
+    )}
+    <div style={{ padding: 40}}>
       <div style={{ textAlign: 'center' }}>
         {data.profilePhotoUrl ? (
           <img
@@ -138,10 +166,10 @@ export default function StudentDashboard() {
 
       <div style={{ marginTop: 30 }}>
         <h3>Your Reservations</h3>
-        {bookings.length === 0 ? (
+        {sortedBookings.length === 0 ? (
           <p>No reservations yet.</p>
         ) : (
-          bookings.map((b, i) => {
+          sortedBookings.map((b, i) => {
             const reviewed = reviews[b.id];
             const teacher = teachers[b.teacherId] || {};
 

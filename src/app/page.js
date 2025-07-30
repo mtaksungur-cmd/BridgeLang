@@ -12,6 +12,9 @@ export default function Home() {
           height={38}
           priority
         />
+         <div className="min-h-screen flex items-center justify-center bg-indigo-600 text-white font-sans">
+          <h1 className="text-4xl font-bold">Tailwind çalışıyor 🎉</h1>
+        </div>
         <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2 tracking-[-.01em]">
             Get started by editing{" "}
