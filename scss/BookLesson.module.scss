@@ -1,0 +1,100 @@
+@use '../styles/variables' as v;
+
+.container {
+  padding: v.$spacer-lg;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: v.$spacer;
+  color: v.$primary-color;
+}
+
+.teacher {
+  margin-bottom: v.$spacer;
+  span { color: #555; }
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: v.$spacer;
+  margin-bottom: v.$spacer-lg;
+
+  @media (max-width: 820px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.input,
+.select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.95rem;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: v.$spacer-sm;
+}
+
+.empty {
+  color: #777;
+  font-style: italic;
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: v.$spacer-sm;
+  margin-bottom: v.$spacer;
+}
+
+.slotBtn {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #f8fbff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.02s ease;
+
+  &:hover {
+    background: #eef4ff;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.slotBtnDisabled {
+  background: #f4f4f4;
+  color: #888;
+  cursor: not-allowed;
+  border-color: #eee;
+
+  &:hover { background: #f4f4f4; }
+}
+
+.credits {
+  margin-top: v.$spacer-sm;
+}
+
+.msg {
+  margin-top: v.$spacer;
+  color: v.$accent-color; // hata mesajları kırmızı palete düşsün
+}

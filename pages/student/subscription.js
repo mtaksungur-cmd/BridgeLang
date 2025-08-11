@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../../lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import StudentLayout from "../../components/StudentLayout";
 import { useRouter } from "next/router";
+import styles from "../../scss/SubscriptionPage.module.scss";
 
-// Abonelik planlarını burada tanımla
 const PLANS = [
   {
     key: "starter",
@@ -67,88 +67,59 @@ export default function SubscriptionPage() {
   }, []);
 
   const handleSelect = async (planKey) => {
-  setSaving(true);
-  const user = auth.currentUser;
-  if (!user) return;
+    setSaving(true);
+    const user = auth.currentUser;
+    if (!user) return;
+    const userEmail = user.email;
 
-  // Kullanıcı emaili şart!
-  const userEmail = user.email;
-
-  // Stripe checkout session başlat
-  try {
-    const res = await fetch('/api/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: user.uid,
-        userEmail,
-        planKey,
-      })
-    });
-    const data = await res.json();
-    if (data.url) {
-      // Stripe Checkout yönlendir!
-      window.location.href = data.url;
-    } else {
-      alert(data.error || "An error occurred.");
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          userEmail,
+          planKey,
+        })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "An error occurred.");
+      }
+    } catch (err) {
+      alert("Could not start payment.");
+      console.error(err);
     }
-  } catch (err) {
-    alert("Could not start payment.");
-    console.error(err);
-  }
-  setSaving(false);
-};
-
+    setSaving(false);
+  };
 
   if (loading) return <p>Loading...</p>;
 
   return (
     <StudentLayout>
-      <div style={{ padding: 40, maxWidth: 720, margin: "auto" }}>
-        <h2>Choose Your Subscription Plan</h2>
-        <p>
-          Access lessons, view teachers and send messages based on your chosen
-          plan.
+      <div className={styles.container}>
+        <h2 className={styles.title}>Choose Your Subscription Plan</h2>
+        <p className={styles.subtitle}>
+          Access lessons, view teachers and send messages based on your chosen plan.
         </p>
-        <div style={{
-          display: "flex",
-          gap: 30,
-          justifyContent: "center",
-          marginTop: 30,
-        }}>
+        <div className={styles.planList}>
           {PLANS.map((plan) => (
             <div
               key={plan.key}
-              style={{
-                border: activePlan === plan.key ? "2px solid #1464ff" : "1px solid #ccc",
-                borderRadius: 14,
-                padding: 32,
-                width: 220,
-                textAlign: "center",
-                background: "#fafcff",
-                boxShadow: activePlan === plan.key ? "0 2px 12px #e0eaff" : "0 1px 8px #eee"
-              }}
+              className={`${styles.planCard} ${activePlan === plan.key ? styles.active : ''}`}
             >
-              <h3 style={{ color: "#1464ff" }}>{plan.name}</h3>
-              <div style={{ fontWeight: 600, fontSize: 22 }}>{plan.price}</div>
-              <div style={{ margin: "12px 0", fontSize: 14, color: "#555" }}>{plan.desc}</div>
-              <ul style={{ listStyle: "disc", textAlign: "left", paddingLeft: 20 }}>
+              <h3 className={styles.planName}>{plan.name}</h3>
+              <div className={styles.planPrice}>{plan.price}</div>
+              <div className={styles.planDesc}>{plan.desc}</div>
+              <ul className={styles.planFeatures}>
                 {plan.features.map((f, i) => (
                   <li key={i}>{f}</li>
                 ))}
               </ul>
               <button
-                style={{
-                  marginTop: 12,
-                  padding: "8px 24px",
-                  border: 0,
-                  borderRadius: 8,
-                  background: "#1464ff",
-                  color: "#fff",
-                  fontWeight: 600,
-                  cursor: activePlan === plan.key ? "not-allowed" : "pointer",
-                  opacity: activePlan === plan.key ? 0.7 : 1
-                }}
+                className={styles.selectBtn}
                 disabled={saving || activePlan === plan.key}
                 onClick={() => handleSelect(plan.key)}
               >

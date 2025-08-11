@@ -4,8 +4,9 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import TeacherLayout from '../../components/TeacherLayout';
+import styles from '../../scss/TeacherCalendar.module.scss';
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 export default function CalendarPage() {
   const [availability, setAvailability] = useState({});
@@ -18,47 +19,37 @@ export default function CalendarPage() {
   const [endAMPM, setEndAMPM] = useState('AM');
   const [msg, setMsg] = useState('');
   const [userId, setUserId] = useState('');
-  const [userData, setUserData] = useState(null); // EKLEDİK
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) return router.push('/login');
       setUserId(user.uid);
       const snap = await getDoc(doc(db, 'users', user.uid));
       if (snap.exists()) {
         const data = snap.data();
         setAvailability(data.availability || {});
-        setUserData(data); // EKLEDİK
-        // Kontrol burada!
         if (!data?.stripeOnboarded) return router.push('/teacher/stripe-connect');
       }
     });
-    return () => unsubscribe();
-  }, []);
+    return () => unsub();
+  }, [router]);
 
-  const formatTime = (h, m, ampm) => {
-    const hh = h.padStart(2, '0');
-    return `${hh}:${m} ${ampm}`;
-  };
+  const formatTime = (h, m, ampm) => `${h.padStart(2,'0')}:${m} ${ampm}`;
 
   const addSlot = () => {
     const start = formatTime(startHour, startMinute, startAMPM);
-    const end = formatTime(endHour, endMinute, endAMPM);
-    if (start && end) {
-      const updated = { ...availability };
-      if (!updated[day]) updated[day] = [];
-      updated[day].push({ start, end });
-      setAvailability(updated);
-    }
+    const end   = formatTime(endHour,   endMinute,   endAMPM);
+    if (!start || !end) return;
+    const updated = { ...availability };
+    if (!updated[day]) updated[day] = [];
+    updated[day].push({ start, end });
+    setAvailability(updated);
   };
 
-  const removeSlot = (day, index) => {
+  const removeSlot = (d, idx) => {
     const updated = { ...availability };
-    updated[day].splice(index, 1);
+    updated[d].splice(idx, 1);
     setAvailability(updated);
   };
 
@@ -72,51 +63,112 @@ export default function CalendarPage() {
   };
 
   const hours = Array.from({ length: 12 }, (_, i) => `${i + 1}`);
-  const minutes = ['00', '15', '30', '45'];
-  const ampm = ['AM', 'PM'];
+  const minutes = ['00','15','30','45'];
+  const ampm = ['AM','PM'];
 
   return (
     <TeacherLayout>
-    <div style={{ maxWidth: 600, margin: 'auto', paddingTop: 40 }}>
-      <h2>Weekly Lesson Availability</h2>
-      <p>Select the days and times you are available to teach each week. Students will see these slots when booking.</p>
+      <div className={styles.wrap}>
+        <h2 className={styles.title}>Weekly Lesson Availability</h2>
+        <p className={styles.subtitle}>
+          Select the days and times you’re available. Students will see these slots when booking.
+        </p>
 
-      <div style={{ marginBottom: 20 }}>
-        <select value={day} onChange={(e) => setDay(e.target.value)}>
-          {days.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <span style={{ marginLeft: 10 }}>Start:</span>
-        <select value={startHour} onChange={(e) => setStartHour(e.target.value)}>{hours.map(h => <option key={h} value={h}>{h}</option>)}</select>
-        <select value={startMinute} onChange={(e) => setStartMinute(e.target.value)}>{minutes.map(m => <option key={m} value={m}>{m}</option>)}</select>
-        <select value={startAMPM} onChange={(e) => setStartAMPM(e.target.value)}>{ampm.map(a => <option key={a} value={a}>{a}</option>)}</select>
+        {/* Controls */}
+        <div className={`row g-2 ${styles.controls}`}>
+          <div className="col-12 col-md-3">
+            <label className="form-label">Day</label>
+            <select value={day} onChange={e=>setDay(e.target.value)} className="form-select">
+              {days.map(d => <option key={d}>{d}</option>)}
+            </select>
+          </div>
 
-        <span style={{ marginLeft: 10 }}>End:</span>
-        <select value={endHour} onChange={(e) => setEndHour(e.target.value)}>{hours.map(h => <option key={h} value={h}>{h}</option>)}</select>
-        <select value={endMinute} onChange={(e) => setEndMinute(e.target.value)}>{minutes.map(m => <option key={m} value={m}>{m}</option>)}</select>
-        <select value={endAMPM} onChange={(e) => setEndAMPM(e.target.value)}>{ampm.map(a => <option key={a} value={a}>{a}</option>)}</select>
+          <div className="col-12 col-md-4">
+            <label className="form-label">Start</label>
+            <div className="d-flex gap-2">
+              <select value={startHour} onChange={e=>setStartHour(e.target.value)} className="form-select">
+                {hours.map(h => <option key={h}>{h}</option>)}
+              </select>
+              <select value={startMinute} onChange={e=>setStartMinute(e.target.value)} className="form-select">
+                {minutes.map(m => <option key={m}>{m}</option>)}
+              </select>
+              <select value={startAMPM} onChange={e=>setStartAMPM(e.target.value)} className="form-select">
+                {ampm.map(a => <option key={a}>{a}</option>)}
+              </select>
+            </div>
+          </div>
 
-        <button onClick={addSlot} style={{ marginLeft: 10 }}>Add Slot</button>
-      </div>
+          <div className="col-12 col-md-4">
+            <label className="form-label">End</label>
+            <div className="d-flex gap-2">
+              <select value={endHour} onChange={e=>setEndHour(e.target.value)} className="form-select">
+                {hours.map(h => <option key={h}>{h}</option>)}
+              </select>
+              <select value={endMinute} onChange={e=>setEndMinute(e.target.value)} className="form-select">
+                {minutes.map(m => <option key={m}>{m}</option>)}
+              </select>
+              <select value={endAMPM} onChange={e=>setEndAMPM(e.target.value)} className="form-select">
+                {ampm.map(a => <option key={a}>{a}</option>)}
+              </select>
+            </div>
+          </div>
 
-      {days.map((d) => (
-        <div key={d} style={{ marginBottom: 10 }}>
-          <strong>{d}:</strong>{' '}
-          {availability[d]?.length > 0 ? (
-            availability[d].map((slot, idx) => (
-              <div key={idx}>
-                {slot.start} - {slot.end}
-                <button onClick={() => removeSlot(d, idx)} style={{ marginLeft: 10 }}>Remove</button>
-              </div>
-            ))
-          ) : (
-            <span>No availability</span>
-          )}
+          <div className="col-12 col-md-1 d-flex align-items-end">
+            <button onClick={addSlot} className="btn btn-primary w-100">Add</button>
+          </div>
         </div>
-      ))}
 
-      <button onClick={saveToFirestore} style={{ marginTop: 20 }}>Save Availability</button>
-      {msg && <p>{msg}</p>}
-    </div>
+        {/* Table */}
+        <div className={styles.tableCard}>
+          <table className={`table ${styles.table}`}>
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th>Slots</th>
+                <th className="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {days.map(d => (
+                <tr key={d}>
+                  <td className={styles.dayCell}>{d}</td>
+                  <td>
+                    {availability[d]?.length ? (
+                      <ul className={styles.slotList}>
+                        {availability[d].map((s, i) => (
+                          <li key={i} className={styles.slot}>
+                            <span>{s.start} — {s.end}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-muted">No availability</span>
+                    )}
+                  </td>
+                  <td className="text-end">
+                    {availability[d]?.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => removeSlot(d, i)}
+                        className="btn btn-danger btn-sm ms-1"
+                        title="Remove this slot"
+                      >
+                        Remove #{i + 1}
+                      </button>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Save */}
+        <div className="d-flex align-items-center gap-3 mt-3">
+          <button onClick={saveToFirestore} className="btn btn-success">Save Availability</button>
+          {msg && <span className={msg.startsWith('✅') ? styles.msgOk : styles.msgErr}>{msg}</span>}
+        </div>
+      </div>
     </TeacherLayout>
   );
 }

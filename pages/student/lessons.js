@@ -2,63 +2,56 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useRouter } from 'next/router';
 import StudentLayout from '../../components/StudentLayout';
 import SubscriptionBanner from '../../components/SubscriptionBanner';
 import LoyaltyBadge from '../../components/LoyaltyBadge';
+import styles from '../../scss/StudentLessons.module.scss';
 
 export default function StudentLessons() {
   const [bookings, setBookings] = useState([]);
   const [user, setUser] = useState(null);
   const [teachers, setTeachers] = useState({});
+  const router = useRouter();
 
   useEffect(() => {
     let _uid;
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        _uid = user.uid;
-        // Kullanıcı verisi
-        const userSnap = await getDoc(doc(db, 'users', _uid));
-        if (userSnap.exists()) setUser(userSnap.data());
+    onAuthStateChanged(auth, async (u) => {
+      if (!u) return;
+      _uid = u.uid;
 
-        // Dersleri çek
-        const q = query(
-          collection(db, 'bookings'),
-          where('studentId', '==', _uid),
-          where('status', 'in', [
-            'pending-approval', 'confirmed', 'teacher_approved', 'student_approved', 'approved'
-          ])
-        );
-        const snap = await getDocs(q);
-        const lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const userSnap = await getDoc(doc(db, 'users', _uid));
+      if (userSnap.exists()) setUser(userSnap.data());
 
-        // Öğretmenleri toplu çek (her dersin teacherId’sini uniq listele)
-        const teacherIds = [...new Set(lessons.map(b => b.teacherId).filter(Boolean))];
-        const teacherMap = {};
-        await Promise.all(teacherIds.map(async id => {
-          const tsnap = await getDoc(doc(db, 'users', id));
-          if (tsnap.exists()) teacherMap[id] = tsnap.data();
-        }));
-        setTeachers(teacherMap);
+      const q = query(
+        collection(db, 'bookings'),
+        where('studentId', '==', _uid),
+        where('status', 'in', ['pending-approval','confirmed','teacher_approved','student_approved','approved'])
+      );
+      const snap = await getDocs(q);
+      const lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        // Önce "I attended" gösterilecek dersler, sonra tarihe göre
-        const notConfirmed = lessons.filter(b => !b.studentConfirmed && isPastLesson(b.date, b.endTime));
-        const others = lessons.filter(b => b.studentConfirmed || !isPastLesson(b.date, b.endTime));
-        notConfirmed.sort(sortByDateDesc);
-        others.sort(sortByDateDesc);
+      const teacherIds = [...new Set(lessons.map(b => b.teacherId).filter(Boolean))];
+      const teacherMap = {};
+      await Promise.all(teacherIds.map(async id => {
+        const ts = await getDoc(doc(db, 'users', id));
+        if (ts.exists()) teacherMap[id] = ts.data();
+      }));
+      setTeachers(teacherMap);
 
-        setBookings([...notConfirmed, ...others]);
-      }
+      const notConfirmed = lessons.filter(b => !b.studentConfirmed && isPastLesson(b.date, b.endTime));
+      const others = lessons.filter(b => b.studentConfirmed || !isPastLesson(b.date, b.endTime));
+      notConfirmed.sort(sortByDateDesc);
+      others.sort(sortByDateDesc);
+      setBookings([...notConfirmed, ...others]);
     });
   }, []);
 
   const confirmLesson = async (booking) => {
     const updates = { studentConfirmed: true };
-
     if (booking.teacherApproved) {
       updates.status = 'approved';
       updates.payoutSent = false;
-
-      // Stripe transferi API üzerinden tetikle!
       await fetch('/api/transfer-payout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,13 +60,8 @@ export default function StudentLessons() {
     } else {
       updates.status = 'student_approved';
     }
-
     await updateDoc(doc(db, 'bookings', booking.id), updates);
-
-    setBookings(prev =>
-      prev.map(b => b.id === booking.id ? { ...b, ...updates } : b)
-    );
-
+    setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...updates } : b));
     alert('You confirmed the lesson.');
   };
 
@@ -81,7 +69,7 @@ export default function StudentLessons() {
     const [_, time, modifier] = timeStr.match(/(\d{1,2}:\d{2})\s?(AM|PM)/i) || [];
     if (!time || !modifier) return timeStr;
     let [hours, minutes] = time.split(":");
-    hours = parseInt(hours);
+    hours = parseInt(hours, 10);
     if (modifier.toUpperCase() === "PM" && hours !== 12) hours += 12;
     if (modifier.toUpperCase() === "AM" && hours === 12) hours = 0;
     return `${String(hours).padStart(2, '0')}:${minutes}`;
@@ -101,7 +89,7 @@ export default function StudentLessons() {
 
   return (
     <StudentLayout>
-      <SubscriptionBanner />  
+      <SubscriptionBanner />
       {user && user.subscriptionPlan !== 'starter' && (
         <LoyaltyBadge
           plan={user.subscriptionPlan}
@@ -110,44 +98,87 @@ export default function StudentLessons() {
           discountEligible={user.discountEligible}
         />
       )}
-      <div style={{ padding: 40 }}>
-        <h2>📘 Your Lessons</h2>
-        {bookings.map(b => {
-          const t = teachers[b.teacherId] || {};
-          return (
-            <div key={b.id} style={{ border: '1px solid #ccc', margin: 10, padding: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-                {t.profilePhotoUrl && (
-                  <img src={t.profilePhotoUrl} alt="Teacher" width={40} height={40} style={{ borderRadius: '50%' }} />
-                )}
-                <div>
-                  <strong>Teacher:</strong> {t.name || "-"}
-                  {t.languagesTaught && <span style={{ marginLeft: 10, color: '#888', fontSize: 13 }}>({t.languagesTaught})</span>}
+
+      <div className={`container ${styles.wrap}`}>
+        <h2 className="h3 mb-4"><span className="me-2">📘</span>Your Lessons</h2>
+
+        <div className="row g-4">
+          {bookings.map(b => {
+            const t = teachers[b.teacherId] || {};
+            return (
+              <div key={b.id} className="col-12 col-md-6 col-lg-4 col-xl-3">
+                <div className={`card h-100 shadow-sm ${styles.lessonCard}`}>
+                  <div className="card-body">
+                    {/* Header */}
+                    <div className="d-flex align-items-center mb-3">
+                      {t.profilePhotoUrl ? (
+                        <img src={t.profilePhotoUrl} alt="Teacher" className={styles.avatar} />
+                      ) : (
+                        <div className={styles.avatarPlaceholder}>T</div>
+                      )}
+                      <div className="ms-3">
+                        <div className="fw-semibold">
+                          Teacher: {t.name || '-'}
+                        </div>
+                        <div className="text-muted small">
+                          {(t.level || t.languagesTaught) ? (t.level || t.languagesTaught) : ''}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Date & Time */}
+                    <div className="mb-2">
+                      <div className="small text-muted">Date:</div>
+                      <div className="fw-semibold">{b.date}</div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="small text-muted">Time:</div>
+                      <div className="fw-semibold">{b.startTime} — {b.endTime}</div>
+                    </div>
+
+                    {/* Status pill */}
+                    <div className="mb-3">
+                      <span className={`${styles.pill} ${b.status === 'approved' ? styles.pillApproved : styles.pillDefault}`}>
+                        {b.status === 'approved' ? 'Approved' : b.status.replace('_', ' ')}
+                      </span>
+                    </div>
+
+                    {/* Join link */}
+                    {b.meetingLink && (
+                      <div className="mb-3">
+                        <a className={styles.joinLink} href={b.meetingLink} target="_blank" rel="noopener noreferrer">
+                          🔗 Join Lesson
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Approved message */}
+                    {b.status === 'approved' && (
+                      <p className={`mb-3 ${styles.approvedMsg}`}>
+                        🎉 Lesson approved by both sides.
+                      </p>
+                    )}
+
+                    {/* Confirm attended (only past & not confirmed) */}
+                    {isPastLesson(b.date, b.endTime) && !b.studentConfirmed && (
+                      <button className={`btn btn-success w-100 mb-2 ${styles.confirmBtn}`} onClick={() => confirmLesson(b)}>
+                        ✅ I attended
+                      </button>
+                    )}
+
+                    {/* Report */}
+                    <button
+                      className={`btn w-100 ${styles.reportBtn}`}
+                      onClick={() => router.push(`/student/report?bookingId=${b.id}`)}
+                    >
+                      🛑 Report
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div style={{ marginTop: 8 }}>
-                <span><strong>Date:</strong> {b.date}</span>
-                <span style={{ marginLeft: 20 }}><strong>Time:</strong> {b.startTime} – {b.endTime}</span>
-                <span style={{ marginLeft: 20 }}><strong>Status:</strong> {b.status}</span>
-              </div>
-              {b.meetingLink && (
-                <div style={{ marginTop: 7 }}>
-                  <a href={b.meetingLink} target="_blank" rel="noopener noreferrer" style={{ color: "#2573ef" }}>
-                    🔗 Join Lesson
-                  </a>
-                </div>
-              )}
-              {isPastLesson(b.date, b.endTime) && !b.studentConfirmed && (
-                <button onClick={() => confirmLesson(b)} style={{ marginTop: 12 }}>
-                  ✅ I attended
-                </button>
-              )}
-              {b.status === 'approved' && (
-                <p style={{ color: 'green' }}>🎉 Lesson approved by both sides.</p>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </StudentLayout>
   );

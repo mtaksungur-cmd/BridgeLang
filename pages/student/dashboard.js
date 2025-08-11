@@ -6,6 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import StudentLayout from '../../components/StudentLayout';
 import SubscriptionBanner from '../../components/SubscriptionBanner';
 import LoyaltyBadge from '../../components/LoyaltyBadge';
+import styles from '../../scss/StudentDashboard.module.scss';
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
@@ -123,83 +124,88 @@ export default function StudentDashboard() {
         discountEligible={data.discountEligible}
       />
     )}
-    <div style={{ padding: 40}}>
-      <div style={{ textAlign: 'center' }}>
-        {data.profilePhotoUrl ? (
-          <img
-            src={data.profilePhotoUrl}
-            alt="Profile"
-            style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover' }}
-          />
-        ) : (
-          <p style={{ fontStyle: 'italic' }}>No profile photo uploaded</p>
-        )}
-        <br />
-        <label style={{ fontSize: 14 }}>
-          {uploading ? 'Uploading...' : 'Change Photo:'}
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: 'block', margin: '10px auto' }}
-            onChange={handleFileChange}
-            disabled={uploading}
-          />
-        </label>
+    <div className={styles.dashboard}>
+      <h2>🎓 Student Dashboard</h2>
+      <div className={styles['dashboard-row']}>
+        <div className={styles['dashboard-profile']}>
+          {data.profilePhotoUrl ? (
+            <img
+              src={data.profilePhotoUrl}
+              alt="Profile"
+              className={styles['dashboard-profile-img']}
+            />
+          ) : (
+            <p style={{ fontStyle: 'italic' }}>No profile photo uploaded</p>
+          )}
+          <br />
+          <label className={styles['dashboard-profile-label']}>
+            {uploading ? 'Uploading...' : 'Change Photo:'}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+          </label>
+          <p><strong>Full Name:</strong> {data.name}</p>
+          <p><strong>Email:</strong> {data.email} {auth.currentUser?.emailVerified ? '✅' : '❌'}</p>
+          <p><strong>Phone:</strong> {data.phone || '-'}</p>
+        </div>
+        <div className={styles['dashboard-info']}>
+          <p><strong>City/Postcode:</strong> {data.city || '-'}</p>
+          <p><strong>Timezone:</strong> {data.timezone || '-'}</p>
+          <p><strong>Level:</strong> {data.level || '-'}</p>
+          <p><strong>Bio:</strong><br />{data.intro || '-'}</p>
+          <p><strong>Goals:</strong>
+            <ul>
+              {data.goals && data.goals.map((g, i) => (
+                <li key={i}>{g}</li>
+              ))}
+            </ul>
+          </p>
+        </div>
       </div>
 
-      <h2>🎓 Student Dashboard</h2>
-      <p><strong>Full Name:</strong> {data.name}</p>
-      <p><strong>Email:</strong> {data.email} {auth.currentUser?.emailVerified ? '✅' : '❌'}</p>
-      <p><strong>City/Postcode:</strong> {data.city || '-'}</p>
-      <p><strong>Timezone:</strong> {data.timezone || '-'}</p>
-      <p><strong>Phone:</strong> {data.phone || '-'}</p>
-      <p><strong>Level:</strong> {data.level || '-'}</p>
-      <p><strong>Bio:</strong><br />{data.intro || '-'}</p>
-      <p><strong>Goals:</strong>
-        <ul>
-          {data.goals && data.goals.map((g, i) => (
-            <li key={i}>{g}</li>
-          ))}
-        </ul>
-      </p>
-      <p><strong>Subscription:</strong> {data.subscriptionPlan || 'Starter'}</p>
 
-      <div style={{ marginTop: 30 }}>
+      <div className={styles['dashboard-reservations']}>
         <h3>Your Reservations</h3>
-        {sortedBookings.length === 0 ? (
-          <p>No reservations yet.</p>
-        ) : (
-          sortedBookings.map((b, i) => {
-            const reviewed = reviews[b.id];
-            const teacher = teachers[b.teacherId] || {};
-
-            return (
-              <div key={i} style={{ borderBottom: '1px solid #ccc', marginBottom: 15, paddingBottom: 10 }}>
-                {teacher.profilePhotoUrl && (
-                  <img src={teacher.profilePhotoUrl} alt="Teacher" width={60} height={60}
-                    style={{ borderRadius: '50%', objectFit: 'cover', marginBottom: 8 }}
-                  />
-                )}
-                <p><strong>Teacher:</strong> {teacher.name || 'N/A'}</p>
-                <p><strong>Date:</strong> {b.date}</p>
-                <p><strong>Time:</strong> {b.startTime} – {b.endTime}</p>
-                <p><strong>Duration:</strong> {b.duration} minutes</p>
-                <p><strong>Location:</strong> {b.location}</p>
-                <p><strong>Status:</strong> {b.status}</p>
-                {b.meetingLink && (
-                  <p><a href={b.meetingLink} target="_blank" rel="noopener noreferrer">Join Online Lesson</a></p>
-                )}
-                {b.status === 'approved' && !reviewed && (
-                  <p>
-                    <a href={`/student/review/${b.id}`}>
-                      <button>✍️ Leave a Review</button>
-                    </a>
-                  </p>
-                )}
-              </div>
-            );
-          })
-        )}
+        <div className={styles['dashboard-reservations-list']}>
+          {sortedBookings.length === 0 ? (
+            <p>No reservations yet.</p>
+          ) : (
+            sortedBookings.map((b, i) => {
+              const reviewed = reviews[b.id];
+              const teacher = teachers[b.teacherId] || {};
+              
+              return (
+                <div key={i} className={styles['dashboard-card']}>
+                  {teacher.profilePhotoUrl && (
+                    <img src={teacher.profilePhotoUrl} alt="Teacher" className={styles['dashboard-card-img']}
+                    />
+                  )}
+                  <div className={styles['dashboard-card-body']}>
+                    <p><strong>Teacher:</strong> {teacher.name || 'N/A'}</p>
+                    <p><strong>Date:</strong> {b.date}</p>
+                    <p><strong>Time:</strong> {b.startTime} – {b.endTime}</p>
+                    <p><strong>Duration:</strong> {b.duration} min</p>
+                    <p><strong>Location:</strong> {b.location}</p>
+                    <p><strong>Status:</strong> {b.status}</p>
+                    {b.meetingLink && (
+                      <a href={b.meetingLink} target="_blank" rel="noopener noreferrer">
+                        Join Online Lesson
+                      </a>
+                    )}
+                    {b.status==='approved' && !reviewed && (
+                      <button onClick={()=>router.push(`/student/review/${b.id}`)}>
+                        ✍️ Leave a Review
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
     </StudentLayout>

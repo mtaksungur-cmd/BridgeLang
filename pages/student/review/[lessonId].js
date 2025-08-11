@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '../../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { isInappropriate } from '../../../lib/messageFilter';
 import StudentLayout from '../../../components/StudentLayout';
+import styles from '../../../scss/ReviewLesson.module.scss';
 
 export default function ReviewLesson() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function ReviewLesson() {
   const [lesson, setLesson] = useState(null);
   const [teacher, setTeacher] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [hovered, setHovered] = useState(0);
 
   useEffect(() => {
     const checkAuthAndLoad = async () => {
@@ -34,7 +37,6 @@ export default function ReviewLesson() {
 
         setLesson({ id: snap.id, ...data });
 
-        // öğretmen verisini çek
         const teacherSnap = await getDoc(doc(db, 'users', data.teacherId));
         if (teacherSnap.exists()) {
           setTeacher(teacherSnap.data());
@@ -46,7 +48,13 @@ export default function ReviewLesson() {
   }, [lessonId]);
 
   const handleSubmit = async () => {
+    if (isInappropriate(comment)) {
+      alert('Your comment contains inappropriate or forbidden content.');
+      return;
+    }
+
     setSubmitting(true);
+
     const res = await fetch(`/api/review/${lessonId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -54,7 +62,6 @@ export default function ReviewLesson() {
     });
 
     if (res.ok) {
-      // Bonus API çağrısı (async, beklemeden)
       fetch('/api/apply-review-bonus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,43 +80,57 @@ export default function ReviewLesson() {
 
   return (
     <StudentLayout>
-    <div style={{ padding: 40 }}>
-      <h2>Leave a Review for Your Lesson</h2>
+      <div className={styles.container}>
+        <h2 className={styles.title}>Leave a Review for Your Lesson</h2>
 
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
-        {teacher.profilePhotoUrl && (
-          <img
-            src={teacher.profilePhotoUrl}
-            alt="Teacher"
-            style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', marginRight: 15 }}
-          />
-        )}
-        <p><strong>{teacher.name}</strong></p>
+        <div className={styles.teacherBox}>
+          {teacher.profilePhotoUrl && (
+            <img
+              src={teacher.profilePhotoUrl}
+              alt="Teacher"
+              className={styles.avatar}
+            />
+          )}
+          <p><strong>{teacher.name}</strong></p>
+        </div>
+
+        <p className={styles.lessonDate}><strong>Date:</strong> {lesson.date}</p>
+
+        <label className={styles.label}>Rating (1–5):</label>
+        <div
+          className={styles.stars}
+          onMouseLeave={() => setHovered(0)} // dışarı çıkınca hover sıfırlanır
+        >
+          {[1, 2, 3, 4, 5].map((star) => (
+            <span
+              key={star}
+              className={`${styles.star} ${
+                star <= (hovered || rating) ? styles.filled : ''
+              }`}
+              onClick={() => setRating(star)}
+              onMouseEnter={() => setHovered(star)}
+            >
+              ★
+            </span>
+          ))}
+        </div>
+
+        <label className={styles.label}>Comment:</label>
+        <textarea
+          rows="4"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className={styles.textarea}
+        />
+
+        <button
+          onClick={handleSubmit}
+          disabled={submitting}
+          className={styles.button}
+        >
+          {submitting ? 'Submitting...' : 'Submit Review'}
+        </button>
       </div>
-
-      <p><strong>Date:</strong> {lesson.date}</p>
-
-      <label>Rating (1–5):</label><br />
-      <input
-        type="number"
-        min="1"
-        max="5"
-        value={rating}
-        onChange={(e) => setRating(Number(e.target.value))}
-      /><br /><br />
-
-      <label>Comment:</label><br />
-      <textarea
-        rows="4"
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        style={{ width: '100%', maxWidth: 500 }}
-      /><br /><br />
-
-      <button onClick={handleSubmit} disabled={submitting}>
-        {submitting ? 'Submitting...' : 'Submit Review'}
-      </button>
-    </div>
     </StudentLayout>
   );
 }

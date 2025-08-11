@@ -1,32 +1,57 @@
 import { useState, useEffect, useRef } from "react";
 import { db } from "../lib/firebase";
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { isInappropriate } from "../lib/messageFilter";
+import { 
+  collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc 
+} from "firebase/firestore";
+import { useRouter } from "next/router";
+import styles from "./ChatBox.module.scss";
 
 export default function ChatBox({ chatId, userId, role, onFirstMessage }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [error, setError] = useState("");
   const messagesEndRef = useRef(null);
+  const router = useRouter();
 
-  // Dinamik olarak mesajları dinle
   useEffect(() => {
     if (!chatId) return;
     const q = query(
       collection(db, "chats", chatId, "messages"),
       orderBy("createdAt", "asc")
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setMessages(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+
+    const unsub = onSnapshot(q, async (snap) => {
+      const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Karşı tarafın mesajlarını okundu olarak işaretle
+      msgs.forEach(async (m) => {
+        if (m.sender !== userId && m.read !== true) {
+          await updateDoc(doc(db, "chats", chatId, "messages", m.id), {
+            read: true
+          });
+        }
+      });
+
+      setMessages(msgs);
+
+      setTimeout(() =>
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }),
+      100);
     });
     return () => unsub();
-  }, [chatId]);
+  }, [chatId, userId]);
 
   const handleSend = async (e) => {
     e.preventDefault();
     const text = input.trim();
     if (!text) return;
 
-    // Eğer ilk mesaj ise parent'a haber ver (ör: mesaj hakkı düşsün)
+    if (isInappropriate(text)) {
+      setError("⚠️ Your message contains inappropriate content.");
+      return;
+    }
+
     if (messages.length === 0 && typeof onFirstMessage === "function") {
       await onFirstMessage();
     }
@@ -35,37 +60,44 @@ export default function ChatBox({ chatId, userId, role, onFirstMessage }) {
       text,
       sender: userId,
       role,
+      read: false, // yeni mesaj varsayılan okunmamış
       createdAt: serverTimestamp(),
     });
+
     setInput("");
+    setError("");
+  };
+
+  const handleExitChat = () => {
+    if (role === "student") {
+      router.push("/student/chats");
+    } else {
+      router.push("/teacher/chats");
+    }
   };
 
   return (
-    <div style={{ border: "1px solid #ccc", borderRadius: 10, padding: 16, maxWidth: 520, margin: "auto" }}>
-      <div style={{ minHeight: 240, maxHeight: 320, overflowY: "auto", marginBottom: 12, background: "#fafcff", padding: 8 }}>
-        {messages.length === 0 && <p style={{ color: "#aaa" }}>No messages yet.</p>}
-        {messages.map((m) => {
-          const isMine = m.sender === userId;
+    <div className={styles.container}>
+      {/* Üst bar */}
+      <div className={styles.topBar}>
+        <button onClick={handleExitChat} className={styles.closeBtn}>✖</button>
+        <span className={styles.chatTitle}>Chat</span>
+      </div>
+
+      {/* Mesajlar */}
+      <div className={styles.messages}>
+        {messages.length === 0 && (
+          <p className={styles.noMessages}>No messages yet.</p>
+        )}
+        {messages.map(m => {
+          const mine = m.sender === userId;
+          const wrapperClass = mine 
+            ? `${styles.message} ${styles['message--mine']}` 
+            : `${styles.message} ${styles['message--theirs']}`;
+
           return (
-            <div
-              key={m.id}
-              style={{
-                textAlign: isMine ? "right" : "left",
-                margin: "6px 0",
-                display: "flex",
-                flexDirection: isMine ? "row-reverse" : "row",
-              }}
-            >
-              <span
-                style={{
-                  background: isMine ? "#e6f0fd" : "#f2f2f2",
-                  borderRadius: 7,
-                  padding: "7px 15px",
-                  display: "inline-block",
-                  maxWidth: 320,
-                  wordBreak: "break-word",
-                }}
-              >
+            <div key={m.id} className={wrapperClass}>
+              <span className={styles.message__bubble}>
                 {m.text}
               </span>
             </div>
@@ -73,18 +105,25 @@ export default function ChatBox({ chatId, userId, role, onFirstMessage }) {
         })}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSend} style={{ display: "flex", gap: 8 }}>
+
+      {/* Mesaj gönderme formu */}
+      <form onSubmit={handleSend} className={styles.form}>
         <input
           type="text"
           placeholder="Type your message..."
           value={input}
-          onChange={e => setInput(e.target.value)}
-          style={{ flex: 1, padding: 8, borderRadius: 7, border: "1px solid #ccc" }}
+          onChange={e => {
+            setInput(e.target.value);
+            if (error) setError("");
+          }}
+          className={styles.input}
         />
-        <button type="submit" style={{ border: 0, borderRadius: 7, background: "#1464ff", color: "#fff", fontWeight: 600, padding: "0 20px" }}>
+        <button type="submit" className={styles.button}>
           Send
         </button>
       </form>
+
+      {error && <p className={styles.error}>{error}</p>}
     </div>
   );
 }

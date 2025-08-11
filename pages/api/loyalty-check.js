@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   let months;
   // ----- TEST MODU -----
   if (TEST_MODE) {
-    months = Math.floor((now - start) / (1000 * 60 * 60)); // 1 saat = 1 ay
+    months = Math.floor((now - start) / (1000 * 60 * 60 * 24)); // 1 saat = 1 ay
   } else {
     // ----- GERÇEK MOD -----
     months = (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth();

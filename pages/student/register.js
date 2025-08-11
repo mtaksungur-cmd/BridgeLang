@@ -3,6 +3,7 @@ import { auth, db } from '../../lib/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import ReCAPTCHA from 'react-google-recaptcha';
+import styles from '../../scss/StudentRegister.module.scss';
 
 export default function StudentRegister() {
   const [form, setForm] = useState({
@@ -30,11 +31,10 @@ export default function StudentRegister() {
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
     if (type === 'checkbox' && name === 'goals') {
-      if (checked) {
-        setForm((prev) => ({ ...prev, goals: [...prev.goals, value] }));
-      } else {
-        setForm((prev) => ({ ...prev, goals: prev.goals.filter((g) => g !== value) }));
-      }
+      setForm((prev) => ({
+        ...prev,
+        goals: checked ? [...prev.goals, value] : prev.goals.filter((g) => g !== value)
+      }));
     } else if (type === 'checkbox') {
       setForm((prev) => ({ ...prev, [name]: checked }));
     } else if (type === 'file') {
@@ -47,10 +47,7 @@ export default function StudentRegister() {
   const uploadFileViaApi = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
     const data = await res.json();
     return data.url;
   };
@@ -72,7 +69,6 @@ export default function StudentRegister() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
-
       const verifyData = await verifyRes.json();
       if (!verifyData.success) return setError('reCAPTCHA verification failed.');
 
@@ -107,52 +103,55 @@ export default function StudentRegister() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: 'auto', paddingTop: 50 }}>
-      <h2>Student Registration</h2>
-      <form onSubmit={handleRegister}>
-        <input name="name" placeholder="Full Name" onChange={handleChange} required /><br />
-        <input name="email" type="email" placeholder="Email Address" onChange={handleChange} required /><br />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} required /><br />
-        <input name="city" placeholder="City or Postcode" onChange={handleChange} required /><br />
-        <input name="timezone" placeholder="Timezone" value={form.timezone} onChange={handleChange} /><br />
-        <input name="phone" placeholder="Phone (optional)" onChange={handleChange} /><br />
+    <div className={styles.container}>
+      <h2 className={styles.title}>Student Registration</h2>
+      <form onSubmit={handleRegister} className={styles.form}>
+        <input className={styles.input} name="name" placeholder="Full Name" onChange={handleChange} required />
+        <input className={styles.input} name="email" type="email" placeholder="Email Address" onChange={handleChange} required />
+        <input className={styles.input} name="password" type="password" placeholder="Password" onChange={handleChange} required />
+        <input className={styles.input} name="city" placeholder="City or Postcode" onChange={handleChange} required />
+        <input className={styles.input} name="timezone" placeholder="Timezone" value={form.timezone} onChange={handleChange} />
+        <input className={styles.input} name="phone" placeholder="Phone (optional)" onChange={handleChange} />
 
-        <select name="level" onChange={handleChange}>
+        <select name="level" className={styles.select} onChange={handleChange}>
           <option value="">Select your level (optional)</option>
           <option>Beginner</option>
           <option>Elementary</option>
           <option>Intermediate</option>
           <option>Upper-Intermediate</option>
           <option>Advanced</option>
-        </select><br /><br />
+        </select>
 
-        <textarea name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} /><br />
+        <textarea className={styles.textarea} name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} />
 
-        <label>Profile Photo (optional):</label><br />
-        <input type="file" name="profilePhoto" accept="image/*" onChange={handleChange} /><br /><br />
+        <label>Profile Photo (optional):</label>
+        <input className={styles.fileInput} type="file" name="profilePhoto" accept="image/*" onChange={handleChange} />
 
         <p><strong>Your English Learning Goals:</strong> (select at least one)</p>
-        {goalsList.map((goal, i) => (
-          <label key={i}><input type="checkbox" name="goals" value={goal} onChange={handleChange} /> {goal}</label>
-        ))}<br />
-        <label>Other Goal: <input type="text" name="otherGoal" onChange={handleChange} /></label><br /><br />
+        <div className={styles.checkboxGroup}>
+          {goalsList.map((goal, i) => (
+            <label key={i} className={styles.checkboxLabel}>
+              <input type="checkbox" name="goals" value={goal} onChange={handleChange} /> {goal}
+            </label>
+          ))}
+        </div>
+
+        <label>Other Goal:
+          <input className={styles.input} type="text" name="otherGoal" onChange={handleChange} />
+        </label>
 
         <label>
           <input type="checkbox" name="acceptTerms" checked={form.acceptTerms} onChange={handleChange} />
           I agree to the Terms of Use and Privacy Policy
-        </label><br /><br />
+        </label>
 
-        <ReCAPTCHA
-          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-          size="invisible"
-          ref={recaptchaRef}
-        />
+        <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} size="invisible" ref={recaptchaRef} />
 
-        <button type="submit">Register</button>
+        <button type="submit" className={styles.button}>Register</button>
       </form>
 
-      {error && <p style={{ color: 'red' }}>❌ {error}</p>}
-      {success && <p style={{ color: 'green' }}>✅ Registration successful! Please verify your email.</p>}
+      {error && <p className={styles.error}>❌ {error}</p>}
+      {success && <p className={styles.success}>✅ Registration successful! Please verify your email.</p>}
     </div>
   );
 }

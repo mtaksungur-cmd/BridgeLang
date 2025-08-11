@@ -1,0 +1,151 @@
+@use '../styles/_variables' as v; // varsa; yoksa sabit renkleri kullan
+
+.wrap {
+  padding: 40px;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+}
+
+.header {
+  h2 {
+    margin: 0 0 12px;
+  }
+}
+
+.topBadge {
+  background: #e6f7e7;
+  border: 1px solid #c7e9ca;
+  border-radius: 12px;
+  padding: 12px 14px;
+  max-width: 720px;
+
+  &__desc {
+    font-size: 0.9rem;
+    color: #556;
+    margin-top: 4px;
+  }
+}
+
+.profile {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  align-items: start;
+  margin-top: 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__left {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__avatar {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #eee;
+    background: #fff;
+  }
+
+  &__uploadLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    color: #1f3b70;
+
+    input {
+      display: none;
+    }
+  }
+
+  &__right {
+    display: grid;
+    gap: 16px;
+  }
+}
+
+.statGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.stat {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px 14px;
+
+  &__label {
+    font-size: 0.82rem;
+    color: #667085;
+    margin-bottom: 4px;
+  }
+
+  &__value {
+    font-weight: 600;
+    color: #222;
+  }
+}
+
+.btnPrimary {
+  margin-top: 6px;
+  align-self: start;
+  background: #1f3b70; // v.$primary-color;
+  color: #fff;
+  border: 0;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+}
+
+.info { color: #444; }
+.ok   { color: #1a8917; }
+.err  { color: #c0392b; }
+
+.badges {
+  margin-top: 28px;
+
+  &__list {
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+  }
+
+  &__item {
+    background: #fafbff;
+    border: 1px solid #eef0f6;
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: #9aa1b2;
+
+    &--on {
+      color: #1a8917;
+      border-color: #cde9d2;
+      background: #f4fbf5;
+      font-weight: 600;
+    }
+  }
+
+  &__name { margin-right: 6px; }
+  &__sep  { margin: 0 8px; color: #c0c3cc; }
+  &__desc { }
+  &__state { margin-left: 8px; font-style: italic; font-size: .9rem; color: #667085; }
+}

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import StudentLayout from '../../../components/StudentLayout';
+import styles from "../../../scss/TeacherProfile.module.scss";
 
 const badgeDescriptions = {
   '🆕 New Teacher': '🆕 New Teacher – Granted automatically during the first 30 days after registration.',
@@ -16,10 +17,10 @@ export default function TeacherProfilePage() {
   const [reviews, setReviews] = useState([]);
   const [chatsLeft, setChatsLeft] = useState(null);
   const [viewLimit, setViewLimit] = useState(null);
+  const [reviewUsers, setReviewUsers] = useState({});
   const router = useRouter();
   const { id } = router.query;
 
-  // Kalan hakları çek
   const fetchUserLimits = async () => {
     const user = auth.currentUser;
     if (user) {
@@ -31,7 +32,24 @@ export default function TeacherProfilePage() {
     }
   };
 
-  // İlk kez görüntülemede viewLimit'i azalt
+  useEffect(() => {
+    if (reviews.length === 0) return;
+    const fetchReviewUsers = async () => {
+      const userMap = {};
+      for (let r of reviews) {
+        if (r.studentId && !userMap[r.studentId]) {
+          const snap = await getDoc(doc(db, 'users', r.studentId));
+          if (snap.exists()) {
+            userMap[r.studentId] = snap.data();
+          }
+        }
+      }
+      setReviewUsers(userMap);
+    };
+    fetchReviewUsers();
+  }, [reviews]);
+
+  // Görüntüleme hakkını azalt
   useEffect(() => {
     if (!id) return;
     const user = auth.currentUser;
@@ -50,6 +68,7 @@ export default function TeacherProfilePage() {
       });
   }, [id]);
 
+  // Öğretmen bilgisi
   useEffect(() => {
     if (!id) return;
     const fetchTeacher = async () => {
@@ -66,6 +85,7 @@ export default function TeacherProfilePage() {
     fetchUserLimits();
   }, [id]);
 
+  // Yorumlar
   useEffect(() => {
     if (!id) return;
     const fetchReviews = async () => {
@@ -82,7 +102,7 @@ export default function TeacherProfilePage() {
 
   const handleStartChat = async () => {
     if (chatsLeft === 0) {
-      alert("You have no chat rights left for this month. Please upgrade your plan or wait for reset.");
+      alert("You have no chat rights left for this month.");
       return;
     }
     router.push(`/student/chats/${auth.currentUser.uid}_${id}`);
@@ -91,93 +111,133 @@ export default function TeacherProfilePage() {
   if (loading) return <p>Loading...</p>;
   if (!teacher) return <p>Teacher not found.</p>;
 
-  // --- UI ---
   return (
     <StudentLayout>
-      <div style={{ padding: 40 }}>
-        <h2>{teacher.name}</h2>
-        {teacher.profilePhotoUrl && (
-          <img src={teacher.profilePhotoUrl} alt="Profile" width="150" style={{ borderRadius: 10, marginBottom: 20 }} />
-        )}
-        <p><strong>Bio:</strong> {teacher.bio || 'No bio provided.'}</p>
-        <p><strong>Languages Taught:</strong> {teacher.languagesTaught}</p>
-        <p><strong>Languages Spoken:</strong> {teacher.languagesSpoken}</p>
-        <p><strong>Education Level:</strong> {teacher.educationLevel}</p>
-        <p><strong>Experience:</strong> {teacher.experienceYears} years</p>
-        <p><strong>Lesson Pricing:</strong><br />
-          30 min: £{teacher.pricing30}<br />
-          45 min: £{teacher.pricing45}<br />
-          60 min: £{teacher.pricing60}
-        </p>
-        {teacher.avgRating && (
-          <p><strong>Rating:</strong> ⭐ {teacher.avgRating.toFixed(1)} ({teacher.reviewCount || 0} reviews)</p>
-        )}
+      <div className={styles.container}>
+        {/* ÜST PANEL */}
+        <div className={styles.topSection}>
+          {/* Sol panel */}
+          <div className={styles.leftPanel}>
+            {teacher.profilePhotoUrl && (
+              <img src={teacher.profilePhotoUrl} alt="Profile" className={styles.profileImg} />
+            )}
+            <h2 className={styles.name}>{teacher.name}</h2>
+            {teacher.avgRating && (
+              <p className={styles.rating}>
+                ⭐ {teacher.avgRating.toFixed(1)} ({teacher.reviewCount || 0} reviews)
+              </p>
+            )}
+            <div className={styles.badges}>
+              {Array.isArray(teacher.badges) && teacher.badges.length > 0 ? (
+                (() => {
+                  const lastBadge = teacher.badges[teacher.badges.length - 1];
+                  return (
+                    <span className={styles.badge} title={badgeDescriptions[lastBadge]}>
+                      {lastBadge}
+                    </span>
+                  );
+                })()
+              ) : (
+                <span className={styles.noBadge}>No badges yet</span>
+              )}
+            </div>
+          </div>
 
-        <div style={{ marginTop: 20 }}>
-          <h3>🎖 Badges</h3>
-          {Array.isArray(teacher.badges) && teacher.badges.length > 0 ? (
-            <ul>
-              {teacher.badges.map((badge, index) => (
-                <li key={index}>{badgeDescriptions[badge] || badge}</li>
-              ))}
-            </ul>
-          ) : (
-            <p>No badges earned yet.</p>
-          )}
+          {/* orta panel */}
+          <div className={styles.centerPanel}>
+            <p><strong>Bio:</strong> {teacher.bio || 'No bio provided.'}</p>
+            <p><strong>Languages Taught:</strong> {teacher.languagesTaught}</p>
+            <p><strong>Languages Spoken:</strong> {teacher.languagesSpoken}</p>
+            <p><strong>Education Level:</strong> {teacher.educationLevel}</p>
+            <p><strong>Experience:</strong> {teacher.experienceYears} years</p>
+            <div className={styles.pricing}>
+              <strong>Lesson Pricing:</strong>
+              <table>
+                <tbody>
+                  <tr><td>30 min</td><td>£{teacher.pricing30}</td></tr>
+                  <tr><td>45 min</td><td>£{teacher.pricing45}</td></tr>
+                  <tr><td>60 min</td><td>£{teacher.pricing60}</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Sağ panel */}
+          <div className={styles.availabilityPanel}>
+            <h4>Weekly Availability</h4>
+            {teacher.availability && Object.keys(teacher.availability).length > 0 ? (
+              <table className={styles.availabilityTable}>
+                <tbody>
+                  {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(day => {
+                    const slots = teacher.availability[day];
+                    return (
+                      <tr key={day}>
+                        <td className={styles.dayCell}><strong>{day}</strong></td>
+                        <td>
+                          {Array.isArray(slots) && slots.length > 0
+                            ? slots.map(s => `${s.start}–${s.end}`).join(', ')
+                            : 'No availability'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <p>No availability set.</p>
+            )}
+          </div>
         </div>
 
-        <div style={{ marginTop: 30 }}>
-          <h3>Weekly Availability</h3>
-          {teacher.availability && Object.keys(teacher.availability).length > 0 ? (
-            ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
-              const slots = teacher.availability[day];
-              return (
-                <p key={day}>
-                  <strong>{day}:</strong>{' '}
-                  {Array.isArray(slots) && slots.length > 0
-                    ? slots.map((s) => `${s.start}–${s.end}`).join(', ')
-                    : 'No availability'}
-                </p>
-              );
-            })
-          ) : (
-            <p>No availability set.</p>
-          )}
-        </div>
-
-        {/* === BUTONLAR ve KALAN HAKLAR === */}
-        <div style={{ marginTop: 20, marginBottom: 10 }}>
-          <button onClick={handleBookLesson}>Book Lesson</button>
-          <button
-            style={{ marginLeft: 20 }}
-            onClick={handleStartChat}
-            disabled={chatsLeft === null || chatsLeft <= 0}
-          >
-            {chatsLeft === null ? '...' : `Send Message (Remaining: ${chatsLeft})`}
-          </button>
-          {chatsLeft === 0 && (
-            <span style={{ color: 'red', marginLeft: 8 }}>No chat rights left</span>
-          )}
-          {viewLimit !== null && (
-            <span style={{ color: '#555', marginLeft: 30 }}>
-              Teacher profile views left: <b>{viewLimit}</b>
-            </span>
-          )}
-        </div>
-
-        <div style={{ marginTop: 40 }}>
+            <div className={styles.actions}>
+              <button
+                onClick={handleBookLesson}
+                className={styles.btnSecondary}
+              >
+                📅 Book Lesson
+              </button>
+              <button
+                onClick={handleStartChat}
+                disabled={chatsLeft === null || chatsLeft <= 0}
+                className={styles.btnSecondary}
+              >
+                💬 Send Message ({chatsLeft ?? 0} left)
+              </button>
+              {viewLimit !== null && (
+                <span className={styles.viewInfo}>
+                  Views left: <b>{viewLimit}</b>
+                </span>
+              )}
+            </div>
+        {/* YORUMLAR */}
+        <div className={styles.reviews}>
           <h3>Student Reviews</h3>
           {reviews.length === 0 ? (
             <p>No reviews yet.</p>
           ) : (
-            <ul>
-              {reviews.map((r, i) => (
-                <li key={i} style={{ marginBottom: 15 }}>
-                  <strong>⭐ {r.rating}</strong><br />
-                  <span>{r.comment}</span>
-                </li>
-              ))}
-            </ul>
+            <div className={styles.reviewList}>
+              {reviews.map((r, i) => {
+                const student = r.studentId ? reviewUsers[r.studentId] : null;
+                return (
+                  <div key={i} className={styles.reviewCard}>
+                    <div className={styles.reviewHeader}>
+                      {student?.profilePhotoUrl && (
+                        <img
+                          src={student.profilePhotoUrl}
+                          alt={student.name}
+                          className={styles.reviewAvatar}
+                        />
+                      )}
+                      <div>
+                        <strong>{student?.name || 'Anonymous'}</strong>
+                        <div>⭐ {r.rating}</div>
+                      </div>
+                    </div>
+                    <p>{r.comment}</p>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

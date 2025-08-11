@@ -1,0 +1,21 @@
+// styles/globals.scss
+@use './_variables' as v;
+
+@use 'bootstrap' with (
+  $primary:   v.$primary-color, // Lacivert
+  $danger:    v.$accent-color, // Canlı Kırmızı
+  $body-bg:        v.$bg-color, // Krem
+  $body-color:      v.$text-color, // Koyu Gri
+  $link-hover-color:     v.$hover-color, // Açık Mavi
+  $warning:   v.$warning-color
+);
+
+body {
+  background: v.$bg-color;
+  color:      v.$text-color;
+  font-family: system-ui, sans-serif;
+}
+
+.text-accent {
+  color: #D73B3E !important;
+}

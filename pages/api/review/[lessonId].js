@@ -2,6 +2,7 @@ import { db } from '../../../lib/firebase';
 import { doc, getDoc, setDoc, collection, getDocs, query, where, updateDoc } from 'firebase/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import '../../../lib/firebaseAdmin';
+import { isInappropriate } from '../../../lib/messageFilter';
 import { updateBadgesForTeacher } from '../../../lib/badgeUtils';
 
 if (!getApps().length) {
@@ -19,11 +20,14 @@ export default async function handler(req, res) {
 
   const { lessonId } = req.query;
   const { rating, comment } = req.body;
-
+  
   if (!lessonId || !rating || typeof rating !== 'number') {
     return res.status(400).json({ error: 'Invalid input' });
   }
-
+  
+  if (comment && isInappropriate(comment)) {
+    return res.status(400).json({ error: 'Inappropriate comment content' });
+  }
   try {
     // 1. Get lesson
     const bookingSnap = await getDoc(doc(db, 'bookings', lessonId));

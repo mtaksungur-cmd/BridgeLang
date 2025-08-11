@@ -1,0 +1,86 @@
+@use '../styles/variables' as v;
+
+.container {
+  padding: v.$spacer-lg;
+  margin: auto;
+  text-align: center;
+}
+
+.title {
+  font-size: v.$spacer-lg;
+  font-weight: bold;
+  margin-bottom: v.$spacer;
+  color: v.$primary-color;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: v.$spacer-lg;
+}
+
+.planList {
+  display: flex;
+  gap: v.$spacer-lg;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.planCard {
+  border: 1px solid #ccc;
+  border-radius: 14px;
+  background: #fafcff;
+  width: 220px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 1px 8px #eee;
+  transition: all 0.2s ease-in-out;
+
+  &.active {
+    border: 2px solid v.$primary-color;
+    box-shadow: 0 2px 12px #e0eaff;
+  }
+}
+
+.planName {
+  color: v.$primary-color;
+  font-size: 1.25rem;
+  margin-bottom: v.$spacer-sm;
+}
+
+.planPrice {
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin-bottom: v.$spacer-sm;
+}
+
+.planDesc {
+  font-size: 0.875rem;
+  color: #555;
+  margin: v.$spacer-sm 0;
+}
+
+.planFeatures {
+  text-align: left;
+  list-style: disc;
+  padding-left: 1.2rem;
+  margin-bottom: v.$spacer;
+  font-size: 0.875rem;
+}
+
+.selectBtn {
+  margin-top: v.$spacer-sm;
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: v.$accent-color;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}

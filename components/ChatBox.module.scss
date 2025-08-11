@@ -1,0 +1,87 @@
+@use '../styles/variables' as v;
+
+.container {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 5px;
+  max-width: 520px;
+  margin: auto;
+}
+
+.closeBtn {
+  border-radius: 50%;
+  background-color: v.$accent-color;
+  color: #fff;
+}
+
+.messages {
+  border-radius: 10px;
+  min-height: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+  background: #fafcff;
+  padding: 8px;
+}
+
+.noMessages {
+  color: #aaa;
+}
+
+.message {
+  margin: 6px 0;
+  display: flex;
+  word-break: break-word;
+
+  &__bubble {
+    border-radius: 7px;
+    padding: 7px 15px;
+    display: inline-block;
+    max-width: 320px;
+  }
+
+  &--mine {
+    text-align: right;
+    flex-direction: row-reverse;
+
+    .message__bubble {
+      background: #e6f0fd;
+    }
+  }
+
+  &--theirs {
+    text-align: left;
+    flex-direction: row;
+
+    .message__bubble {
+      background: #f2f2f2;
+    }
+  }
+}
+
+.form {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 7px;
+  border: 1px solid #ccc;
+}
+
+.button {
+  border: 0;
+  border-radius: 7px;
+  background: v.$primary-color;
+  color: #fff;
+  font-weight: 600;
+  padding: 0 20px;
+  cursor: pointer;
+}
+
+.error {
+  color: red;
+  margin-top: 8px;
+}

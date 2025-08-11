@@ -1,0 +1,91 @@
+@use '../styles/variables' as v;
+
+.container {
+  padding: v.$spacer-lg;
+}
+
+.lockedMessage {
+  background: #fee;
+  border: 1px solid #f88;
+  color: #a11;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: v.$spacer-lg;
+  text-align: center;
+}
+
+.seePlansBtn {
+  margin-top: v.$spacer-sm;
+  background: v.$primary-color;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 22px;
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: v.$spacer;
+}
+
+.card {
+  border: 1px solid #ccc;
+  padding: 1.2rem;
+  border-radius: 10px;
+  background: white;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.locked {
+  filter: blur(4px) grayscale(0.6);
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.cardContent {
+  text-align: center;
+}
+
+.teacherName {
+  color: v.$primary-color;
+  cursor: pointer;
+}
+
+.profileImg {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-top: v.$spacer-sm;
+  margin-bottom: v.$spacer;
+}
+
+.reportBtn {
+  background-color: v.$accent-color;
+  color: white;
+  border: none;
+  margin-top: v.$spacer-sm;
+  margin-left: v.$spacer-sm;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #a11;
+  font-size: 16px;
+}

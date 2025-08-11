@@ -1,0 +1,73 @@
+.wrap {
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+.lessonCard {
+  border: 0;
+  background: #fff;
+  border-radius: 14px;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e8e8e8;
+}
+
+.avatarPlaceholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #e9ecef;
+  color: #6c757d;
+  font-weight: 600;
+  border: 1px solid #e8e8e8;
+}
+
+.pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pillApproved {
+  background: #eaf7ec;
+  color: #2e7d32;
+  border: 1px solid #cfe8d2;
+}
+
+.pillDefault {
+  background: #f1f3f5;
+  color: #495057;
+  border: 1px solid #e9ecef;
+}
+
+.joinLink {
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px dashed #0d6efd;
+}
+
+.approvedMsg {
+  color: #198754;
+  font-weight: 600;
+}
+
+.confirmBtn {
+  border-radius: 10px;
+}
+
+.reportBtn {
+  background: #ffebe9;
+  color: #d22;
+  border: 1px solid #ffd1cd;
+  border-radius: 10px;
+  font-weight: 600;
+}

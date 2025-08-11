@@ -5,6 +5,7 @@ import Link from 'next/link';
 import StudentLayout from '../../components/StudentLayout';
 import SubscriptionBanner from "../../components/SubscriptionBanner";
 import { useRouter } from 'next/router';
+import styles from "../../scss/TeachersList.module.scss";
 
 export default function TeachersList() {
   const [teachers, setTeachers] = useState([]);
@@ -18,7 +19,41 @@ export default function TeachersList() {
       const data = snap.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(user => user.role === 'teacher' && user.status === 'approved');
-      setTeachers(data);
+
+      // Yorumlar
+      const reviewSnap = await getDocs(collection(db, 'reviews'));
+      const reviewMap = {};
+
+      reviewSnap.docs.forEach(doc => {
+        const d = doc.data();
+        if (!reviewMap[d.teacherId]) reviewMap[d.teacherId] = [];
+        reviewMap[d.teacherId].push(d.rating);
+      });
+
+      const dataWithRatings = data.map(teacher => {
+        const ratings = reviewMap[teacher.id] || [];
+        const avg =
+          ratings.length > 0
+            ? (ratings.reduce((sum, r) => sum + r, 0) / ratings.length).toFixed(1)
+            : null;
+        return {
+          ...teacher,
+          avgRating: avg,
+          reviewCount: ratings.length,
+        };
+      });
+
+      dataWithRatings.sort((a, b) => {
+        // Önce yorum sayısına göre azalan
+        if (b.reviewCount !== a.reviewCount) {
+          return b.reviewCount - a.reviewCount;
+        }
+
+        // Eğer eşitse, ortalama puana göre azalan
+        return (b.avgRating || 0) - (a.avgRating || 0);
+      });
+
+      setTeachers(dataWithRatings);
       setLoading(false);
     };
 
@@ -37,66 +72,51 @@ export default function TeachersList() {
 
   if (loading) return <p>Loading teachers...</p>;
 
-  // Abone değilse (plan yoksa) kartları blurla ve tıklanınca aboneliğe yönlendir
   const isLocked = !activePlan;
 
   return (
     <StudentLayout>
       <SubscriptionBanner />
-      <div style={{ padding: 40 }}>
+      <div className={styles.container}>
         <h2>Browse Our Teachers</h2>
+
         {isLocked && (
-          <div style={{
-            background: "#fee",
-            border: "1px solid #f88",
-            color: "#a11",
-            padding: 16,
-            borderRadius: 8,
-            marginBottom: 30,
-            textAlign: "center"
-          }}>
+          <div className={styles.lockedMessage}>
             <b>You need a subscription to view teachers.</b>
             <br />
             <Link href="/student/subscription">
-              <button style={{
-                marginTop: 10,
-                background: "#1464ff",
-                color: "#fff",
-                border: 0,
-                borderRadius: 8,
-                padding: "8px 22px",
-                cursor: "pointer"
-              }}>See Plans</button>
+              <button className={styles.seePlansBtn}>See Plans</button>
             </Link>
           </div>
         )}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: 22
-        }}>
+
+        <div className={styles.grid}>
           {teachers.map(t => (
             <div
               key={t.id}
-              style={{
-                border: '1px solid #ccc',
-                padding: 20,
-                borderRadius: 10,
-                filter: isLocked ? "blur(4.4px) grayscale(0.6)" : "none",
-                opacity: isLocked ? 0.75 : 1,
-                position: "relative"
-              }}
+              className={`${styles.card} ${isLocked ? styles.locked : ''}`}
               onClick={isLocked ? () => router.push("/student/subscription") : undefined}
             >
-              <div style={{
-                pointerEvents: isLocked ? "none" : "auto"
-              }}>
+              <div className={styles.cardContent} style={{ pointerEvents: isLocked ? "none" : "auto" }}>
                 <Link href={`/student/teachers/${t.id}`}>
-                  <h3 style={{ color: 'blue', cursor: 'pointer' }}>{t.name}</h3>
+                  <h3 className={styles.teacherName}>{t.name}</h3>
                 </Link>
+
+                {/* Rating */}
+                {t.avgRating ? (
+                  <p className={styles.rating}>
+                    ⭐ {t.avgRating} <span className={styles.reviewCount}>({t.reviewCount})</span>
+                  </p>
+                ) : (
+                  <p className={styles.rating}>⭐ No reviews yet</p>
+                )}
+
                 {t.profilePhotoUrl && (
-                  <img src={t.profilePhotoUrl} alt="Profile" width="100"
-                    style={{ borderRadius: '50%', marginTop: 10 }} />
+                  <img
+                    src={t.profilePhotoUrl}
+                    alt="Profile"
+                    className={styles.profileImg}
+                  />
                 )}
                 <p><strong>Languages:</strong> {t.languagesTaught}</p>
                 <p><strong>Experience:</strong> {t.experienceYears} years</p>
@@ -105,16 +125,18 @@ export default function TeachersList() {
                   45 min: £{t.pricing45}<br />
                   60 min: £{t.pricing60}
                 </p>
+                {!isLocked && (
+                  <button
+                    className={styles.reportBtn}
+                    onClick={() => router.push(`/student/report?target=${t.id}`)}
+                  >
+                    🛑 Report
+                  </button>
+                )}
               </div>
               {isLocked && (
-                <div style={{
-                  position: "absolute", left: 0, top: 0, width: "100%", height: "100%",
-                  zIndex: 2, background: "rgba(255,255,255,0.52)",
-                  display: "flex", alignItems: "center", justifyContent: "center"
-                }}>
-                  <span style={{ color: "#a11", fontWeight: 600, fontSize: 16 }}>
-                    Subscription required
-                  </span>
+                <div className={styles.overlay}>
+                  <span>Subscription required</span>
                 </div>
               )}
             </div>

@@ -1,0 +1,169 @@
+.container {
+  padding: 40px;
+}
+
+.title {
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.empty {
+  color: #666;
+  padding: 12px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e9eef5;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(25, 36, 60, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 6px 18px rgba(25, 36, 60, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.studentName {
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.studentLevel {
+  font-size: 12px;
+  color: #8a94a6;
+  margin-top: 2px;
+}
+
+.row {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: #39465e;
+  margin: 6px 0 10px;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 12px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #3b4a66;
+  text-transform: capitalize;
+
+  &--approved {
+    background: #e6f7e7;
+    color: #1e7d25;
+  }
+  &--confirmed {
+    background: #eaf2ff;
+    color: #2759d6;
+  }
+  &--pending-approval {
+    background: #fff6e5;
+    color: #a86a00;
+  }
+  &--teacher_approved,
+  &--student_approved {
+    background: #f1e9ff;
+    color: #6b38b1;
+  }
+}
+
+.link {
+  font-size: 14px;
+  color: #2573ef;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.primaryBtn {
+  background: #1464ff;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #0e53d6;
+  }
+}
+
+.dangerBtn {
+  background: #e03131;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #c12a2a;
+  }
+}
+
+.approved {
+  color: #1a7f27;
+  font-weight: 600;
+}
+
+@media (max-width: 540px) {
+  .row {
+    gap: 12px;
+  }
+  .statusRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}

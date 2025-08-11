@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { db, auth, storage } from '../../lib/firebase';
+import { db, auth } from '../../lib/firebase';
 import { setDoc, doc, Timestamp } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { updateBadgesForTeacher } from '../../lib/badgeUtils';
+import styles from '../../scss/TeacherApply.module.scss';
 
 export default function TeacherApply() {
   const [form, setForm] = useState({
@@ -58,16 +59,13 @@ export default function TeacherApply() {
     }
   };
 
-   const uploadFileViaApi = async (file) => {
+  const uploadFileViaApi = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-    });
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
     const data = await res.json();
     return data.url;
-    };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,31 +75,35 @@ export default function TeacherApply() {
     }
 
     try {
-        const userCred = await createUserWithEmailAndPassword(auth, form.email, form.password);
-        const uid = userCred.user.uid;
-      
-        const profilePhotoUrl = files.profilePhoto ? await uploadFileViaApi(files.profilePhoto) : '';
-        const cvUrl = files.cvFile ? await uploadFileViaApi(files.cvFile) : '';
-        const introVideoUrl = files.introVideo ? await uploadFileViaApi(files.introVideo) : '';
-        
-        const certificationUrls = [];
-        for (let cert of files.certificateFiles) {
-            const url = await uploadFileViaApi(cert);
-            certificationUrls.push(url);
-        }
-      
-        await setDoc(doc(db, 'pendingTeachers', uid), {      
-            ...form, 
-            profilePhotoUrl,      
-            cvUrl,      
-            introVideoUrl,
-            certificationUrls,
-            status: 'pending',
-            createdAt: Timestamp.now()
+      const userCred = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const uid = userCred.user.uid;
+
+      const profilePhotoUrl = files.profilePhoto ? await uploadFileViaApi(files.profilePhoto) : '';
+      const cvUrl = files.cvFile ? await uploadFileViaApi(files.cvFile) : '';
+      const introVideoUrl = files.introVideo ? await uploadFileViaApi(files.introVideo) : '';
+
+      const certificationUrls = [];
+      for (let cert of files.certificateFiles) {
+        const url = await uploadFileViaApi(cert);
+        certificationUrls.push(url);
+      }
+
+      await setDoc(doc(db, 'pendingTeachers', uid), {
+        ...form,
+        profilePhotoUrl,
+        cvUrl,
+        introVideoUrl,
+        certificationUrls,
+        status: 'pending',
+        createdAt: Timestamp.now()
       });
-      await updateBadgesForTeacher(newTeacherId);
+
+      // Not: mevcut işlevselliği bozmayayım diye bıraktım
+      // await updateBadgesForTeacher(newTeacherId);
+
       setSuccess('✅ Your application has been submitted. You will be contacted within 3–5 business days.');
-      setForm({});
+      // form resetlemek istersen:
+      // setForm({...form, name:'', ...});
     } catch (err) {
       alert('❌ Failed to submit application');
       console.error(err);
@@ -109,56 +111,104 @@ export default function TeacherApply() {
   };
 
   return (
-    <div style={{ padding: 40, maxWidth: 600, margin: 'auto' }}>
-      <h2>Apply to Teach with BridgeLang</h2>
-      <p>Join our UK-based platform to teach online or in person. Fill in the form below.</p>
-      <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required /><br />
-        <input name="email" type="email" placeholder="Email Address" value={form.email} onChange={handleChange} required /><br />
-        <input name="password" type="password" placeholder="Password (required for login after approval)" value={form.password} onChange={handleChange} required/><br/>
-        <input name="homeAddress" placeholder="Home Address" value={form.homeAddress} onChange={handleChange} required /><br />
-        <input name="city" placeholder="City" value={form.city} onChange={handleChange} required /><br />
-        <input name="postcode" placeholder="Postcode" value={form.postcode} onChange={handleChange} required /><br />
-        <input name="timezone" placeholder="Timezone (e.g. GMT+1)" value={form.timezone} onChange={handleChange} required /><br />
-        <input name="languagesTaught" placeholder="Languages You Teach" value={form.languagesTaught} onChange={handleChange} required /><br />
-        <input name="languagesSpoken" placeholder="Languages You Speak Fluently" value={form.languagesSpoken} onChange={handleChange} required /><br />
-        <input name="experienceYears" placeholder="Years of Teaching Experience" value={form.experienceYears} onChange={handleChange} required /><br />
-        <input name="educationLevel" placeholder="Highest Education Level" value={form.educationLevel} onChange={handleChange} required /><br />
-        <input name="lessonTypes" placeholder="Lesson Types (comma-separated)" value={form.lessonTypes} onChange={handleChange} required /><br />
-        <input name="studentAges" placeholder="Student Age Groups" value={form.studentAges} onChange={handleChange} required /><br />
-        <input name="availability" placeholder="Available Days and Times" value={form.availability} onChange={handleChange} required /><br />
-        <input name="pricing30" placeholder="Price for 30 minutes (£)" value={form.pricing30} onChange={handleChange} required /><br />
-        <input name="pricing45" placeholder="Price for 45 minutes (£)" value={form.pricing45} onChange={handleChange} required /><br />
-        <input name="pricing60" placeholder="Price for 60 minutes (£)" value={form.pricing60} onChange={handleChange} required /><br />
-        <input name="platformExperience" placeholder="Platform Experience (e.g., Zoom, Skype)" value={form.platformExperience} onChange={handleChange} /><br />
-        <input name="deliveryMethod" placeholder="Delivery Method" value={form.deliveryMethod} onChange={handleChange} required /><br />
-        <label><input type="checkbox" name="willingToTravel" checked={form.willingToTravel} onChange={handleChange} /> Willing to travel for lessons</label><br />
-        <textarea name="bio" placeholder="Short Bio (max 300 words)" value={form.bio} onChange={handleChange} maxLength={300} /><br />
-        
-        <label>Profile Photo:</label><br />
-        <input type="file" name="profilePhoto" accept="image/*" onChange={handleChange} required/><br />
+    <div className={styles.container}>
+      <h2 className={styles.title}>Apply to Teach with BridgeLang</h2>
+      <p className={styles.lead}>
+        Join our UK-based platform to teach online or in person. Fill in the form below.
+      </p>
 
-        <label>CV (PDF):</label><br />
-        <input type="file" name="cvFile" accept=".pdf" onChange={handleChange} required/><br />
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.grid2}>
+          <input className={styles.input} name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required />
+          <input className={styles.input} name="email" type="email" placeholder="Email Address" value={form.email} onChange={handleChange} required />
+          <input className={styles.input} name="password" type="password" placeholder="Password (required for login after approval)" value={form.password} onChange={handleChange} required />
+          <input className={styles.input} name="timezone" placeholder="Timezone (e.g. GMT+1)" value={form.timezone} onChange={handleChange} required />
+          <input className={styles.input} name="homeAddress" placeholder="Home Address" value={form.homeAddress} onChange={handleChange} required />
+          <input className={styles.input} name="city" placeholder="City" value={form.city} onChange={handleChange} required />
+          <input className={styles.input} name="postcode" placeholder="Postcode" value={form.postcode} onChange={handleChange} required />
+          <input className={styles.input} name="platformExperience" placeholder="Platform Experience (e.g., Zoom, Skype)" value={form.platformExperience} onChange={handleChange} />
+        </div>
 
-        <label>Certificates (PDF, JPG, PNG):</label><br />
-        <input type="file" name="certificateFiles" accept=".pdf,image/*" multiple onChange={handleChange} /><br />
+        <h4 className={styles.sectionTitle}>Languages & Experience</h4>
+        <div className={styles.grid2}>
+          <input className={styles.input} name="languagesTaught" placeholder="Languages You Teach" value={form.languagesTaught} onChange={handleChange} required />
+          <input className={styles.input} name="languagesSpoken" placeholder="Languages You Speak Fluently" value={form.languagesSpoken} onChange={handleChange} required />
+          <input className={styles.input} name="experienceYears" placeholder="Years of Teaching Experience" value={form.experienceYears} onChange={handleChange} required />
+          <input className={styles.input} name="educationLevel" placeholder="Highest Education Level" value={form.educationLevel} onChange={handleChange} required />
+          <input className={styles.input} name="lessonTypes" placeholder="Lesson Types (comma-separated)" value={form.lessonTypes} onChange={handleChange} required />
+          <input className={styles.input} name="studentAges" placeholder="Student Age Groups" value={form.studentAges} onChange={handleChange} required />
+          <input className={styles.input} name="availability" placeholder="Available Days and Times" value={form.availability} onChange={handleChange} required />
+          <input className={styles.input} name="deliveryMethod" placeholder="Delivery Method" value={form.deliveryMethod} onChange={handleChange} required />
+        </div>
 
-        <label>Intro Video (MP4):</label><br />
-        <input type="file" name="introVideo" accept="video/mp4" onChange={handleChange} /><br />
+        <h4 className={styles.sectionTitle}>Pricing</h4>
+        <div className={styles.grid3}>
+          <input className={styles.input} name="pricing30" placeholder="Price for 30 minutes (£)" value={form.pricing30} onChange={handleChange} required />
+          <input className={styles.input} name="pricing45" placeholder="Price for 45 minutes (£)" value={form.pricing45} onChange={handleChange} required />
+          <input className={styles.input} name="pricing60" placeholder="Price for 60 minutes (£)" value={form.pricing60} onChange={handleChange} required />
+        </div>
 
-        <label><input type="checkbox" name="confirmInfo" checked={form.confirmInfo} onChange={handleChange} required/> I confirm that all the information is accurate.</label><br />
-        <label><input type="checkbox" name="agreeTerms" checked={form.agreeTerms} onChange={handleChange} required/> I agree to BridgeLang's Teacher Terms.</label><br />
-        <label><input type="checkbox" name="acceptResponsibility" checked={form.acceptResponsibility} onChange={handleChange} required/> I understand I'm responsible for my schedule and rates.</label><br />
-        <label><input type="checkbox" name="cancellationAware" checked={form.cancellationAware} onChange={handleChange} required/> I acknowledge the 24-hour cancellation policy.</label><br />
-        <label><input type="checkbox" name="acceptPrivacy" checked={form.acceptPrivacy} onChange={handleChange} required/> I accept the Privacy Policy & GDPR Terms.</label><br /><br />
+        <h4 className={styles.sectionTitle}>Bio</h4>
+        <textarea className={styles.textarea} name="bio" placeholder="Short Bio (max 300 words)" value={form.bio} onChange={handleChange} maxLength={300} />
 
-        <button type="submit">Submit Application</button>
+        <h4 className={styles.sectionTitle}>Uploads</h4>
+        <div className={styles.files}>
+          <label className={styles.fileLabel}>
+            <span>Profile Photo</span>
+            <input className={styles.fileInput} type="file" name="profilePhoto" accept="image/*" onChange={handleChange} required />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>CV (PDF)</span>
+            <input className={styles.fileInput} type="file" name="cvFile" accept=".pdf" onChange={handleChange} required />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>Certificates (PDF, JPG, PNG)</span>
+            <input className={styles.fileInput} type="file" name="certificateFiles" accept=".pdf,image/*" multiple onChange={handleChange} />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>Intro Video (MP4)</span>
+            <input className={styles.fileInput} type="file" name="introVideo" accept="video/mp4" onChange={handleChange} />
+          </label>
+        </div>
+
+        <h4 className={styles.sectionTitle}>Confirmations</h4>
+        <div className={styles.checks}>
+          <label className={styles.checkItem}>
+            <input type="checkbox" name="willingToTravel" checked={form.willingToTravel} onChange={handleChange} />
+            <span>Willing to travel for lessons</span>
+          </label>
+          <label className={styles.checkItem}>
+            <input type="checkbox" name="confirmInfo" checked={form.confirmInfo} onChange={handleChange} required />
+            <span>I confirm that all the information is accurate.</span>
+          </label>
+          <label className={styles.checkItem}>
+            <input type="checkbox" name="agreeTerms" checked={form.agreeTerms} onChange={handleChange} required />
+            <span>I agree to BridgeLang's Teacher Terms.</span>
+          </label>
+          <label className={styles.checkItem}>
+            <input type="checkbox" name="acceptResponsibility" checked={form.acceptResponsibility} onChange={handleChange} required />
+            <span>I understand I'm responsible for my schedule and rates.</span>
+          </label>
+          <label className={styles.checkItem}>
+            <input type="checkbox" name="cancellationAware" checked={form.cancellationAware} onChange={handleChange} required />
+            <span>I acknowledge the 24-hour cancellation policy.</span>
+          </label>
+          <label className={styles.checkItem}>
+            <input type="checkbox" name="acceptPrivacy" checked={form.acceptPrivacy} onChange={handleChange} required />
+            <span>I accept the Privacy Policy & GDPR Terms.</span>
+          </label>
+        </div>
+
+        <button type="submit" className={styles.submitBtn}>Submit Application</button>
       </form>
+
       {success && (
-        <div style={{ marginTop: 20 }}>
-          <p style={{ color: 'green' }}>{success}</p>
-          <p style={{ fontStyle: 'italic' }}>
+        <div className={styles.successBox}>
+          <p className={styles.successText}>{success}</p>
+          <p className={styles.successHint}>
             Once your application is submitted, our team will review your details and get back to you within 3–5 business days. If approved, you'll receive a link to create your public teacher profile and get started on the platform!
           </p>
         </div>

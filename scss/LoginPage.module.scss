@@ -1,0 +1,81 @@
+.page {
+  min-height: calc(100vh - 64px); // navbar yüksekliğini kabaca düş
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  background: #f6f8fb;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #e9eef5;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow:
+    0 10px 20px rgba(28, 37, 44, 0.04),
+    0 2px 6px rgba(28, 37, 44, 0.06);
+}
+
+.title {
+  margin: 0 0 18px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.label {
+  display: grid;
+  gap: 6px;
+
+  span {
+    font-size: 13px;
+    color: #475569;
+  }
+}
+
+.input {
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+}
+
+.submit {
+  margin-top: 6px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.03s ease;
+
+  &:hover { filter: brightness(1.05); }
+  &:active { transform: translateY(1px); }
+}
+
+.error {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #dc2626;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  padding: 8px 10px;
+  border-radius: 8px;
+}

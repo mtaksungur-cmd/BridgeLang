@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import StudentLayout from '../../components/StudentLayout';
+import styles from '../../scss/StudentCredits.module.scss';
+
+const UNIT_PRICE = 15; // £
 
 export default function StudentCredits() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [buyCount, setBuyCount] = useState(1); // Satın alınacak kredi sayısı
+  const [buyCount, setBuyCount] = useState(1);
   const [msg, setMsg] = useState('');
   const [checkoutUrl, setCheckoutUrl] = useState('');
 
@@ -38,51 +41,63 @@ export default function StudentCredits() {
       if (data.url) {
         setMsg('');
         setCheckoutUrl(data.url);
-        window.location.href = data.url; // Direkt Stripe Checkout'a yönlendir
+        window.location.href = data.url;
       } else {
         setMsg(data.error || 'Payment initiation failed');
       }
-    } catch (err) {
+    } catch {
       setMsg('Payment initiation failed.');
     }
   };
 
-  if (loading) return <StudentLayout><p>Loading...</p></StudentLayout>;
-  if (!user) return <StudentLayout><p>User not found.</p></StudentLayout>;
+  if (loading) return <StudentLayout><p className={styles.loading}>Loading...</p></StudentLayout>;
+  if (!user)   return <StudentLayout><p className={styles.loading}>User not found.</p></StudentLayout>;
 
   return (
     <StudentLayout>
-      <div style={{ maxWidth: 450, margin: '40px auto', padding: 30, border: "1px solid #eee", borderRadius: 16, background: "#fafcff" }}>
-        <h2>🎫 Lesson Credits</h2>
-        <p><strong>Current Plan:</strong> {user.subscriptionPlan ? user.subscriptionPlan.toUpperCase() : 'None'}</p>
-        <p><strong>Remaining Credits:</strong> <span style={{ fontSize: 26 }}>{user.credits || 0}</span></p>
+      <div className={styles.container}>
+        <h2 className={styles.title}>🎫 Lesson Credits</h2>
 
-        <div style={{ marginTop: 30 }}>
-          <h4>Buy Extra Credits</h4>
-          <div>
+        <p className={styles.plan}>
+          <strong>Current Plan:</strong> {user.subscriptionPlan ? user.subscriptionPlan.toUpperCase() : 'None'}
+        </p>
+
+        <p className={styles.remaining}>
+          <strong>Remaining Credits:</strong> <span className={styles.remainingCount}>{user.credits || 0}</span>
+        </p>
+
+        <div className={styles.buySection}>
+          <h4 className={styles.subtitle}>Buy Extra Credits</h4>
+
+          <div className={styles.qtyRow}>
             <input
               type="number"
               min="1"
               value={buyCount}
-              onChange={e => setBuyCount(Number(e.target.value))}
-              style={{ width: 60, marginRight: 8 }}
+              onChange={e => setBuyCount(Math.max(1, Number(e.target.value)))}
+              className={styles.qtyInput}
             />
-            <span> x £15 = <strong>£{buyCount * 15}</strong></span>
+            <span className={styles.total}>
+              × £{UNIT_PRICE} = <strong>£{buyCount * UNIT_PRICE}</strong>
+            </span>
           </div>
-          <button onClick={handleBuyCredits} style={{ marginTop: 12 }}>
+
+          <button onClick={handleBuyCredits} className={styles.buyBtn}>
             Purchase Credits
           </button>
-          {msg && <p style={{ color: 'red', marginTop: 8 }}>{msg}</p>}
+
+          {msg && <p className={styles.msg}>{msg}</p>}
         </div>
 
-        {/* Satın alma geçmişi: İsteğe bağlı, bonus ve kredi geçmişini ekleyebilirsin */}
-        {/* <div style={{ marginTop: 30 }}>
-          <h4>Credit Purchase History</h4>
-          <ul>
+        {/* 
+        <div className={styles.history}>
+          <h4 className={styles.subtitle}>Credit Purchase History</h4>
+          <ul className={styles.historyList}>
             <li>01.07.2025 – +3 credits (subscription)</li>
             <li>15.07.2025 – +1 credit (purchase)</li>
           </ul>
-        </div> */}
+        </div>
+        */}
       </div>
     </StudentLayout>
   );

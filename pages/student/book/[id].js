@@ -4,6 +4,7 @@ import { db, auth } from '../../../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import StudentLayout from '../../../components/StudentLayout';
+import styles from '../../../scss/BookLesson.module.scss';
 
 export default function BookLessonPage() {
   const router = useRouter();
@@ -19,21 +20,19 @@ export default function BookLessonPage() {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [msg, setMsg] = useState('');
 
-  // Öğrenci bilgisi ve kredileri çek
+  // Öğrenci + kredi
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setStudentId(user.uid);
-        // Öğrencinin mevcut kredisi
         const sSnap = await getDoc(doc(db, 'users', user.uid));
-        if (sSnap.exists()) {
-          setStudentCredits(sSnap.data().credits);
-        }
+        if (sSnap.exists()) setStudentCredits(sSnap.data().credits);
       }
     });
     return () => unsubscribe();
   }, []);
 
+  // Öğretmen
   useEffect(() => {
     if (!teacherId) return;
     const fetchTeacher = async () => {
@@ -43,6 +42,7 @@ export default function BookLessonPage() {
     fetchTeacher();
   }, [teacherId]);
 
+  // Seçili tarihteki rezervasyonlar
   useEffect(() => {
     if (!teacherId || !selectedDate) return;
     const fetchBookings = async () => {
@@ -118,6 +118,7 @@ export default function BookLessonPage() {
   };
 
   const handleBooking = async (slot) => {
+    setMsg('');
     if (!location) {
       setMsg('❌ Please select a lesson location.');
       return;
@@ -128,7 +129,7 @@ export default function BookLessonPage() {
     }
 
     try {
-      // Rezervasyon başlamadan kredi eksilt
+      // Kredi düş
       const dec = await fetch('/api/decrement', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -163,7 +164,6 @@ export default function BookLessonPage() {
         })
       });
       const data = await res.json();
-      console.log('Stripe response:', data);
 
       if (data.url) {
         window.location.href = data.url;
@@ -178,58 +178,86 @@ export default function BookLessonPage() {
 
   return (
     <StudentLayout>
-    <div style={{ padding: 40 }}>
-      <h2>Book a Lesson</h2>
-      {teacher && <p>Teacher: <strong>{teacher.name}</strong></p>}
+      <div className={styles.container}>
+        <h2 className={styles.title}>Book a Lesson</h2>
+        {teacher && <p className={styles.teacher}><span>Teacher:</span> <strong>{teacher.name}</strong></p>}
 
-      <label>Date: <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} /></label><br /><br />
+        <div className={styles.row}>
+          <label className={styles.label}>
+            Date
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
+              className={styles.input}
+            />
+          </label>
 
-      <label>Lesson Duration: </label>
-      <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-        <option value={30}>30 minutes</option>
-        <option value={45}>45 minutes</option>
-        <option value={60}>60 minutes</option>
-      </select><br /><br />
+          <label className={styles.label}>
+            Lesson Duration
+            <select
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              className={styles.select}
+            >
+              <option value={30}>30 minutes</option>
+              <option value={45}>45 minutes</option>
+              <option value={60}>60 minutes</option>
+            </select>
+          </label>
 
-      <label>Location: </label>
-      <select value={location} onChange={(e) => setLocation(e.target.value)} required>
-        <option value="">-- Select --</option>
-        <option value="Online">Online</option>
-        <option value="Teacher's Home">Teacher's Home</option>
-        <option value="Student's Home">Student's Home</option>
-        <option value="Other">Other</option>
-      </select><br /><br />
+          <label className={styles.label}>
+            Location
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              required
+              className={styles.select}
+            >
+              <option value="">-- Select --</option>
+              <option value="Online">Online</option>
+              <option value="Teacher's Home">Teacher's Home</option>
+              <option value="Student's Home">Student's Home</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+        </div>
 
-      <h3>Available Time Slots</h3>
-      {availableSlots.length === 0 ? (
-        <p>No available time slots for selected day.</p>
-      ) : (
-        availableSlots.map((slot, i) => (
-          <button
-            key={i}
-            onClick={() => handleBooking(slot)}
-            disabled={
-              !teacher ||
-              !studentId ||
-              !duration ||
-              !location ||
-              !teacher[`pricing${duration}`] ||
-              !auth.currentUser ||
-              studentCredits !== null && studentCredits <= 0
-            }
-            style={{ margin: 5 }}
-          >
-            {slot.start} – {slot.end}
-          </button>
-        ))
-      )}
+        <h3 className={styles.subtitle}>Available Time Slots</h3>
+        {availableSlots.length === 0 ? (
+          <p className={styles.empty}>No available time slots for selected day.</p>
+        ) : (
+          <div className={styles.slots}>
+            {availableSlots.map((slot, i) => {
+              const disabled =
+                !teacher ||
+                !studentId ||
+                !duration ||
+                !location ||
+                !teacher[`pricing${duration}`] ||
+                !auth.currentUser ||
+                (studentCredits !== null && studentCredits <= 0);
 
-      <p style={{ marginTop: 16 }}>
-        <strong>Lesson Credits Left: {studentCredits !== null ? studentCredits : '-'}</strong>
-      </p>
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleBooking(slot)}
+                  disabled={disabled}
+                  className={`${styles.slotBtn} ${disabled ? styles.slotBtnDisabled : ''}`}
+                >
+                  {slot.start} – {slot.end}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-      {msg && <p style={{ marginTop: 20, color: 'green' }}>{msg}</p>}
-    </div>
+        <p className={styles.credits}>
+          <strong>Lesson Credits Left: {studentCredits !== null ? studentCredits : '-'}</strong>
+        </p>
+
+        {msg && <p className={styles.msg}>{msg}</p>}
+      </div>
     </StudentLayout>
   );
 }

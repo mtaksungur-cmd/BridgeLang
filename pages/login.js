@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '../lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import styles from '../scss/LoginPage.module.scss';
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -16,39 +17,60 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
-      const user = userCredential.user;
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
+      const { user } = await signInWithEmailAndPassword(auth, form.email, form.password);
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (!snap.exists()) return setError('Kullanıcı Firestore’da bulunamadı.');
 
-      if (userSnap.exists()) {
-        const role = userSnap.data().role;
-        if (role === 'teacher') {
-          router.push('/teacher/dashboard');
-        } else if (role === 'student') {
-          router.push('/student/dashboard');
-        } else {
-          setError('Tanımsız kullanıcı rolü.');
-        }
-      } else {
-        setError('Kullanıcı Firestore’da bulunamadı.');
-      }
+      const role = snap.data().role;
+      if (role === 'teacher') router.push('/teacher/dashboard');
+      else if (role === 'student') router.push('/student/dashboard');
+      else setError('Tanımsız kullanıcı rolü.');
     } catch (err) {
       setError('Email veya şifre hatalı.');
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: 'auto', paddingTop: 50 }}>
-      <h2>Giriş Yap</h2>
-      <form onSubmit={handleLogin}>
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required /><br />
-        <input name="password" type="password" placeholder="Şifre" value={form.password} onChange={handleChange} required /><br /><br />
-        <button type="submit">Giriş Yap</button>
-      </form>
-      {error && <p style={{ color: 'red' }}>❌ {error}</p>}
-    </div>
+    <>
+      {/* Navbar burada görünür */}
+      <main className={styles.page}>
+        <section className={styles.card}>
+          <h1 className={styles.title}>Login</h1>
+
+          <form onSubmit={handleLogin} className={styles.form}>
+            <label className={styles.label}>
+              <span>Email</span>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                className={styles.input}
+                placeholder="example@mail.com"
+              />
+            </label>
+
+            <label className={styles.label}>
+              <span>Şifre</span>
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                className={styles.input}
+                placeholder="••••••••"
+              />
+            </label>
+
+            {error && <p className={styles.error}>❌ {error}</p>}
+
+            <button type="submit" className={`bg-danger ${styles.submit}`}>Login</button>
+          </form>
+        </section>
+      </main>
+    </>
   );
 }
