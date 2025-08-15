@@ -1,22 +1,16 @@
-import React, { useEffect } from 'react';
+// pages/_app.js
 import '../styles/globals.scss';
-import { useRouter } from 'next/router';
-import DefaultNavbar from '../components/DefaultNavbar';
+import { useEffect } from 'react';
+import NavbarSwitcher from '../components/NavbarSwitcher';
 
 export default function MyApp({ Component, pageProps }) {
-  const router = useRouter();
-
   useEffect(() => {
     import('bootstrap/dist/js/bootstrap.bundle.min.js');
   }, []);
 
-  // Auth alanları: kendi layout'ları navbar'ı getiriyor (student/teacher)
-  const isAuthArea =
-    router.pathname.startsWith('/student') || router.pathname.startsWith('/teacher');
-
   return (
     <>
-      {!isAuthArea && <DefaultNavbar />}
+      <NavbarSwitcher />
       <Component {...pageProps} />
     </>
   );

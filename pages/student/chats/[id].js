@@ -48,7 +48,6 @@ export default function StudentChatPage() {
   // Sadece student mesaj başlatabilir, teacher mesaj yazamaz (kısıtlamayı backend'de yapmaya gerek yok, UI ile çözülür)
 
   return (
-    <StudentLayout>
       <div style={{ maxWidth: 600, margin: "auto", paddingTop: 40 }}>
         <h2>Chat with Teacher</h2>
         <ChatBox
@@ -58,6 +57,5 @@ export default function StudentChatPage() {
           onFirstMessage={handleFirstMessage}
         />
       </div>
-    </StudentLayout>
   );
 }

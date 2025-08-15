@@ -36,10 +36,14 @@ export default function TeachersList() {
           ratings.length > 0
             ? (ratings.reduce((sum, r) => sum + r, 0) / ratings.length).toFixed(1)
             : null;
+        const badges = teacher.badges || [];
+        const latestBadge = badges.length > 0 ? badges[badges.length - 1] : null;
+
         return {
           ...teacher,
           avgRating: avg,
           reviewCount: ratings.length,
+          latestBadge
         };
       });
 
@@ -75,7 +79,7 @@ export default function TeachersList() {
   const isLocked = !activePlan;
 
   return (
-    <StudentLayout>
+      <div>
       <SubscriptionBanner />
       <div className={styles.container}>
         <h2>Browse Our Teachers</h2>
@@ -111,6 +115,12 @@ export default function TeachersList() {
                   <p className={styles.rating}>⭐ No reviews yet</p>
                 )}
 
+                {t.latestBadge && (
+                  <p className={styles.badge}>
+                    {t.latestBadge}
+                  </p>
+                )}
+
                 {t.profilePhotoUrl && (
                   <img
                     src={t.profilePhotoUrl}
@@ -143,6 +153,6 @@ export default function TeachersList() {
           ))}
         </div>
       </div>
-    </StudentLayout>
+      </div>
   );
 }

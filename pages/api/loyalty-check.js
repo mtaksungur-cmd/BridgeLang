@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   const data = userSnap.data();
 
   if (!['pro', 'vip'].includes(data.subscriptionPlan)) {
-    return res.status(200).json({ loyaltyBonus: false });
+    return res.status(200).json({ loyaltyBonus: false, discountEligible: false });
   }
 
   let { loyaltyBonusCount = 0, discountGivenCount = 0, subscriptionStartedAt } = data;
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   }
 
   // VIP için 6 ayda bir indirim
-  let discountEligible = false;
+  let discountEligible = !!data.discountEligible;
   if (data.subscriptionPlan === 'vip') {
     const newDiscountCount = Math.floor(months / 6);
     if (newDiscountCount > (discountGivenCount || 0)) {
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     }
   }
 
-  updateObj.loyaltyMonths = months;
+  // updateObj.loyaltyMonths = months;
 
   if (Object.keys(updateObj).length > 0) {
     await userRef.update(updateObj);

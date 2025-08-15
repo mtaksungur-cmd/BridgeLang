@@ -67,7 +67,6 @@ export default function CalendarPage() {
   const ampm = ['AM','PM'];
 
   return (
-    <TeacherLayout>
       <div className={styles.wrap}>
         <h2 className={styles.title}>Weekly Lesson Availability</h2>
         <p className={styles.subtitle}>
@@ -169,6 +168,5 @@ export default function CalendarPage() {
           {msg && <span className={msg.startsWith('✅') ? styles.msgOk : styles.msgErr}>{msg}</span>}
         </div>
       </div>
-    </TeacherLayout>
   );
 }

@@ -98,7 +98,6 @@ export default function SubscriptionPage() {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <StudentLayout>
       <div className={styles.container}>
         <h2 className={styles.title}>Choose Your Subscription Plan</h2>
         <p className={styles.subtitle}>
@@ -129,6 +128,5 @@ export default function SubscriptionPage() {
           ))}
         </div>
       </div>
-    </StudentLayout>
   );
 }

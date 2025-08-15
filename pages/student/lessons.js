@@ -88,7 +88,7 @@ export default function StudentLessons() {
   }
 
   return (
-    <StudentLayout>
+    <div>
       <SubscriptionBanner />
       {user && user.subscriptionPlan !== 'starter' && (
         <LoyaltyBadge
@@ -180,6 +180,6 @@ export default function StudentLessons() {
           })}
         </div>
       </div>
-    </StudentLayout>
+    </div>
   );
 }

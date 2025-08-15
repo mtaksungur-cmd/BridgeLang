@@ -3,7 +3,6 @@ import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { onAuthStateChanged } from 'firebase/auth';
-import StudentLayout from '../../components/StudentLayout';
 import SubscriptionBanner from '../../components/SubscriptionBanner';
 import LoyaltyBadge from '../../components/LoyaltyBadge';
 import styles from '../../scss/StudentDashboard.module.scss';
@@ -114,7 +113,7 @@ export default function StudentDashboard() {
   });
 
   return (
-    <StudentLayout>
+    <div>
     <SubscriptionBanner />         
     {data && data.subscriptionPlan !== 'starter' && (
       <LoyaltyBadge
@@ -208,6 +207,6 @@ export default function StudentDashboard() {
         </div>
       </div>
     </div>
-    </StudentLayout>
+    </div>
   );
 }

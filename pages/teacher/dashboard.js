@@ -141,7 +141,6 @@ export default function TeacherDashboard() {
   }));
 
   return (
-    <TeacherLayout>
       <div className={styles.wrap}>
         <header className={styles.header}>
           <h2>👨‍🏫 Teacher Dashboard</h2>
@@ -230,6 +229,5 @@ export default function TeacherDashboard() {
           </ul>
         </section>
       </div>
-    </TeacherLayout>
   );
 }

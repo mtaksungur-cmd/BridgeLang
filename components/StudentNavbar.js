@@ -1,4 +1,3 @@
-// components/StudentNavbar.js
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';

@@ -79,7 +79,7 @@ export default function ReviewLesson() {
   if (!lesson || !teacher) return <p>Loading...</p>;
 
   return (
-    <StudentLayout>
+    <div>
       <div className={styles.container}>
         <h2 className={styles.title}>Leave a Review for Your Lesson</h2>
 
@@ -131,6 +131,6 @@ export default function ReviewLesson() {
           {submitting ? 'Submitting...' : 'Submit Review'}
         </button>
       </div>
-    </StudentLayout>
+    </div>
   );
 }

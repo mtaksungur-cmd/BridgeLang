@@ -91,20 +91,16 @@ export default function TeacherChats() {
 
   if (loading) {
     return (
-      <TeacherLayout>
         <div className={styles.container}><p>Loading chats...</p></div>
-      </TeacherLayout>
     );
   }
 
   if (chats.length === 0) {
     return (
-      <TeacherLayout>
         <div className={styles.container}>
           <h2 className={styles.header}>Your Chats</h2>
           <p>No conversations yet.</p>
         </div>
-      </TeacherLayout>
     );
   }
 
@@ -117,7 +113,6 @@ export default function TeacherChats() {
     };
 
   return (
-    <TeacherLayout>
       <div className={styles.container}>
         <h2 className={styles.header}>Your Chats</h2>
         <ul className={styles.list}>
@@ -167,6 +162,5 @@ export default function TeacherChats() {
           })}
         </ul>
       </div>
-    </TeacherLayout>
   );
 }

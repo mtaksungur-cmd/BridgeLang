@@ -96,7 +96,6 @@ export default function TeacherLessons() {
   };
 
   return (
-    <TeacherLayout>
       <div className={styles.container}>
         <h2 className={styles.title}>📩 Your Lessons</h2>
 
@@ -174,6 +173,5 @@ export default function TeacherLessons() {
           </div>
         )}
       </div>
-    </TeacherLayout>
   );
 }

@@ -21,7 +21,6 @@ export default function TeacherChatPage() {
   if (!user) return null;
 
   return (
-    <TeacherLayout>
       <div style={{ maxWidth: 600, margin: "auto", paddingTop: 40 }}>
         <h2>Chat with Student</h2>
         <ChatBox
@@ -31,6 +30,5 @@ export default function TeacherChatPage() {
           // onFirstMessage yok, teacher ilk mesaj atamaz
         />
       </div>
-    </TeacherLayout>
   );
 }

@@ -47,7 +47,7 @@ export default function StudentReport() {
   };
 
   return (
-    <StudentLayout>
+    <div>
       <div className={styles.container}>
         <h2 className={styles.title}>Submit a Complaint</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -78,6 +78,6 @@ export default function StudentReport() {
 
         {success && <p className={styles.successMsg}>✅ Complaint submitted successfully.</p>}
       </div>
-    </StudentLayout>
+    </div>
   );
 }

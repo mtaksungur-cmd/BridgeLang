@@ -40,7 +40,6 @@ export default function TeacherReport() {
   };
 
   return (
-    <TeacherLayout>
       <div className={styles.container}>
         <h2 className={styles.title}>Submit a Complaint</h2>
 
@@ -84,6 +83,5 @@ export default function TeacherReport() {
           <p className={styles.success}>✅ Complaint submitted successfully.</p>
         )}
       </div>
-    </TeacherLayout>
   );
 }

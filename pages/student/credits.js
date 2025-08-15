@@ -50,11 +50,11 @@ export default function StudentCredits() {
     }
   };
 
-  if (loading) return <StudentLayout><p className={styles.loading}>Loading...</p></StudentLayout>;
-  if (!user)   return <StudentLayout><p className={styles.loading}>User not found.</p></StudentLayout>;
+  if (loading) return <div><p className={styles.loading}>Loading...</p></div>;
+  if (!user)   return <div><p className={styles.loading}>User not found.</p></div>;
 
   return (
-    <StudentLayout>
+    <div>
       <div className={styles.container}>
         <h2 className={styles.title}>🎫 Lesson Credits</h2>
 
@@ -99,6 +99,6 @@ export default function StudentCredits() {
         </div>
         */}
       </div>
-    </StudentLayout>
+    </div>
   );
 }

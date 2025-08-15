@@ -80,28 +80,45 @@ export default function BookLessonPage() {
   };
 
   const generateSlots = () => {
-    if (!teacher || !selectedDate) return [];
-    const day = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
-    const daySlots = teacher.availability?.[day] || [];
+  if (!teacher || !selectedDate) return [];
+  const day = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
+  const daySlots = teacher.availability?.[day] || [];
 
-    const result = [];
-    daySlots.forEach(({ start, end }) => {
-      const startMinutes = convertToMinutes(start);
-      const endMinutes = convertToMinutes(end);
+  const result = [];
+  const today = new Date();
+  const selected = new Date(selectedDate);
 
-      for (let t = startMinutes; t + duration <= endMinutes; t += 15) {
-        const isTaken = bookedSlots.some(b => convertToMinutes(b.startTime) === t);
-        if (!isTaken) {
-          result.push({
-            start: formatToAmPm(t),
-            end: formatToAmPm(t + duration),
-            rawStart: t,
-          });
-        }
+  daySlots.forEach(({ start, end }) => {
+    const startMinutes = convertToMinutes(start);
+    const endMinutes = convertToMinutes(end);
+
+    for (let t = startMinutes; t + duration <= endMinutes; t += 15) {
+      const slotStart = t;
+      const slotEnd = t + duration;
+
+      // Çakışma kontrolü (hem kısmi hem tam çakışma engellenir)
+      const isTaken = bookedSlots.some(b => {
+        const bookedStart = convertToMinutes(b.startTime);
+        const bookedEnd = convertToMinutes(b.endTime);
+        return slotStart < bookedEnd && slotEnd > bookedStart;
+      });
+
+      // Geçmiş saat filtresi (bugünün tarihi ise)
+      if (selected.toDateString() === today.toDateString()) {
+        const nowMinutes = today.getHours() * 60 + today.getMinutes();
+        if (slotStart <= nowMinutes) continue;
       }
-    });
-    setAvailableSlots(result);
-  };
+
+      result.push({
+        start: formatToAmPm(slotStart),
+        end: formatToAmPm(slotEnd),
+        rawStart: slotStart,
+        taken: isTaken
+      });
+    }
+  });
+  setAvailableSlots(result);
+};
 
   useEffect(() => {
     generateSlots();
@@ -129,19 +146,6 @@ export default function BookLessonPage() {
     }
 
     try {
-      // Kredi düş
-      const dec = await fetch('/api/decrement', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: studentId, type: 'credit' }),
-      });
-      const decResult = await dec.json();
-      if (decResult.credits <= 0) {
-        setMsg('❌ No credits left.');
-        return;
-      }
-      setStudentCredits(decResult.credits);
-
       let meetingLink = '';
       if (location === 'Online') {
         meetingLink = await createDailyMeeting();
@@ -176,88 +180,89 @@ export default function BookLessonPage() {
     }
   };
 
+
   return (
-    <StudentLayout>
-      <div className={styles.container}>
-        <h2 className={styles.title}>Book a Lesson</h2>
-        {teacher && <p className={styles.teacher}><span>Teacher:</span> <strong>{teacher.name}</strong></p>}
+    <div className={styles.container}>
+      <h2 className={styles.title}>Book a Lesson</h2>
+      {teacher && <p className={styles.teacher}><span>Teacher:</span> <strong>{teacher.name}</strong></p>}
 
-        <div className={styles.row}>
-          <label className={styles.label}>
-            Date
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={e => setSelectedDate(e.target.value)}
-              className={styles.input}
-            />
-          </label>
+      <div className={styles.row}>
+        <label className={styles.label}>
+          Date
+          <input
+            type="date"
+            min={new Date().toISOString().split('T')[0]}
+            value={selectedDate}
+            onChange={e => setSelectedDate(e.target.value)}
+            className={styles.input}
+          />
+        </label>
 
-          <label className={styles.label}>
-            Lesson Duration
-            <select
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
-              className={styles.select}
-            >
-              <option value={30}>30 minutes</option>
-              <option value={45}>45 minutes</option>
-              <option value={60}>60 minutes</option>
-            </select>
-          </label>
+        <label className={styles.label}>
+          Lesson Duration
+          <select
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            className={styles.select}
+          >
+            <option value={30}>30 minutes</option>
+            <option value={45}>45 minutes</option>
+            <option value={60}>60 minutes</option>
+          </select>
+        </label>
 
-          <label className={styles.label}>
-            Location
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-              className={styles.select}
-            >
-              <option value="">-- Select --</option>
-              <option value="Online">Online</option>
-              <option value="Teacher's Home">Teacher's Home</option>
-              <option value="Student's Home">Student's Home</option>
-              <option value="Other">Other</option>
-            </select>
-          </label>
-        </div>
-
-        <h3 className={styles.subtitle}>Available Time Slots</h3>
-        {availableSlots.length === 0 ? (
-          <p className={styles.empty}>No available time slots for selected day.</p>
-        ) : (
-          <div className={styles.slots}>
-            {availableSlots.map((slot, i) => {
-              const disabled =
-                !teacher ||
-                !studentId ||
-                !duration ||
-                !location ||
-                !teacher[`pricing${duration}`] ||
-                !auth.currentUser ||
-                (studentCredits !== null && studentCredits <= 0);
-
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleBooking(slot)}
-                  disabled={disabled}
-                  className={`${styles.slotBtn} ${disabled ? styles.slotBtnDisabled : ''}`}
-                >
-                  {slot.start} – {slot.end}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        <p className={styles.credits}>
-          <strong>Lesson Credits Left: {studentCredits !== null ? studentCredits : '-'}</strong>
-        </p>
-
-        {msg && <p className={styles.msg}>{msg}</p>}
+        <label className={styles.label}>
+          Location
+          <select
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            required
+            className={styles.select}
+          >
+            <option value="">-- Select --</option>
+            <option value="Online">Online</option>
+            <option value="Teacher's Home">Teacher's Home</option>
+            <option value="Student's Home">Student's Home</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
       </div>
-    </StudentLayout>
+
+      <h3 className={styles.subtitle}>Available Time Slots</h3>
+      {availableSlots.length === 0 ? (
+        <p className={styles.empty}>No available time slots for selected day.</p>
+      ) : (
+        <div className={styles.slots}>
+          {availableSlots.map((slot, i) => {
+            const disabled =
+              slot.taken ||
+              !teacher ||
+              !studentId ||
+              !duration ||
+              !location ||
+              !teacher[`pricing${duration}`] ||
+              !auth.currentUser ||
+              (studentCredits !== null && studentCredits <= 0);
+
+            return (
+              <button
+                key={i}
+                onClick={() => handleBooking(slot)}
+                disabled={disabled}
+                className={`${styles.slotBtn} ${disabled ? styles.slotBtnDisabled : ''}`}
+              >
+                {slot.start} – {slot.end} {slot.taken && ' (Booked)'}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <p className={styles.credits}>
+        <strong>Lesson Credits Left: {studentCredits !== null ? studentCredits : '-'}</strong>
+      </p>
+
+      {msg && <p className={styles.msg}>{msg}</p>}
+    </div>
   );
 }

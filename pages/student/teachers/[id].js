@@ -112,7 +112,7 @@ export default function TeacherProfilePage() {
   if (!teacher) return <p>Teacher not found.</p>;
 
   return (
-    <StudentLayout>
+    <div>
       <div className={styles.container}>
         {/* ÜST PANEL */}
         <div className={styles.topSection}>
@@ -241,6 +241,6 @@ export default function TeacherProfilePage() {
           )}
         </div>
       </div>
-    </StudentLayout>
+    </div>
   );
 }

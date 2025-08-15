@@ -1,76 +1,173 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '../lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import {
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signOut,
+} from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import styles from '../scss/LoginPage.module.scss';
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const router = useRouter();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setError('');
+    setInfo('');
+  };
+
+  const handleForgotPassword = async () => {
+    setError('');
+    setInfo('');
+    const email = form.email.trim().toLowerCase();
+    if (!email) return setError('Please enter your email, then click "Forgot password".');
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setInfo('Password reset email sent. Please check your Inbox and Spam/Junk folders.');
+    } catch (err) {
+      setError(err?.message || 'Could not send reset email.');
+    }
+  };
+
+  const resendVerification = async () => {
+    // kullanıcı parolayı girmişse tekrar kısa oturum açıp maili yolluyoruz
+    setError('');
+    setInfo('');
+    try {
+      const email = form.email.trim().toLowerCase();
+      const pwd = form.password;
+      if (!email || !pwd) return setError('Enter your email & password, then click "Resend verification".');
+
+      const { user } = await signInWithEmailAndPassword(auth, email, pwd);
+      await sendEmailVerification(user);
+      await signOut(auth);
+      setInfo('Verification email re-sent. Please check Inbox and Spam/Junk.');
+    } catch (err) {
+      setError(err?.message || 'Could not resend verification email.');
+    }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    try {
-      const { user } = await signInWithEmailAndPassword(auth, form.email, form.password);
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      if (!snap.exists()) return setError('Kullanıcı Firestore’da bulunamadı.');
+    setInfo('');
+    setNeedsVerification(false);
+    setLoading(true);
 
+    try {
+      const email = form.email.trim().toLowerCase();
+      const { user } = await signInWithEmailAndPassword(auth, email, form.password);
       const role = snap.data().role;
+
+      // E‑posta doğrulanmamışsa: hemen doğrulama yolla ve girişe izin verme
+      if (role === 'student' && !user.emailVerified) {
+        await sendEmailVerification(user);
+        await signOut(auth);
+        setNeedsVerification(true);
+        setInfo('We sent you a new verification email. Please verify your address to log in. Check Spam/Junk.');
+        setLoading(false);
+        return;
+      }
+
+      // Firestore kaydı çek
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (!snap.exists()) {
+        await signOut(auth);
+        setError('User not found in database.');
+        setLoading(false);
+        return;
+      }
+
+      // Firestore emailVerified alanını senkronla (true yap)
+      if (!snap.data().emailVerified && user.emailVerified) {
+        try {
+          await updateDoc(doc(db, 'users', user.uid), { emailVerified: true });
+        } catch {}
+      }
+
       if (role === 'teacher') router.push('/teacher/dashboard');
       else if (role === 'student') router.push('/student/dashboard');
-      else setError('Tanımsız kullanıcı rolü.');
+      else {
+        await signOut(auth);
+        setError('Undefined user role.');
+      }
     } catch (err) {
-      setError('Email veya şifre hatalı.');
+      setError('Email or password is incorrect.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      {/* Navbar burada görünür */}
-      <main className={styles.page}>
-        <section className={styles.card}>
-          <h1 className={styles.title}>Login</h1>
+    <main className={styles.page}>
+      <section className={styles.card}>
+        <h1 className={styles.title}>Login</h1>
 
-          <form onSubmit={handleLogin} className={styles.form}>
-            <label className={styles.label}>
-              <span>Email</span>
-              <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                className={styles.input}
-                placeholder="example@mail.com"
-              />
-            </label>
+        {/* Uyarı alanları */}
+        {info && <p className={styles.info}>ℹ️ {info}</p>}
+        {error && <p className={styles.error}>❌ {error}</p>}
+        {needsVerification && (
+          <div className={styles.verifyBox}>
+            <p>
+              Your email is not verified yet. We’ve sent you a verification email.
+              Please click the link inside that email to continue. (Also check Spam/Junk.)
+            </p>
+            <button type="button" onClick={resendVerification} className={styles.secondaryBtn}>
+              Resend verification
+            </button>
+          </div>
+        )}
 
-            <label className={styles.label}>
-              <span>Şifre</span>
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                className={styles.input}
-                placeholder="••••••••"
-              />
-            </label>
+        <form onSubmit={handleLogin} className={styles.form}>
+          <label className={styles.label}>
+            <span>Email</span>
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              className={styles.input}
+              placeholder="example@mail.com"
+            />
+          </label>
 
-            {error && <p className={styles.error}>❌ {error}</p>}
+          <label className={styles.label}>
+            <span>Password</span>
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className={styles.input}
+              placeholder="••••••••"
+            />
+          </label>
 
-            <button type="submit" className={`bg-danger ${styles.submit}`}>Login</button>
-          </form>
-        </section>
-      </main>
-    </>
+          <div className={styles.actionsRow}>
+            <button type="submit" disabled={loading} className={`bg-danger ${styles.submit}`}>
+              {loading ? 'Please wait…' : 'Login'}
+            </button>
+
+            <button type="button" className={styles.linkBtn} onClick={handleForgotPassword}>
+              Forgot password?
+            </button>
+          </div>
+        </form>
+
+        <div className={styles.hint}>
+          New here? <a href="/student/register">Create a student account</a> or <a href="/teacher/apply">apply as a teacher</a>.
+        </div>
+      </section>
+    </main>
   );
 }

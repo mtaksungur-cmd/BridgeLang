@@ -50,25 +50,25 @@ export default function StudentChatsPage() {
 
   if (loading) {
     return (
-      <StudentLayout>
+      <div>
         <p className={styles.loading}>Loading chats...</p>
-      </StudentLayout>
+      </div>
     );
   }
 
   if (chats.length === 0) {
     return (
-      <StudentLayout>
+      <div>
         <div className={styles.container}>
           <h2 className={styles.title}>Your Chats</h2>
           <p className={styles.noChats}>No conversations yet.</p>
         </div>
-      </StudentLayout>
+      </div>
     );
   }
 
   return (
-    <StudentLayout>
+    <div>
       <div className={styles.container}>
         <h2 className={styles.title}>Your Chats</h2>
         <ul className={styles.chatList}>
@@ -108,6 +108,6 @@ export default function StudentChatsPage() {
           ))}
         </ul>
       </div>
-    </StudentLayout>
+    </div>
   );
 }
