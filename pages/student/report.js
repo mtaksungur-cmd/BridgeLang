@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import StudentLayout from '../../components/StudentLayout';
 import styles from "../../scss/StudentReport.module.scss";
 
 export default function StudentReport() {

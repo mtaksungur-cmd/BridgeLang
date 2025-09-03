@@ -1,3 +1,5 @@
+@use '../styles/_variables' as v;
+
 .container {
   padding: 40px;
 }
@@ -125,7 +127,7 @@
 }
 
 .primaryBtn {
-  background: #1464ff;
+  background: v.$accent-color;
   color: #fff;
   border: none;
   border-radius: 10px;

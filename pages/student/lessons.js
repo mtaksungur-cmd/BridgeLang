@@ -1,16 +1,19 @@
+// pages/student/lessons.js
 import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
-import StudentLayout from '../../components/StudentLayout';
+import { DateTime } from 'luxon';
 import SubscriptionBanner from '../../components/SubscriptionBanner';
 import LoyaltyBadge from '../../components/LoyaltyBadge';
+import { getLoyaltyInfo } from '../../lib/loyalty'; // ← eklendi
 import styles from '../../scss/StudentLessons.module.scss';
 
 export default function StudentLessons() {
   const [bookings, setBookings] = useState([]);
   const [user, setUser] = useState(null);
+  const [loyalty, setLoyalty] = useState(null);         // ← eklendi
   const [teachers, setTeachers] = useState({});
   const router = useRouter();
 
@@ -22,6 +25,15 @@ export default function StudentLessons() {
 
       const userSnap = await getDoc(doc(db, 'users', _uid));
       if (userSnap.exists()) setUser(userSnap.data());
+
+      // Loyalty bilgisi
+      try {
+        const info = await getLoyaltyInfo(_uid);
+        setLoyalty(info);
+      } catch (e) {
+        console.error('loyalty load error:', e);
+        setLoyalty(null);
+      }
 
       const q = query(
         collection(db, 'bookings'),
@@ -65,8 +77,9 @@ export default function StudentLessons() {
     alert('You confirmed the lesson.');
   };
 
+  // AM/PM → 24 saat
   const parseTimeTo24h = (timeStr) => {
-    const [_, time, modifier] = timeStr.match(/(\d{1,2}:\d{2})\s?(AM|PM)/i) || [];
+    const [_, time, modifier] = timeStr?.match(/(\d{1,2}:\d{2})\s?(AM|PM)/i) || [];
     if (!time || !modifier) return timeStr;
     let [hours, minutes] = time.split(":");
     hours = parseInt(hours, 10);
@@ -75,27 +88,30 @@ export default function StudentLessons() {
     return `${String(hours).padStart(2, '0')}:${minutes}`;
   };
 
-  const isPastLesson = (dateStr, timeStr) => {
-    const cleanTime = parseTimeTo24h(timeStr);
-    const dateTime = new Date(`${dateStr}T${cleanTime}`);
-    return new Date() > dateTime;
+  const isPastLesson = (dateStr, timeStr, tz) => {
+    if (!timeStr) return false;
+    const dt = DateTime.fromFormat(`${dateStr} ${timeStr}`, 'yyyy-MM-dd HH:mm', { zone: tz || 'UTC' });
+    return DateTime.now().setZone(tz || 'UTC') > dt;
   };
 
   function sortByDateDesc(a, b) {
-    const aTime = new Date(a.date + ' ' + (a.startTime || '00:00'));
-    const bTime = new Date(b.date + ' ' + (b.startTime || '00:00'));
+    const aTime = new Date(a.date + ' ' + (parseTimeTo24h(a.startTime) || '00:00'));
+    const bTime = new Date(b.date + ' ' + (parseTimeTo24h(b.startTime) || '00:00'));
     return bTime - aTime;
   }
 
   return (
     <div>
       <SubscriptionBanner />
-      {user && user.subscriptionPlan !== 'starter' && (
+
+      {/* Loyalty rozet – dashboard ile aynı model */}
+      {loyalty && loyalty.plan !== 'starter' && (
         <LoyaltyBadge
-          plan={user.subscriptionPlan}
-          loyaltyMonths={user.loyaltyMonths}
-          loyaltyBonusGiven={user.loyaltyBonusGiven}
-          discountEligible={user.discountEligible}
+          plan={loyalty.plan}
+          loyaltyMonths={loyalty.loyaltyMonths}
+          loyaltyBonusCount={loyalty.loyaltyBonusCount}
+          discountEligible={loyalty.discountEligible}
+          promoCode={loyalty.promoCode}
         />
       )}
 
@@ -117,9 +133,7 @@ export default function StudentLessons() {
                         <div className={styles.avatarPlaceholder}>T</div>
                       )}
                       <div className="ms-3">
-                        <div className="fw-semibold">
-                          Teacher: {t.name || '-'}
-                        </div>
+                        <div className="fw-semibold">Teacher: {t.name || '-'}</div>
                         <div className="text-muted small">
                           {(t.level || t.languagesTaught) ? (t.level || t.languagesTaught) : ''}
                         </div>
@@ -131,9 +145,13 @@ export default function StudentLessons() {
                       <div className="small text-muted">Date:</div>
                       <div className="fw-semibold">{b.date}</div>
                     </div>
-                    <div className="mb-3">
+                    <div className="mb-2">
                       <div className="small text-muted">Time:</div>
                       <div className="fw-semibold">{b.startTime} — {b.endTime}</div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="small text-muted">Location:</div>
+                      <div className="fw-semibold">{b.location || "Not specified"}</div>
                     </div>
 
                     {/* Status pill */}
@@ -154,13 +172,11 @@ export default function StudentLessons() {
 
                     {/* Approved message */}
                     {b.status === 'approved' && (
-                      <p className={`mb-3 ${styles.approvedMsg}`}>
-                        🎉 Lesson approved by both sides.
-                      </p>
+                      <p className={`mb-3 ${styles.approvedMsg}`}>🎉 Lesson approved by both sides.</p>
                     )}
 
                     {/* Confirm attended (only past & not confirmed) */}
-                    {isPastLesson(b.date, b.endTime) && !b.studentConfirmed && (
+                    {isPastLesson(b.date, b.endTime, b.timezone) && !b.studentConfirmed && (
                       <button className={`btn btn-success w-100 mb-2 ${styles.confirmBtn}`} onClick={() => confirmLesson(b)}>
                         ✅ I attended
                       </button>

@@ -1,0 +1,104 @@
+:root {
+  --nav-height: 64px; /* gerekirse override edebilirsin */
+  --card-border: 1px solid rgba(0,0,0,.08);
+  --muted: rgba(0,0,0,.6);
+  --ring: 0 0 0 4px rgba(13,110,253,.12);
+}
+
+/* Grid düzeni */
+.legal {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 260px 1fr;
+  }
+}
+
+.header {
+  grid-column: 1 / -1;
+
+  h1 {
+    margin: 0 0 .25rem;
+    line-height: 1.15;
+    color: #002b5c;
+  }
+}
+.sub { color: var(--muted); margin-top: .25rem; }
+
+/* TOC */
+.toc {
+  position: sticky;
+  top: calc(var(--nav-height) + 12px);
+  align-self: start;
+  background: #fff;
+  border: var(--card-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+
+  h3 { font-size: 1rem; margin: 0 0 .5rem; }
+
+  ol {
+    margin: 0; padding-left: 1.1rem;
+    display: grid; gap: .25rem;
+  }
+
+  li { font-size: .95rem; }
+
+  a {
+    color: inherit; text-decoration: none;
+    &:hover { text-decoration: underline; }
+    &:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 6px; }
+  }
+}
+
+/* İçerik */
+.article {
+  max-width: 70ch;
+
+  section { scroll-margin-top: calc(var(--nav-height) + 20px); }
+
+  h2 { margin-top: 1.25rem; font-size: 1.35rem; }
+  p, li { line-height: 1.65; }
+  ul, ol { padding-left: 1.25rem; margin: .5rem 0 .9rem; }
+
+  a { text-decoration: underline; text-underline-offset: 2px; }
+
+  :target {
+    scroll-margin-top: calc(var(--nav-height) + 20px);
+    background: #fafcff;
+    box-shadow: inset 0 0 0 1px rgba(13,110,253,.12);
+    border-radius: 8px;
+    padding: .2rem .3rem;
+    margin-left: -.3rem;
+  }
+}
+
+/* Mobil: TOC sticky OLMASIN (privacy’deki gibi) */
+@media (max-width: 991.98px) {
+  .toc {
+    position: static;
+    top: auto;
+    align-self: auto;
+    margin-top: .5rem;
+    z-index: auto;
+  }
+  .legal { grid-template-columns: 1fr; }
+  .article { max-width: 100%; }
+  .toc h3, .toc li { font-size: .95rem; }
+}
+
+/* Koyu tema (opsiyonel) */
+@media (prefers-color-scheme: dark) {
+  .toc { background: #0f1115; border-color: rgba(255,255,255,.08); }
+  .sub { color: rgba(255,255,255,.6); }
+  .article :target { background: rgba(13,110,253,.12); }
+}
+
+/* Print */
+@media print {
+  .legal { display: block; }
+  .toc { display: none !important; }
+  .article { max-width: none; }
+}

@@ -1,0 +1,173 @@
+/* ==== Privacy Policy layout ==== */
+:root {
+  /* Bootstrap fixed-top navbar yakl. yüksekliği */
+  --nav-height: 64px;
+  --card-border: 1px solid rgba(0,0,0,.08);
+  --muted: rgba(0,0,0,.6);
+  --muted-2: rgba(0,0,0,.5);
+  --ring: 0 0 0 4px rgba(13,110,253,.12); /* bootstrap primary glow */
+}
+
+/* Ana grid */
+.legal {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+
+  @media (min-width: 992px) { /* lg */
+    grid-template-columns: 260px 1fr;
+  }
+}
+
+/* Üst başlık */
+.header {
+  grid-column: 1 / -1;
+
+  h1 {
+    margin: 0 0 .25rem;
+    line-height: 1.15;
+  }
+}
+
+.sub { color: var(--muted); margin-top: .25rem; }
+
+/* İçindekiler (TOC) */
+.toc {
+  position: sticky;
+  top: calc(var(--nav-height) + 12px); /* sabit navbar boşluğu */
+  align-self: start;
+  background: #fff;
+  border: var(--card-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+
+  h3 {
+    font-size: 1rem;
+    margin: 0 0 .5rem;
+  }
+
+  ol {
+    margin: 0; padding-left: 1.1rem;
+    display: grid; gap: .25rem;
+  }
+
+  li { font-size: .95rem; }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+
+    &:hover { text-decoration: underline; }
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+      border-radius: 6px;
+    }
+  }
+}
+
+/* İçerik */
+.article {
+  max-width: 70ch;
+
+  /* TOC’den atlayınca başlıklar nav altında kalmasın */
+  section {
+    scroll-margin-top: calc(var(--nav-height) + 20px);
+  }
+
+  h2 {
+    margin-top: 1.25rem;
+    font-size: 1.35rem;
+  }
+
+  h3 {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+  }
+
+  p, li {
+    line-height: 1.65;
+  }
+
+  /* liste aralığı ve okunabilirlik */
+  ul, ol {
+    padding-left: 1.25rem;
+    margin: .5rem 0 .9rem;
+  }
+
+  /* aktif başlık (hash ile gidilen) vurgusu */
+  :target {
+    scroll-margin-top: calc(var(--nav-height) + 20px);
+    outline: none;
+    background: #fafcff;
+    box-shadow: inset 0 0 0 1px rgba(13,110,253,.12);
+    border-radius: 8px;
+    /* sadece başlığın çevresini vurgulamak için padding */
+    padding: .2rem .3rem;
+    margin-left: -.3rem;
+  }
+
+  a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
+/* Küçük ekran iyileştirmeleri */
+@media (max-width: 576px) {
+  .article {
+    max-width: 100%;
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+  }
+
+  .toc {
+    /* mobilde daha kompakt */
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+}
+
+/* Koyu tema (opsiyonel, sistem temasıyla) */
+@media (prefers-color-scheme: dark) {
+  .toc {
+    background: #0f1115;
+    border-color: rgba(255,255,255,.08);
+  }
+  .sub { color: rgba(255,255,255,.6); }
+  .article :target { background: rgba(13,110,253,.12); }
+}
+
+/* Yazdırma için sade görünüm */
+@media print {
+  .legal {
+    display: block;
+  }
+  .toc { display: none !important; }
+  .article {
+    max-width: none;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .toc {
+    position: static;   /* sticky değil */
+    top: auto;
+    align-self: auto;
+    margin-top: .5rem;  /* başlıktan sonra küçük boşluk */
+    z-index: auto;      /* olası üstte kalma ihtimalini sıfırlar */
+  }
+
+  /* grid tek kolon zaten, okunabilirlik için ufak ayar */
+  .legal {
+    grid-template-columns: 1fr;   /* garanti olsun */
+  }
+
+  .article {
+    max-width: 100%;
+  }
+
+  /* TOC linkleri ve başlık boyutlarını biraz küçültelim */
+  .toc h3 { font-size: .95rem; }
+  .toc li { font-size: .95rem; }
+}

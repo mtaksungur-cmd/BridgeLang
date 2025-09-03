@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { auth, db } from "../../lib/firebase";
 import { collection, getDocs, doc, getDoc, query } from "firebase/firestore";
-import StudentLayout from "../../components/StudentLayout";
 import styles from "../../scss/StudentChats.module.scss";
 
 export default function StudentChatsPage() {

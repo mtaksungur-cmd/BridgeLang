@@ -1,0 +1,157 @@
+/* Sayfa arkaplanı + grid */
+@use '../styles/variables' as v;
+
+.page {
+  --card-bg: #ffffff;
+  --beige: #f3f1eb;
+
+  background: var(--beige);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: .5rem;
+}
+
+.header {
+  margin-bottom: .5rem;
+
+  h1 {
+    font-weight: 800;
+    font-size: 2rem;
+    margin: 0 0 .25rem 0;
+    color: #1f2937;
+  }
+}
+
+/* 2 kolon: sol form, sağ şirket bilgisi */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 1fr 320px;
+  }
+}
+
+/* FORM */
+.form {
+  background: var(--card-bg);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+
+.field { margin-bottom: 14px; }
+
+.label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #111827;
+}
+
+.req { color: #dc2626; margin-left: .2rem; }
+
+.input,
+.select,
+.textarea,
+.file {
+  width: 100%;
+  display: block;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  font-size: 1rem;
+}
+
+.textarea { resize: vertical; }
+
+.consent {
+  .checkboxLabel {
+    display: flex;
+    gap: .5rem;
+    align-items: flex-start;
+
+    input { margin-top: 4px; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  }
+}
+
+.status {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-weight: 600;
+  &.ok {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+  &.err {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+}
+
+.actions { margin-top: 10px; }
+
+.submit {
+  display: inline-block;
+  background: v.$accent-color;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.submit[disabled] { opacity: .7; cursor: not-allowed; }
+
+/* Şirket bilgi kartı (sağ) */
+.company {
+  background: var(--card-bg);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  align-self: start;
+
+  @media (min-width: 992px) {
+    position: sticky;
+    top: calc(var(--nav-height, 64px) + 16px);
+  }
+}
+
+.company__title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 .35rem 0;
+  color: #111827;
+}
+
+.company__list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 .75rem 0;
+
+  li { margin: .25rem 0; color: #374151; }
+  a { color: #2563eb; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+
+.company__addrLabel { margin-top: .35rem; }
+.company__addr { line-height: 1.5; }
+
+.company__help {
+  margin-top: .5rem;
+  padding-top: .5rem;
+  border-top: 1px dashed rgba(0,0,0,.1);
+  font-size: .95rem;
+  color: #4b5563;
+
+  a { color: #2563eb; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}

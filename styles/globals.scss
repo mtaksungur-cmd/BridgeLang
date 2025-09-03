@@ -1,18 +1,34 @@
-// styles/globals.scss
 @use './_variables' as v;
 
 @use 'bootstrap' with (
   $primary:   v.$primary-color, // Lacivert
-  $danger:    v.$accent-color, // Canlı Kırmızı
-  $body-bg:        v.$bg-color, // Krem
-  $body-color:      v.$text-color, // Koyu Gri
-  $link-hover-color:     v.$hover-color, // Açık Mavi
+  $danger:    v.$accent-color,  // Canlı Kırmızı
+  $body-bg:   v.$bg-color,      // Krem
+  $body-color: v.$text-color,   // Koyu Gri
+  $link-hover-color: v.$hover-color, // Açık Mavi
   $warning:   v.$warning-color
 );
 
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Root kapsayıcılar */
+#__next,
+.app-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; // her zaman ekran yüksekliği kadar
+}
+
+main {
+  flex: 1; // içerik boşsa bile footer'ı alta iter
+}
+
 body {
   background: v.$bg-color;
-  color:      v.$text-color;
+  color: v.$text-color;
   font-family: system-ui, sans-serif;
 }
 

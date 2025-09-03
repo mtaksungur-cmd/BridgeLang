@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { auth, db } from "../../../lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import StudentLayout from "../../../components/StudentLayout";
 import ChatBox from "../../../components/ChatBox";
 
 export default function StudentChatPage() {

@@ -3,7 +3,6 @@ import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
-import TeacherLayout from '../../components/TeacherLayout';
 import styles from '../../scss/TeacherCalendar.module.scss';
 
 const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -11,12 +10,10 @@ const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
 export default function CalendarPage() {
   const [availability, setAvailability] = useState({});
   const [day, setDay] = useState('Monday');
-  const [startHour, setStartHour] = useState('9');
+  const [startHour, setStartHour] = useState('09');
   const [startMinute, setStartMinute] = useState('00');
-  const [startAMPM, setStartAMPM] = useState('AM');
   const [endHour, setEndHour] = useState('10');
   const [endMinute, setEndMinute] = useState('00');
-  const [endAMPM, setEndAMPM] = useState('AM');
   const [msg, setMsg] = useState('');
   const [userId, setUserId] = useState('');
   const router = useRouter();
@@ -35,11 +32,11 @@ export default function CalendarPage() {
     return () => unsub();
   }, [router]);
 
-  const formatTime = (h, m, ampm) => `${h.padStart(2,'0')}:${m} ${ampm}`;
+  const formatTime = (h, m) => `${h.padStart(2,'0')}:${m}`;
 
   const addSlot = () => {
-    const start = formatTime(startHour, startMinute, startAMPM);
-    const end   = formatTime(endHour,   endMinute,   endAMPM);
+    const start = formatTime(startHour, startMinute);
+    const end   = formatTime(endHour, endMinute);
     if (!start || !end) return;
     const updated = { ...availability };
     if (!updated[day]) updated[day] = [];
@@ -62,9 +59,8 @@ export default function CalendarPage() {
     }
   };
 
-  const hours = Array.from({ length: 12 }, (_, i) => `${i + 1}`);
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2,'0'));
   const minutes = ['00','15','30','45'];
-  const ampm = ['AM','PM'];
 
   return (
       <div className={styles.wrap}>
@@ -91,9 +87,6 @@ export default function CalendarPage() {
               <select value={startMinute} onChange={e=>setStartMinute(e.target.value)} className="form-select">
                 {minutes.map(m => <option key={m}>{m}</option>)}
               </select>
-              <select value={startAMPM} onChange={e=>setStartAMPM(e.target.value)} className="form-select">
-                {ampm.map(a => <option key={a}>{a}</option>)}
-              </select>
             </div>
           </div>
 
@@ -105,9 +98,6 @@ export default function CalendarPage() {
               </select>
               <select value={endMinute} onChange={e=>setEndMinute(e.target.value)} className="form-select">
                 {minutes.map(m => <option key={m}>{m}</option>)}
-              </select>
-              <select value={endAMPM} onChange={e=>setEndAMPM(e.target.value)} className="form-select">
-                {ampm.map(a => <option key={a}>{a}</option>)}
               </select>
             </div>
           </div>
@@ -150,7 +140,6 @@ export default function CalendarPage() {
                         key={i}
                         onClick={() => removeSlot(d, i)}
                         className="btn btn-danger btn-sm ms-1"
-                        title="Remove this slot"
                       >
                         Remove #{i + 1}
                       </button>

@@ -1,9 +1,9 @@
+// pages/student/book/[id].js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import StudentLayout from '../../../components/StudentLayout';
 import styles from '../../../scss/BookLesson.module.scss';
 
 export default function BookLessonPage() {
@@ -19,6 +19,7 @@ export default function BookLessonPage() {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [bookedSlots, setBookedSlots] = useState([]);
   const [msg, setMsg] = useState('');
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   // Öğrenci + kredi
   useEffect(() => {
@@ -66,59 +67,53 @@ export default function BookLessonPage() {
     return hours * 60 + minutes;
   };
 
-  const formatToAmPm = (minutes) => {
+  // ✅ 24 saat formatına çevir
+  const formatTo24Hour = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    const date = new Date();
-    date.setHours(hours);
-    date.setMinutes(mins);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   };
 
   const generateSlots = () => {
-  if (!teacher || !selectedDate) return [];
-  const day = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
-  const daySlots = teacher.availability?.[day] || [];
+    if (!teacher || !selectedDate) return [];
+    const day = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
+    const daySlots = teacher.availability?.[day] || [];
 
-  const result = [];
-  const today = new Date();
-  const selected = new Date(selectedDate);
+    const result = [];
+    const today = new Date();
+    const selected = new Date(selectedDate);
 
-  daySlots.forEach(({ start, end }) => {
-    const startMinutes = convertToMinutes(start);
-    const endMinutes = convertToMinutes(end);
+    daySlots.forEach(({ start, end }) => {
+      const startMinutes = convertToMinutes(start);
+      const endMinutes = convertToMinutes(end);
 
-    for (let t = startMinutes; t + duration <= endMinutes; t += 15) {
-      const slotStart = t;
-      const slotEnd = t + duration;
+      for (let t = startMinutes; t + duration <= endMinutes; t += 15) {
+        const slotStart = t;
+        const slotEnd = t + duration;
 
-      // Çakışma kontrolü (hem kısmi hem tam çakışma engellenir)
-      const isTaken = bookedSlots.some(b => {
-        const bookedStart = convertToMinutes(b.startTime);
-        const bookedEnd = convertToMinutes(b.endTime);
-        return slotStart < bookedEnd && slotEnd > bookedStart;
-      });
+        // Çakışma kontrolü
+        const isTaken = bookedSlots.some(b => {
+          const bookedStart = convertToMinutes(b.startTime);
+          const bookedEnd = convertToMinutes(b.endTime);
+          return slotStart < bookedEnd && slotEnd > bookedStart;
+        });
 
-      // Geçmiş saat filtresi (bugünün tarihi ise)
-      if (selected.toDateString() === today.toDateString()) {
-        const nowMinutes = today.getHours() * 60 + today.getMinutes();
-        if (slotStart <= nowMinutes) continue;
+        // Geçmiş saat filtresi (bugünün tarihi ise)
+        if (selected.toDateString() === today.toDateString()) {
+          const nowMinutes = today.getHours() * 60 + today.getMinutes();
+          if (slotStart <= nowMinutes) continue;
+        }
+
+        result.push({
+          start: formatTo24Hour(slotStart),
+          end: formatTo24Hour(slotEnd),
+          rawStart: slotStart,
+          taken: isTaken
+        });
       }
-
-      result.push({
-        start: formatToAmPm(slotStart),
-        end: formatToAmPm(slotEnd),
-        rawStart: slotStart,
-        taken: isTaken
-      });
-    }
-  });
-  setAvailableSlots(result);
-};
+    });
+    setAvailableSlots(result);
+  };
 
   useEffect(() => {
     generateSlots();
@@ -146,11 +141,6 @@ export default function BookLessonPage() {
     }
 
     try {
-      let meetingLink = '';
-      if (location === 'Online') {
-        meetingLink = await createDailyMeeting();
-      }
-
       const res = await fetch('/api/payment/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,9 +152,9 @@ export default function BookLessonPage() {
           endTime: slot.end,
           duration,
           location,
-          meetingLink,
           price: teacher[`pricing${duration}`],
-          studentEmail: auth.currentUser.email
+          studentEmail: auth.currentUser.email,
+          timezone: userTimezone
         })
       });
       const data = await res.json();
@@ -179,7 +169,6 @@ export default function BookLessonPage() {
       setMsg('❌ Booking failed.');
     }
   };
-
 
   return (
     <div className={styles.container}>

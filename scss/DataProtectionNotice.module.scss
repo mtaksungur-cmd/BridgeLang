@@ -1,0 +1,142 @@
+/* Genel sayfa ızgarası ve arkaplan tonu (AUP/Parental ile tutarlı) */
+.page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  background: #f3f1eb; /* yumuşak bej ton */
+  padding: 1rem;
+  border-radius: 12px;
+  margin-top: 0.5rem;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 260px 1fr;
+    padding: 1.25rem 1.5rem;
+  }
+}
+
+/* Başlık */
+.header {
+  grid-column: 1 / -1;
+  margin-bottom: 0.25rem;
+
+  h1 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+    font-weight: 800;
+    color: #1f2937;
+    margin: 0 0 .25rem 0;
+
+    small {
+      font-size: 60%;
+      font-weight: 700;
+      color: #374151;
+      margin-left: .35rem;
+    }
+  }
+
+  .subhead {
+    margin: 0 0 .25rem 0;
+    color: #374151;
+    font-weight: 600;
+  }
+
+  .lastUpdated {
+    color: rgba(17, 24, 39, .6);
+    font-size: .95rem;
+    margin: 0;
+  }
+}
+
+/* İçindekiler (sol) */
+.toc {
+  position: sticky;
+  top: calc(var(--nav-height, 64px) + 16px);
+  align-self: start;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 .5rem 0;
+    color: #111827;
+  }
+
+  ol {
+    list-style: decimal;
+    padding-left: 1.1rem;
+    margin: 0;
+
+    li {
+      margin: .3rem 0;
+
+      a {
+        text-decoration: none;
+        color: #1f2937;
+        opacity: .9;
+        transition: opacity .2s ease;
+
+        &:hover { text-decoration: underline; opacity: 1; }
+        &:focus-visible {
+          outline: 3px solid rgba(37, 99, 235, .35);
+          border-radius: 4px;
+        }
+      }
+    }
+  }
+}
+
+/* Makale (sağ) */
+.article {
+  max-width: 76ch;
+
+  h2 {
+    margin-top: 1.75rem;
+    margin-bottom: .35rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  h3 {
+    margin-top: 1rem;
+    margin-bottom: .15rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  p, li {
+    line-height: 1.65;
+    margin-top: .35rem;
+    font-size: 1rem;
+    color: #374151;
+  }
+
+  ul, ol {
+    padding-left: 1.25rem;
+    margin-top: .5rem;
+  }
+
+  a {
+    color: #2563eb;
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  /* Bölümler arası min ayrım */
+  section + section { margin-top: .75rem; }
+}
+
+/* Küçük ekranlar */
+@media (max-width: 991.98px) {
+  .toc {
+    position: static;
+    order: -1;
+  }
+}

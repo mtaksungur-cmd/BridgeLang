@@ -1,4 +1,4 @@
-export default function LoyaltyBadge({ plan, loyaltyMonths, loyaltyBonusCount, discountEligible }) {
+export default function LoyaltyBadge({ plan, loyaltyMonths, loyaltyBonusCount, discountEligible, promoCode }) {
   let text = "";
   let badge = "";
 
@@ -21,6 +21,11 @@ export default function LoyaltyBadge({ plan, loyaltyMonths, loyaltyBonusCount, d
       text = `VIP Loyalty: ${loyaltyMonths || 0} consecutive months.`;
   }
 
+  const copy = () => {
+    if (!promoCode) return;
+    navigator.clipboard?.writeText(promoCode).catch(()=>{});
+  };
+
   return (
     <div style={{
       border: "2px solid gold",
@@ -36,6 +41,29 @@ export default function LoyaltyBadge({ plan, loyaltyMonths, loyaltyBonusCount, d
       {plan !== 'starter' && (
         <div style={{ fontSize: 12, marginTop: 5, color: "#999" }}>
           Stay on {plan === 'vip' ? "VIP" : "Pro"} 3+ months to earn loyalty bonus!
+        </div>
+      )}
+
+      {/* PROMO CODE: varsa göster */}
+      {plan === 'vip' && promoCode && (
+        <div style={{
+          marginTop: 12,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          border: '1px dashed #d4b106',
+          background: '#fff',
+          padding: '8px 12px',
+          borderRadius: 8
+        }}>
+          <span style={{ fontWeight: 700 }}>Your 10% code:</span>
+          <code style={{ fontWeight: 700 }}>{promoCode}</code>
+          <button onClick={copy} style={{
+            marginLeft: 4, padding: '4px 8px', borderRadius: 6,
+            border: '1px solid #d4b106', background: '#fff7e6', cursor: 'pointer'
+          }}>
+            Copy
+          </button>
         </div>
       )}
     </div>

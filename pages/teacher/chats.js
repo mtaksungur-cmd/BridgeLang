@@ -11,7 +11,6 @@ import {
   where,
   orderBy,
 } from 'firebase/firestore';
-import TeacherLayout from '../../components/TeacherLayout';
 import styles from '../../scss/TeacherChats.module.scss';
 
 export default function TeacherChats() {

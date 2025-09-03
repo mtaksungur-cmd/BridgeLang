@@ -5,7 +5,6 @@ import {
   doc, getDoc, collection, query, where, getDocs, updateDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import TeacherLayout from '../../components/TeacherLayout';
 import styles from '../../scss/TeacherDashboard.module.scss';
 
 const BADGE_DEFS = [
@@ -198,6 +197,53 @@ export default function TeacherDashboard() {
               <div className={styles.stat}>
                 <div className={styles.stat__label}>Repeat Rate</div>
                 <div className={styles.stat__value}>{Math.round((data.repeatRate || 0) * 100)}%</div>
+              </div>
+              <div className={styles.stat}>
+                <div className={styles.stat__label}>30 min Price (£)</div>
+                <input
+                  type="number"
+                  defaultValue={data.pricing30 || ''}
+                  onBlur={async (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                      await updateDoc(doc(db, 'users', data.uid), { pricing30: val });
+                      setData(prev => ({ ...prev, pricing30: val }));
+                    }
+                  }}
+                  className={styles.input}
+                />
+              </div>
+
+              <div className={styles.stat}>
+                <div className={styles.stat__label}>45 min Price (£)</div>
+                <input
+                  type="number"
+                  defaultValue={data.pricing45 || ''}
+                  onBlur={async (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                      await updateDoc(doc(db, 'users', data.uid), { pricing45: val });
+                      setData(prev => ({ ...prev, pricing45: val }));
+                    }
+                  }}
+                  className={styles.input}
+                />
+              </div>
+
+              <div className={styles.stat}>
+                <div className={styles.stat__label}>60 min Price (£)</div>
+                <input
+                  type="number"
+                  defaultValue={data.pricing60 || ''}
+                  onBlur={async (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                      await updateDoc(doc(db, 'users', data.uid), { pricing60: val });
+                      setData(prev => ({ ...prev, pricing60: val }));
+                    }
+                  }}
+                  className={styles.input}
+                />
               </div>
             </div>
 

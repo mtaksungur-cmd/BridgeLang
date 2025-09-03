@@ -6,6 +6,7 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   signOut,
+  reload,
 } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import styles from '../scss/LoginPage.module.scss';
@@ -38,14 +39,14 @@ export default function LoginPage() {
   };
 
   const resendVerification = async () => {
-    // kullanıcı parolayı girmişse tekrar kısa oturum açıp maili yolluyoruz
     setError('');
     setInfo('');
     try {
       const email = form.email.trim().toLowerCase();
       const pwd = form.password;
-      if (!email || !pwd) return setError('Enter your email & password, then click "Resend verification".');
-
+      if (!email || !pwd) {
+        return setError('Enter your email & password, then click "Resend verification".');
+      }
       const { user } = await signInWithEmailAndPassword(auth, email, pwd);
       await sendEmailVerification(user);
       await signOut(auth);
@@ -65,42 +66,66 @@ export default function LoginPage() {
     try {
       const email = form.email.trim().toLowerCase();
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
-      const role = snap.data().role;
 
-      // E‑posta doğrulanmamışsa: hemen doğrulama yolla ve girişe izin verme
-      if (role === 'student' && !user.emailVerified) {
-        await sendEmailVerification(user);
-        await signOut(auth);
-        setNeedsVerification(true);
-        setInfo('We sent you a new verification email. Please verify your address to log in. Check Spam/Junk.');
-        setLoading(false);
-        return;
-      }
+      // Auth flag'ini güncel gör
+      await reload(user);
+      const authVerified = !!auth.currentUser?.emailVerified;
 
-      // Firestore kaydı çek
-      const snap = await getDoc(doc(db, 'users', user.uid));
+      // Kullanıcı doc’unu oku
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
       if (!snap.exists()) {
         await signOut(auth);
         setError('User not found in database.');
         setLoading(false);
         return;
       }
+      const u = snap.data();
+      const role = u.role;
 
-      // Firestore emailVerified alanını senkronla (true yap)
-      if (!snap.data().emailVerified && user.emailVerified) {
-        try {
-          await updateDoc(doc(db, 'users', user.uid), { emailVerified: true });
-        } catch {}
+      // 🔒 Doğrulama mantığı:
+      // - student → e‑posta doğrulaması ZORUNLU
+      // - teacher/admin → doğrulama ZORUNLU DEĞİL (girişe izin ver)
+      if (role === 'student') {
+        if (authVerified && !u.emailVerified) {
+          try { await updateDoc(userRef, { emailVerified: true }); } catch {}
+        }
+        if (!authVerified) {
+          await sendEmailVerification(user);
+          await signOut(auth);
+          setNeedsVerification(true);
+          setInfo('We sent you a verification email. Please verify your address to log in. Check Spam/Junk.');
+          setLoading(false);
+          return;
+        }
+      } else {
+        // teacher/admin: Firestore tarafında emailVerified alanını true’la (opsiyonel ama tutarlı olur)
+        if (!u.emailVerified) {
+          try { await updateDoc(userRef, { emailVerified: true }); } catch {}
+        }
       }
 
-      if (role === 'teacher') router.push('/teacher/dashboard');
-      else if (role === 'student') router.push('/student/dashboard');
-      else {
+      // Role’e göre yönlendir
+      if (role === 'teacher') {
+        router.push('/teacher/dashboard');
+      } else if (role === 'student') {
+        router.push('/student/dashboard');
+      } else if (role === 'admin') {
+        router.push('/admin/teachers');
+      } else {
         await signOut(auth);
         setError('Undefined user role.');
       }
     } catch (err) {
-      setError('Email or password is incorrect.');
+      const code = err?.code || '';
+      const map = {
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/missing-password': 'Password is missing.',
+        'auth/invalid-credential': 'Email or password is incorrect.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/too-many-requests': 'Too many attempts. Try again later.',
+      };
+      setError(map[code] || 'Email or password is incorrect.');
     } finally {
       setLoading(false);
     }
@@ -111,9 +136,9 @@ export default function LoginPage() {
       <section className={styles.card}>
         <h1 className={styles.title}>Login</h1>
 
-        {/* Uyarı alanları */}
         {info && <p className={styles.info}>ℹ️ {info}</p>}
         {error && <p className={styles.error}>❌ {error}</p>}
+
         {needsVerification && (
           <div className={styles.verifyBox}>
             <p>

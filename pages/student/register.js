@@ -10,8 +10,11 @@ export default function StudentRegister() {
     name: '',
     email: '',
     password: '',
+    dob: '',
+    parentName: '',
+    parentEmail: '',
     city: '',
-    timezone: 'Europe/London',
+    country: 'England',
     phone: '',
     level: '',
     intro: '',
@@ -22,7 +25,7 @@ export default function StudentRegister() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
   const recaptchaRef = useRef(null);
 
   const goalsList = [
@@ -54,6 +57,16 @@ export default function StudentRegister() {
     }
   };
 
+  const calcAge = (dob) => {
+    if (!dob) return null;
+    const birth = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
+
   const uploadFileViaApi = async (file) => {
     const fd = new FormData();
     fd.append('file', file);
@@ -71,6 +84,10 @@ export default function StudentRegister() {
     if (!form.acceptTerms) return setError('You must accept the Terms of Use and Privacy Policy.');
     if (form.password.length < 6) return setError('Password must be at least 6 characters.');
     if (form.goals.length === 0 && !form.otherGoal.trim()) return setError('Please select at least one goal.');
+    if (!form.dob) return setError('Please enter your date of birth.');
+
+    const age = calcAge(form.dob);
+    if (age < 14) return setError('You must be at least 14 years old to use BridgeLang.');
 
     setSubmitting(true);
     try {
@@ -85,10 +102,10 @@ export default function StudentRegister() {
       const verifyData = await verifyRes.json();
       if (!verifyData.success) throw new Error('reCAPTCHA verification failed.');
 
-      // Auth
       const email = form.email.trim().toLowerCase();
+
+      // Auth
       const { user } = await createUserWithEmailAndPassword(auth, email, form.password);
-      await sendEmailVerification(user);
 
       // Fotoğraf (opsiyonel)
       let profilePhotoUrl = '';
@@ -98,38 +115,44 @@ export default function StudentRegister() {
       await setDoc(doc(db, 'users', user.uid), {
         name: form.name.trim(),
         email,
+        dob: form.dob,
         city: form.city.trim(),
-        timezone: form.timezone || 'Europe/London',
+        country: form.country,
         phone: form.phone.trim() || '',
         level: form.level || '',
         intro: form.intro.trim() || '',
         goals: [...form.goals, ...(form.otherGoal ? [form.otherGoal.trim()] : [])],
         profilePhotoUrl,
-
         role: 'student',
         emailVerified: !!user.emailVerified,
         createdAt: Date.now(),
-
-        subscriptionPlan: null,
-        subscriptionStartedAt: null,
-        stripeCustomerId: null,
-        stripeSubscriptionId: null,
-
-        credits: 0,
-        viewLimit: 0,
-        messagesLeft: 0,
-
-        loyaltyMonths: 0,
-        loyaltyBonusCount: 0,
-        reviewBonusUsed: false,
-
-        discountEligible: false,
-        discountGivenCount: 0,
-        discountUsedCount: 0,
-        lastDiscountUsedAt: null,
+        parentConsentRequired: age < 18,
+        parentConsent: null,
       });
 
-      setSuccess(true);
+      // Eğer 14–17 yaş arası ise → parent-consent API
+      if (age < 18) {
+        if (!form.parentEmail || !form.parentName) {
+          throw new Error('Parent information is required for students under 18.');
+        }
+        await fetch('/api/parent-consent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId: user.uid,
+            studentName: form.name,
+            parentName: form.parentName,
+            parentEmail: form.parentEmail,
+            dob: form.dob,
+          }),
+        });
+        setSuccess(true);
+        setError('');
+      } else {
+        // Normal kullanıcı → verification mail
+        await sendEmailVerification(user);
+        setSuccess(true);
+      }
     } catch (err) {
       setError(err?.message || 'Registration failed.');
     } finally {
@@ -141,18 +164,39 @@ export default function StudentRegister() {
     <div className={styles.container}>
       <h2 className={styles.title}>Student Registration</h2>
 
-      <div className={styles.infoBanner}>
-        After you register, we’ll email you a verification link. <strong>Please check your Inbox and Spam/Junk folders.</strong> You must verify your email before logging in.
-      </div>
-
       <form onSubmit={handleRegister} className={styles.form}>
         <input className={styles.input} name="name" placeholder="Full Name" onChange={handleChange} required />
         <input className={styles.input} name="email" type="email" placeholder="Email Address" onChange={handleChange} required />
         <input className={styles.input} name="password" type="password" placeholder="Password (min 6 chars)" onChange={handleChange} required />
-        <input className={styles.input} name="city" placeholder="City or Postcode" onChange={handleChange} required />
-        <input className={styles.input} name="timezone" placeholder="Timezone" value={form.timezone} onChange={handleChange} />
-        <input className={styles.input} name="phone" placeholder="Phone (optional)" onChange={handleChange} />
+        
+        <label>Date of Birth</label>
+        <input className={styles.input} name="dob" type="date" onChange={handleChange} required />
 
+        {(() => {
+          const age = calcAge(form.dob);
+          if (age !== null && age < 18 && age >= 14) {
+            return (
+              <>
+                <label>Parent/Guardian Name</label>
+                <input className={styles.input} name="parentName" onChange={handleChange} required />
+                <label>Parent/Guardian Email</label>
+                <input className={styles.input} type="email" name="parentEmail" onChange={handleChange} required />
+              </>
+            );
+          }
+          return null;
+        })()}
+
+        <input className={styles.input} name="city" placeholder="City" onChange={handleChange} required />
+        
+        <select name="country" className={styles.select} onChange={handleChange} value={form.country}>
+          <option>England</option>
+          <option>Scotland</option>
+          <option>Wales</option>
+          <option>Northern Ireland</option>
+        </select>
+
+        <input className={styles.input} name="phone" placeholder="Phone (optional)" onChange={handleChange} />
         <select name="level" className={styles.select} onChange={handleChange}>
           <option value="">Select your level (optional)</option>
           <option>Beginner</option>
@@ -161,13 +205,12 @@ export default function StudentRegister() {
           <option>Upper-Intermediate</option>
           <option>Advanced</option>
         </select>
-
         <textarea className={styles.textarea} name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} />
 
-        <label className="mt-2">Profile Photo (optional):</label>
+        <label>Profile Photo (optional)</label>
         <input className={styles.fileInput} type="file" name="profilePhoto" accept="image/*" onChange={handleChange} />
 
-        <p className="mt-3"><strong>Your English Learning Goals</strong> (select at least one)</p>
+        <p><strong>Your English Learning Goals</strong> (select at least one)</p>
         <div className={styles.checkboxGroup}>
           {goalsList.map((goal) => (
             <label key={goal} className={styles.checkboxLabel}>
@@ -176,14 +219,26 @@ export default function StudentRegister() {
           ))}
         </div>
 
-        <label className="mt-2">
-          Other Goal:
-          <input className={styles.input} type="text" name="otherGoal" onChange={handleChange} />
-        </label>
+        <label>Other Goal:</label>
+        <input className={styles.input} type="text" name="otherGoal" onChange={handleChange} />
 
         <label className="mt-2 d-flex align-items-center gap-2">
-          <input type="checkbox" name="acceptTerms" checked={form.acceptTerms} onChange={handleChange} />
-          <span>I agree to the Terms of Use and Privacy Policy</span>
+          <input
+            type="checkbox"
+            name="acceptTerms"
+            checked={form.acceptTerms}
+            onChange={handleChange}
+          />
+          <span>
+            I agree to the{" "}
+            <a href="/legal/terms" target="_blank" rel="noopener noreferrer">
+              Terms of Use
+            </a>{" "}
+            and{" "}
+            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer">
+              Privacy Policy
+            </a>
+          </span>
         </label>
 
         <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} size="invisible" ref={recaptchaRef} />
@@ -196,8 +251,10 @@ export default function StudentRegister() {
       {error && <p className={styles.error}>❌ {error}</p>}
       {success && (
         <p className={styles.success}>
-          ✅ Registration successful! We’ve sent a verification email to <strong>{form.email}</strong>.
-          <br />Please verify your email to log in. Don’t forget to check your Spam/Junk.
+          ✅ Registration successful! <br/>
+          {calcAge(form.dob) < 18 
+            ? `We’ve emailed a parental consent request to ${form.parentEmail}.`
+            : `We’ve sent a verification email to ${form.email}. Please check Inbox/Spam.`}
         </p>
       )}
     </div>

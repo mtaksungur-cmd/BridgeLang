@@ -2,6 +2,9 @@
 import '../styles/globals.scss';
 import { useEffect } from 'react';
 import NavbarSwitcher from '../components/NavbarSwitcher';
+import Footer from '../components/Footer';
+import CookieBanner from '../components/CookieBanner';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function MyApp({ Component, pageProps }) {
   useEffect(() => {
@@ -11,7 +14,9 @@ export default function MyApp({ Component, pageProps }) {
   return (
     <>
       <NavbarSwitcher />
+      <CookieBanner />
       <Component {...pageProps} />
+      <Footer />
     </>
   );
 }

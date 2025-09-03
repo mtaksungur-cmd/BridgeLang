@@ -3,26 +3,51 @@ import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
-import TeacherLayout from '../../components/TeacherLayout';
 import styles from '../../scss/TeacherLessons.module.scss';
 
-const parseTimeTo24h = (timeStr) => {
-  const [_, hourStr, minuteStr, period] = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i) || [];
-  if (!hourStr) return null;
-  let hour = parseInt(hourStr, 10);
-  const minute = parseInt(minuteStr, 10);
-  if (period.toUpperCase() === 'PM' && hour !== 12) hour += 12;
-  if (period.toUpperCase() === 'AM' && hour === 12) hour = 0;
-  return { hour, minute };
-};
+/** Esnek saat parse: "14:30" veya "2:30 PM" */
+function parseFlexibleTime(timeStr) {
+  if (!timeStr) return null;
+  const m = timeStr.match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
+  if (!m) return null;
+  let [, hStr, minStr, ampm] = m;
+  let hour = parseInt(hStr, 10);
+  const minute = parseInt(minStr, 10);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
 
-const isPastLesson = (dateStr, timeStr) => {
-  const t = parseTimeTo24h(timeStr);
-  if (!t) return false;
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, m - 1, d, t.hour, t.minute);
-  return new Date() > dt;
-};
+  if (ampm) {
+    const p = ampm.toUpperCase();
+    if (p === 'PM' && hour !== 12) hour += 12;
+    if (p === 'AM' && hour === 12) hour = 0;
+  }
+  // 24h ise direkt geçer
+  return { hour, minute };
+}
+
+/** Dersten bitiş milisaniyesi: öncelik startAtUtc + duration */
+function getLessonEndMs(b) {
+  const durMin = parseInt(b?.duration, 10) || 60;
+
+  if (typeof b?.startAtUtc === 'number') {
+    return b.startAtUtc + durMin * 60_000;
+  }
+
+  // endTime varsa onu, yoksa startTime + duration kullan
+  const tEnd = parseFlexibleTime(b?.endTime);
+  const tStart = parseFlexibleTime(b?.startTime);
+  const useStartPlusDur = !tEnd && tStart;
+
+  if (!b?.date || (!tEnd && !tStart)) return null;
+
+  const [y, m, d] = b.date.split('-').map(Number);
+
+  if (useStartPlusDur) {
+    const start = Date.UTC(y, (m || 1) - 1, d || 1, tStart.hour, tStart.minute);
+    return start + durMin * 60_000;
+  } else {
+    return Date.UTC(y, (m || 1) - 1, d || 1, tEnd.hour, tEnd.minute);
+  }
+}
 
 export default function TeacherLessons() {
   const [bookings, setBookings] = useState([]);
@@ -44,10 +69,11 @@ export default function TeacherLessons() {
           'approved'
         ])
       );
+
       const snap = await getDocs(q);
       let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Öğrencileri topla
+      // Öğrenciler
       const studentIds = [...new Set(data.map(b => b.studentId).filter(Boolean))];
       const map = {};
       await Promise.all(studentIds.map(async (id) => {
@@ -56,24 +82,27 @@ export default function TeacherLessons() {
       }));
       setStudents(map);
 
-      // Sıralama
-      const now = new Date();
+      // Sıralama: önce öğretmen onayı bekleyen geçmiş dersler
+      const nowMs = Date.now();
       data.sort((a, b) => {
-        const aTime = new Date(`${a.date} ${a.startTime || '00:00'}`);
-        const bTime = new Date(`${b.date} ${b.startTime || '00:00'}`);
+        const aEnd = getLessonEndMs(a) ?? 0;
+        const bEnd = getLessonEndMs(b) ?? 0;
+
         const aWaiting =
-          ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(a.status) &&
-          aTime < now && !a.teacherApproved;
+          ['pending-approval','confirmed','student_approved','teacher_approved'].includes(a.status) &&
+          aEnd && nowMs > aEnd && !a.teacherApproved;
         const bWaiting =
-          ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(b.status) &&
-          bTime < now && !b.teacherApproved;
+          ['pending-approval','confirmed','student_approved','teacher_approved'].includes(b.status) &&
+          bEnd && nowMs > bEnd && !b.teacherApproved;
+
         if (aWaiting && !bWaiting) return -1;
         if (!aWaiting && bWaiting) return 1;
-        return bTime - aTime;
+        return (bEnd || 0) - (aEnd || 0);
       });
 
       setBookings(data);
     });
+
     return () => unsub();
   }, [router]);
 
@@ -82,6 +111,7 @@ export default function TeacherLessons() {
     if (booking.studentConfirmed) {
       updates.status = 'approved';
       updates.payoutSent = false;
+
       await fetch('/api/transfer-payout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -96,82 +126,75 @@ export default function TeacherLessons() {
   };
 
   return (
-      <div className={styles.container}>
-        <h2 className={styles.title}>📩 Your Lessons</h2>
+    <div className={styles.container}>
+      <h2 className={styles.title}>📩 Your Lessons</h2>
 
-        {bookings.length === 0 ? (
-          <p className={styles.empty}>No lessons found.</p>
-        ) : (
-          <div className={styles.grid}>
-            {bookings.map((r) => {
-              const student = students[r.studentId] || {};
-              const showCompleteBtn =
-                ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(r.status) &&
-                isPastLesson(r.date, r.endTime) &&
-                !r.teacherApproved;
+      {bookings.length === 0 ? (
+        <p className={styles.empty}>No lessons found.</p>
+      ) : (
+        <div className={styles.grid}>
+          {bookings.map((r) => {
+            const student = students[r.studentId] || {};
 
-              return (
-                <div key={r.id} className={styles.card}>
-                  <div className={styles.header}>
-                    {student.profilePhotoUrl && (
-                      <img
-                        src={student.profilePhotoUrl}
-                        alt="Student"
-                        className={styles.avatar}
-                      />
-                    )}
-                    <div className={styles.headerInfo}>
-                      <div className={styles.studentName}>
-                        <strong>Student:</strong> {student.name || '-'}
-                      </div>
-                      {student.level && (
-                        <div className={styles.studentLevel}>({student.level})</div>
-                      )}
+            const endMs = getLessonEndMs(r);
+            const showCompleteBtn =
+              ['pending-approval','confirmed','student_approved','teacher_approved'].includes(r.status) &&
+              endMs && Date.now() > endMs &&
+              !r.teacherApproved;
+
+            return (
+              <div key={r.id} className={styles.card}>
+                <div className={styles.header}>
+                  {student.profilePhotoUrl && (
+                    <img src={student.profilePhotoUrl} alt="Student" className={styles.avatar} />
+                  )}
+                  <div className={styles.headerInfo}>
+                    <div className={styles.studentName}>
+                      <strong>Student:</strong> {student.name || '-'}
                     </div>
-                  </div>
-
-                  <div className={styles.row}>
-                    <span><strong>Date:</strong> {r.date}</span>
-                    <span><strong>Time:</strong> {r.startTime} – {r.endTime}</span>
-                  </div>
-
-                  <div className={styles.statusRow}>
-                    <span className={`${styles.badge} ${styles[`badge--${r.status}`]}`}>
-                      {r.status}
-                    </span>
-                    {r.meetingLink && (
-                      <a
-                        href={r.meetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.link}
-                      >
-                        🔗 Join Lesson
-                      </a>
-                    )}
-                  </div>
-
-                  <div className={styles.actions}>
-                    {showCompleteBtn && (
-                      <button className={styles.primaryBtn} onClick={() => handleComplete(r)}>
-                        🎓 Confirm Lesson Completed
-                      </button>
-                    )}
-                    {r.status === 'approved' && (
-                      <p className={styles.approved}>🎉 Lesson approved by both sides.</p>
-                    )}
-                    <button
-                      className={styles.dangerBtn}
-                      onClick={() => router.push(`/teacher/report?bookingId=${r.id}`)}
-                    >
-                      🛑 Report
-                    </button>
+                    {student.level && <div className={styles.studentLevel}>({student.level})</div>}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+
+                <div className={styles.row}>
+                  <span><strong>Date:</strong> {r.date}</span>
+                  <span><strong>Time:</strong> {r.startTime} – {r.endTime}</span>
+                </div>
+
+                <div className={styles.row}>
+                  <span><strong>Location:</strong> {r.location || 'Not specified'}</span>
+                </div>
+
+                <div className={styles.statusRow}>
+                  <span className={`${styles.badge} ${styles[`badge--${r.status}`]}`}>{r.status}</span>
+                  {r.meetingLink && (
+                    <a href={r.meetingLink} target="_blank" rel="noopener noreferrer" className={styles.link}>
+                      🔗 Join Lesson
+                    </a>
+                  )}
+                </div>
+
+                <div className={styles.actions}>
+                  {showCompleteBtn && (
+                    <button className={styles.primaryBtn} onClick={() => handleComplete(r)}>
+                      🎓 Confirm Lesson Completed
+                    </button>
+                  )}
+                  {r.status === 'approved' && (
+                    <p className={styles.approved}>🎉 Lesson approved by both sides.</p>
+                  )}
+                  <button
+                    className={styles.dangerBtn}
+                    onClick={() => router.push(`/teacher/report?bookingId=${r.id}`)}
+                  >
+                    🛑 Report
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

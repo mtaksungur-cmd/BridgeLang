@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import TeacherLayout from '../../components/TeacherLayout';
 import styles from '../../scss/TeacherReport.module.scss';
 
 export default function TeacherReport() {

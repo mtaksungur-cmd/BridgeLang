@@ -1,0 +1,170 @@
+.page {
+  padding-top: 28px;
+  padding-bottom: 32px;
+}
+
+.header {
+  margin-bottom: 14px;
+
+  h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin: 0 0 .25rem 0;
+    color: #111827;
+  }
+
+  .sub {
+    margin: 0;
+    color: #6b7280;
+    font-size: .95rem;
+  }
+}
+
+.loading,
+.empty {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  padding: 22px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  background: #f9fafb;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar,
+.avatarFallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #eef2ff;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+
+.avatar { object-fit: cover; }
+
+.name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.meta {
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: .9rem;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+
+  button {
+    border: 0;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
+
+.approve { background: #10b981; color: #fff; }
+.reject { background: #ef4444; color: #fff; }
+
+.body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.col { min-width: 0; }
+
+.dl {
+  margin: 0;
+
+  dt {
+    font-weight: 700;
+    color: #111827;
+    margin-top: 10px;
+    font-size: .95rem;
+  }
+
+  dd {
+    margin: 4px 0 10px 0;
+    color: #374151;
+    line-height: 1.55;
+  }
+}
+
+.linkList {
+  margin: 0;
+  padding-left: 1rem;
+
+  li { margin: 2px 0; }
+  a {
+    color: #2563eb;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.video {
+  width: 100%;
+  max-width: 360px;
+  border-radius: 8px;
+  background: #000;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px;
+  background: #f9fafb;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 8px;
+  margin: 4px 0;
+
+  span { color: #6b7280; }
+  strong { color: #111827; }
+}

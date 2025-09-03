@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import StudentLayout from '../../components/StudentLayout';
 import styles from '../../scss/StudentCredits.module.scss';
 
 const UNIT_PRICE = 15; // £

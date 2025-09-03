@@ -1,0 +1,31 @@
+/* components/AdminNavbar.module.scss */
+.bar {
+  background: #102c57;
+  color: #fff;
+  padding: .6rem 0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+.nav {
+  display: flex;
+  gap: 1rem;
+
+  a { color: #e8eefc; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .logout {
+    border: 1px solid rgba(255,255,255,.25);
+    background: transparent;
+    color: #fff;
+    padding: .35rem .7rem;
+    border-radius: .5rem;
+    cursor: pointer;
+  }
+}

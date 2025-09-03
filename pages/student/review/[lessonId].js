@@ -4,7 +4,6 @@ import { auth, db } from '../../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { isInappropriate } from '../../../lib/messageFilter';
-import StudentLayout from '../../../components/StudentLayout';
 import styles from '../../../scss/ReviewLesson.module.scss';
 
 export default function ReviewLesson() {

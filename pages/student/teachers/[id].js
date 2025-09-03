@@ -1,8 +1,8 @@
+// pages/student/teachers/[id].js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import StudentLayout from '../../../components/StudentLayout';
 import styles from "../../../scss/TeacherProfile.module.scss";
 
 const badgeDescriptions = {
@@ -10,6 +10,21 @@ const badgeDescriptions = {
   '💼 Active Teacher': '💼 Active Teacher – Taught at least 8 approved lessons in the last 3 months.',
   '🌟 5-Star Teacher': '🌟 5-Star Teacher – Average rating of 4.8 or higher in the last 20 lessons.'
 };
+
+// 🔹 AM/PM stringini → 24 saatlik stringe çevir
+function to24Hour(timeStr) {
+  if (!timeStr) return "";
+  const parts = timeStr.split(" ");
+  if (parts.length === 2) {
+    // Örn: "09:30 AM"
+    const [hh, mm] = parts[0].split(":").map(x => parseInt(x, 10));
+    const ampm = parts[1];
+    let hours = hh % 12;
+    if (ampm === "PM") hours += 12;
+    return `${String(hours).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+  }
+  return timeStr; // zaten 24 saat formatındaysa dokunma
+}
 
 export default function TeacherProfilePage() {
   const [teacher, setTeacher] = useState(null);
@@ -175,7 +190,7 @@ export default function TeacherProfilePage() {
                         <td className={styles.dayCell}><strong>{day}</strong></td>
                         <td>
                           {Array.isArray(slots) && slots.length > 0
-                            ? slots.map(s => `${s.start}–${s.end}`).join(', ')
+                            ? slots.map(s => `${to24Hour(s.start)}–${to24Hour(s.end)}`).join(', ')
                             : 'No availability'}
                         </td>
                       </tr>
@@ -189,26 +204,24 @@ export default function TeacherProfilePage() {
           </div>
         </div>
 
-            <div className={styles.actions}>
-              <button
-                onClick={handleBookLesson}
-                className={styles.btnSecondary}
-              >
-                📅 Book Lesson
-              </button>
-              <button
-                onClick={handleStartChat}
-                disabled={chatsLeft === null || chatsLeft <= 0}
-                className={styles.btnSecondary}
-              >
-                💬 Send Message ({chatsLeft ?? 0} left)
-              </button>
-              {viewLimit !== null && (
-                <span className={styles.viewInfo}>
-                  Views left: <b>{viewLimit}</b>
-                </span>
-              )}
-            </div>
+        <div className={styles.actions}>
+          <button onClick={handleBookLesson} className={styles.btnSecondary}>
+            📅 Book Lesson
+          </button>
+          <button
+            onClick={handleStartChat}
+            disabled={chatsLeft === null || chatsLeft <= 0}
+            className={styles.btnSecondary}
+          >
+            💬 Send Message ({chatsLeft ?? 0} left)
+          </button>
+          {viewLimit !== null && (
+            <span className={styles.viewInfo}>
+              Views left: <b>{viewLimit}</b>
+            </span>
+          )}
+        </div>
+
         {/* YORUMLAR */}
         <div className={styles.reviews}>
           <h3>Student Reviews</h3>
