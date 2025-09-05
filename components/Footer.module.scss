@@ -4,18 +4,16 @@
 .footer {
   background: v.$primary-color;
   color: #f9fafb;
-  /* ↓ daha ince dikey padding */
   padding: .75rem 0;
   font-size: .9rem;
   position: sticky;
-  top: 100vh; /* kısa sayfalarda yine altta dursun */
+  top: 100vh;
   z-index: 1;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  /* ↓ aralık küçüldü */
   gap: .75rem 1rem;
   margin-bottom: .75rem;
 }
@@ -33,7 +31,6 @@
   margin: 0;
 
   li {
-    /* ↓ satır aralığı azaldı */
     margin: .25rem 0;
 
     a {
@@ -44,7 +41,23 @@
   }
 }
 
-/* alt satır daha ince */
+/* Sosyal medya ikonları */
+.socials {
+  display: flex;
+  gap: 12px;
+  margin-top: .25rem;
+
+  a {
+    color: #d1d5db;
+    font-size: 1.2rem;
+    transition: color .2s ease;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
 .bottomRow {
   border-top: 1px solid rgba(255,255,255,.12);
   padding-top: .6rem;
@@ -56,7 +69,6 @@
   }
 }
 
-/* büyük ekranlarda biraz daha sıkı */
 @media (min-width: 992px) {
   .footer { padding: .6rem 0; }
   .grid { gap: .6rem .9rem; margin-bottom: .6rem; }

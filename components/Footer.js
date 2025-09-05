@@ -8,7 +8,6 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className="container">
         <div className={styles.grid}>
-          
           {/* Company */}
           <div>
             <h5 className={styles.heading}>Company</h5>
@@ -38,10 +37,28 @@ export default function Footer() {
               <li><Link href="/legal">More Legal</Link></li>
             </ul>
           </div>
+
+          {/* Social Media */}
+          <div>
+            <h5 className={styles.heading}>Follow Us</h5>
+            <div className={styles.socials}>
+              <a href="https://www.instagram.com/bridgelang_uk?igsh=a3U0czIyODJ1cDNy" target="_blank" rel="noopener noreferrer">
+                <i className="bi bi-instagram"></i>
+              </a>
+              <a href="https://www.linkedin.com/company/bridgelang-uk/" target="_blank" rel="noopener noreferrer">
+                <i className="bi bi-linkedin"></i>
+              </a>
+              <a href="https://www.facebook.com/share/17858srkmF/" target="_blank" rel="noopener noreferrer">
+                <i className="bi bi-facebook"></i>
+              </a>
+            </div>
+          </div>
         </div>
 
         <div className={styles.bottomRow}>
-          <small>© {new Date().getFullYear()} BridgeLang UK Ltd. | Company No: 16555217 | Registered in England and Wales</small>
+          <small>
+            © {new Date().getFullYear()} BridgeLang UK Ltd. | Company No: 16555217 | Registered in England and Wales
+          </small>
         </div>
       </div>
     </footer>

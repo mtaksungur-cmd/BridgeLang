@@ -107,7 +107,7 @@ export default function TeachersList() {
             <input
               id="country"
               type="text"
-              placeholder="e.g., United Kingdom"
+              placeholder="e.g., England"
               value={country}
               onChange={(e) => { setCountry(e.target.value); setCity(''); }}
             />
