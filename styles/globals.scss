@@ -9,6 +9,20 @@
   $warning:   v.$warning-color
 );
 
+:root {
+  --nav-height: 64px;
+  --card-border: 1px solid rgba(0,0,0,.08);
+  --muted: rgba(0,0,0,.6);
+  --muted-2: rgba(0,0,0,.5);
+  --ring: 0 0 0 4px rgba(13,110,253,.12);
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  filter: invert(1);
+}
+
+
 html, body {
   height: 100%;
   margin: 0;
