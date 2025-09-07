@@ -1,5 +1,4 @@
-// pages/student/book/[id].js
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -43,7 +42,7 @@ export default function BookLessonPage() {
     fetchTeacher();
   }, [teacherId]);
 
-  // Seçili tarihteki rezervasyonlar
+  // Rezervasyonlar
   useEffect(() => {
     if (!teacherId || !selectedDate) return;
     const fetchBookings = async () => {
@@ -53,8 +52,7 @@ export default function BookLessonPage() {
         where('date', '==', selectedDate)
       );
       const snap = await getDocs(q);
-      const data = snap.docs.map(doc => doc.data());
-      setBookedSlots(data);
+      setBookedSlots(snap.docs.map(doc => doc.data()));
     };
     fetchBookings();
   }, [selectedDate, teacherId]);
@@ -67,14 +65,14 @@ export default function BookLessonPage() {
     return hours * 60 + minutes;
   };
 
-  // ✅ 24 saat formatına çevir
   const formatTo24Hour = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   };
 
-  const generateSlots = () => {
+  // ✅ useCallback ile dependency fix
+  const generateSlots = useCallback(() => {
     if (!teacher || !selectedDate) return [];
     const day = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
     const daySlots = teacher.availability?.[day] || [];
@@ -91,14 +89,12 @@ export default function BookLessonPage() {
         const slotStart = t;
         const slotEnd = t + duration;
 
-        // Çakışma kontrolü
         const isTaken = bookedSlots.some(b => {
           const bookedStart = convertToMinutes(b.startTime);
           const bookedEnd = convertToMinutes(b.endTime);
           return slotStart < bookedEnd && slotEnd > bookedStart;
         });
 
-        // Geçmiş saat filtresi (bugünün tarihi ise)
         if (selected.toDateString() === today.toDateString()) {
           const nowMinutes = today.getHours() * 60 + today.getMinutes();
           if (slotStart <= nowMinutes) continue;
@@ -113,21 +109,11 @@ export default function BookLessonPage() {
       }
     });
     setAvailableSlots(result);
-  };
+  }, [teacher, bookedSlots, duration, selectedDate]);
 
   useEffect(() => {
     generateSlots();
-  }, [teacher, bookedSlots, duration, selectedDate]);
-
-  const createDailyMeeting = async () => {
-    const res = await fetch('/api/daily/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ duration }),
-    });
-    const data = await res.json();
-    return data.url;
-  };
+  }, [generateSlots]);
 
   const handleBooking = async (slot) => {
     setMsg('');
@@ -210,8 +196,8 @@ export default function BookLessonPage() {
           >
             <option value="">-- Select --</option>
             <option value="Online">Online</option>
-            <option value="Teacher's Home">Teacher's Home</option>
-            <option value="Student's Home">Student's Home</option>
+            <option value="Teacher&apos;s Home">Teacher&apos;s Home</option>
+            <option value="Student&apos;s Home">Student&apos;s Home</option>
             <option value="Other">Other</option>
           </select>
         </label>
