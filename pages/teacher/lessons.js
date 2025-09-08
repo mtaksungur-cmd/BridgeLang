@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
+import Image from 'next/image';
 import styles from '../../scss/TeacherLessons.module.scss';
 
 /** Esnek saat parse: "14:30" veya "2:30 PM" */
@@ -146,7 +147,13 @@ export default function TeacherLessons() {
               <div key={r.id} className={styles.card}>
                 <div className={styles.header}>
                   {student.profilePhotoUrl && (
-                    <img src={student.profilePhotoUrl} alt="Student" className={styles.avatar} />
+                    <Image
+                      src={student.profilePhotoUrl}
+                      alt="Student"
+                      className={styles.avatar}
+                      width={44}    // avatar boyutu için uygun değer
+                      height={44}
+                    />
                   )}
                   <div className={styles.headerInfo}>
                     <div className={styles.studentName}>
