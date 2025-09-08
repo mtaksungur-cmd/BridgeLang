@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '../lib/firebase';
+import Link from "next/link";
 import {
   signInWithEmailAndPassword,
   sendEmailVerification,
@@ -190,7 +191,14 @@ export default function LoginPage() {
         </form>
 
         <div className={styles.hint}>
-          New here? <a href="/student/register">Create a student account</a> or <a href="/teacher/apply">apply as a teacher</a>.
+          New here?{" "}
+          <Link href="/student/register" className={styles.inlineLink}>
+            Create a student account
+          </Link>{" "}
+          or{" "}
+          <Link href="/teacher/apply" className={styles.inlineLink}>
+            apply as a teacher
+          </Link>.
         </div>
       </section>
     </main>
