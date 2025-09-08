@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import styles from '../../scss/AdminTeachers.module.scss';
+import Image from "next/image";
 
 export default function AdminTeachers() {
   const [applications, setApplications] = useState([]);
@@ -73,10 +74,12 @@ export default function AdminTeachers() {
               <div className={styles.head}>
                 <div className={styles.identity}>
                   {app.profilePhotoUrl ? (
-                    <img
+                    <Image
                       src={app.profilePhotoUrl}
                       alt={`${app.name || 'Teacher'} photo`}
                       className={styles.avatar}
+                      width={64}
+                      height={64}
                     />
                   ) : (
                     <div className={styles.avatarFallback}>👤</div>
