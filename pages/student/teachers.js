@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { db, auth } from '../../lib/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
+import Image from 'next/image';
 import SubscriptionBanner from "../../components/SubscriptionBanner";
 import { useRouter } from 'next/router';
 import styles from "../../scss/TeachersList.module.scss";
@@ -183,7 +184,13 @@ export default function TeachersList() {
                   {t.latestBadge && <p className={styles.badge}>{t.latestBadge}</p>}
 
                   {t.profilePhotoUrl && (
-                    <img src={t.profilePhotoUrl} alt="Profile" className={styles.profileImg} />
+                    <Image
+                      src={t.profilePhotoUrl}
+                      alt="Profile"
+                      className={styles.profileImg}
+                      width={100}   // istediğin boyutu yaz
+                      height={100}
+                    />
                   )}
 
                   {/* Yeni alanlar */}
