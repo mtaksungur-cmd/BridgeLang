@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import Image from 'next/image';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { DateTime } from 'luxon';
@@ -128,7 +129,13 @@ export default function StudentLessons() {
                     {/* Header */}
                     <div className="d-flex align-items-center mb-3">
                       {t.profilePhotoUrl ? (
-                        <img src={t.profilePhotoUrl} alt="Teacher" className={styles.avatar} />
+                          <Image
+                            src={t.profilePhotoUrl}
+                            alt="Teacher"
+                            className={styles.avatar}
+                            width={44}
+                            height={44}
+                          />
                       ) : (
                         <div className={styles.avatarPlaceholder}>T</div>
                       )}
