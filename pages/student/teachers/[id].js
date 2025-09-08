@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
+import Image from 'next/image';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import styles from "../../../scss/TeacherProfile.module.scss";
 
@@ -134,7 +135,13 @@ export default function TeacherProfilePage() {
           {/* Sol panel */}
           <div className={styles.leftPanel}>
             {teacher.profilePhotoUrl && (
-              <img src={teacher.profilePhotoUrl} alt="Profile" className={styles.profileImg} />
+              <Image
+                src={teacher.profilePhotoUrl}
+                alt="Profile"
+                className={styles.profileImg}
+                width={180}   // istediğin boyutu verebilirsin
+                height={180}
+              />
             )}
             <h2 className={styles.name}>{teacher.name}</h2>
             {teacher.avgRating && (
@@ -235,10 +242,12 @@ export default function TeacherProfilePage() {
                   <div key={i} className={styles.reviewCard}>
                     <div className={styles.reviewHeader}>
                       {student?.profilePhotoUrl && (
-                        <img
+                        <Image
                           src={student.profilePhotoUrl}
                           alt={student.name}
                           className={styles.reviewAvatar}
+                          width={40}   // istediğin boyutu verebilirsin
+                          height={40}
                         />
                       )}
                       <div>
