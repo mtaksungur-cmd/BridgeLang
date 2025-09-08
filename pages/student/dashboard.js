@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { onAuthStateChanged } from 'firebase/auth';
+import Image from 'next/image';
 import SubscriptionBanner from '../../components/SubscriptionBanner';
 import LoyaltyBadge from '../../components/LoyaltyBadge';
 import { getLoyaltyInfo } from '../../lib/loyalty'; // <— YENİ
@@ -159,13 +160,15 @@ export default function StudentDashboard() {
         <div className={styles['dashboard-row']}>
           <div className={styles['dashboard-profile']}>
             {data?.profilePhotoUrl ? (
-              <img
+              <Image
                 src={data.profilePhotoUrl}
                 alt="Profile"
-                className={styles['dashboard-profile-img']}
+                className={styles["dashboard-profile-img"]}
+                width={128}
+                height={128}
               />
             ) : (
-              <p style={{ fontStyle: 'italic' }}>No profile photo uploaded</p>
+              <p style={{ fontStyle: "italic" }}>No profile photo uploaded</p>
             )}
             <br />
             <label className={styles['dashboard-profile-label']}>
@@ -210,10 +213,12 @@ export default function StudentDashboard() {
                 return (
                   <div key={i} className={styles['dashboard-card']}>
                     {teacher.profilePhotoUrl && (
-                      <img
+                      <Image
                         src={teacher.profilePhotoUrl}
                         alt="Teacher"
-                        className={styles['dashboard-card-img']}
+                        className={styles["dashboard-card-img"]}
+                        width={150}
+                        height={150}
                       />
                     )}
                     <div className={styles['dashboard-card-body']}>
