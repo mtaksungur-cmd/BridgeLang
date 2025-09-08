@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
+import Image from 'next/image';
 
 const handleLogout = () => {
   signOut(auth).then(() => {
@@ -14,11 +15,12 @@ export default function TeacherNavbar() {
       <div className="container">  
       <Link href="/teacher/dashboard"
         className="navbar-brand d-flex align-items-center">
-            <img 
-              src="/bridgelang.png" 
-              alt="BridgeLang Logo" 
-              height="30" 
-              className="me-2" 
+            <Image
+              src="/bridgelang.png"
+              alt="BridgeLang Logo"
+              width={50}   // orantıya göre bir genişlik yaz
+              height={50}   // yükseklik aynı kalabilir
+              className="me-2"
             />
             <span style={{ color: 'white', fontWeight: 'bold' }}>BridgeLang</span>
         </Link>
