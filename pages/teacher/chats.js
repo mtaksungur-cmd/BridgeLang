@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
 import {
@@ -129,14 +130,16 @@ export default function TeacherChats() {
                 onClick={() => router.push(`/teacher/chats/${chatId}`)}
               >
                 {student?.profilePhotoUrl ? (
-                  <img
+                  <Image
                     className={styles.avatar}
                     src={student.profilePhotoUrl}
-                    alt={student?.name || 'Student'}
+                    alt={student?.name || "Student"}
+                    width={48}   // avatar için uygun bir boyut yaz
+                    height={48}
                   />
                 ) : (
                   <div className={styles.avatarFallback}>
-                    {(student?.name || 'S')[0]}
+                    {(student?.name || "S")[0]}
                   </div>
                 )}
 
