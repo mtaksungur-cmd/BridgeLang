@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { auth, db } from '../../lib/firebase';
+import Link from 'next/link';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -231,13 +232,13 @@ export default function StudentRegister() {
           />
           <span>
             I agree to the{" "}
-            <a href="/legal/terms" target="_blank" rel="noopener noreferrer">
+            <Link href="/legal/terms" target="_blank" rel="noopener noreferrer" className={styles.inlineLink}>
               Terms of Use
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer">
+            <Link href="/legal/privacy" target="_blank" rel="noopener noreferrer" className={styles.inlineLink}>
               Privacy Policy
-            </a>
+            </Link>
           </span>
         </label>
 
