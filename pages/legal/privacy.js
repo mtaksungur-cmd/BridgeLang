@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import styles from '../../scss/Privacy.module.scss';
 
 export default function PrivacyPolicy() {
@@ -181,7 +182,7 @@ export default function PrivacyPolicy() {
               <li>14.1 Cookies are used to improve user experience.</li>
               <li>14.2 Users may adjust cookie preferences via their browser settings.</li>
               <li>14.3 You can manage your cookie preferences at any time via our cookie consent banner available on the website footer.</li>
-              <li>14.4 For more details, please refer to our <a href="/legal/cookie">Cookie Policy</a>.</li>
+              <li>14.4 For more details, please refer to our <Link href="/legal/cookie" className={styles.inlineLink}>Cookie Policy</Link>.</li>
             </ul>
           </section>
 
