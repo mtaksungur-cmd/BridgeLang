@@ -4,6 +4,7 @@ import { db, auth } from '../../lib/firebase';
 import {
   doc, getDoc, collection, query, where, getDocs, updateDoc
 } from 'firebase/firestore';
+import Image from 'next/image';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from '../../scss/TeacherDashboard.module.scss';
 
@@ -156,7 +157,13 @@ export default function TeacherDashboard() {
         <section className={styles.profile}>
           <div className={styles.profile__left}>
             {data.profilePhotoUrl && (
-              <img className={styles.profile__avatar} src={data.profilePhotoUrl} alt="Profile" />
+              <Image
+                className={styles.profile__avatar}
+                src={data.profilePhotoUrl}
+                alt="Profile"
+                width={160}   // profil avatarı için uygun boyut
+                height={160}
+              />
             )}
             <label className={styles.profile__uploadLabel}>
               <span>Change Profile Photo</span>
