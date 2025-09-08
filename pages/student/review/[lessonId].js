@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '../../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import Image from 'next/image';
 import { isInappropriate } from '../../../lib/messageFilter';
 import styles from '../../../scss/ReviewLesson.module.scss';
 
@@ -84,10 +85,12 @@ export default function ReviewLesson() {
 
         <div className={styles.teacherBox}>
           {teacher.profilePhotoUrl && (
-            <img
+            <Image
               src={teacher.profilePhotoUrl}
               alt="Teacher"
               className={styles.avatar}
+              width={60}   // istediğin değeri yazabilirsin
+              height={60}  // istediğin değeri yazabilirsin
             />
           )}
           <p><strong>{teacher.name}</strong></p>
