@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import styles from './DefaultNavbar.module.scss';
+import Image from "next/image";
 
 export default function DefaultNavbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -38,7 +39,13 @@ export default function DefaultNavbar() {
       <div className="container">
         {/* Logo */}
         <Link href="/" className="navbar-brand d-flex align-items-center">
-          <img src="/bridgelang.png" alt="BridgeLang Logo" height="30" className="me-2" />
+          <Image 
+            src="/bridgelang.png" 
+            alt="BridgeLang Logo" 
+            width={50} 
+            height={50} 
+            className="me-2"
+          />
           <span style={{ color: 'white', fontWeight: 'bold' }}>BridgeLang</span>
         </Link>
 
