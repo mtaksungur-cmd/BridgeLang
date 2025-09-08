@@ -1,6 +1,6 @@
-// pages/index.js
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./Home.module.scss";
 
 export default function Home() {
@@ -25,20 +25,19 @@ export default function Home() {
               Book lessons online or in person. Secure payments, automatic scheduling, and friendly support.
             </p>
             <div>
-              <a
+              <Link
                 href="/student/register"
                 className={`btn btn-primary me-2 ${styles.heroBtnPrimary}`}
               >
                 Get Started
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/how-it-works"
                 className={`btn btn-outline-secondary ${styles.heroBtnSecondary}`}
               >
                 How it works
-              </a>
+              </Link>
             </div>
-
           </div>
 
           <div className="col-lg-6 text-center">
@@ -59,7 +58,7 @@ export default function Home() {
           <div className="row g-4">
             <div className="col-md-4">
               <div className={styles.howCard}>
-                <h5>1) Search & Message</h5>
+                <h5>1) Search &amp; Message</h5>
                 <p className="mb-0">
                   Browse verified tutors, check availability, and send a safe
                   in-app message to discuss your goals.
@@ -68,15 +67,15 @@ export default function Home() {
             </div>
             <div className="col-md-4">
               <div className={styles.howCard}>
-                <h5>2) Book & Pay</h5>
+                <h5>2) Book &amp; Pay</h5>
                 <p className="mb-0">
-                  Pick a time that works. Pay with Stripe. You’ll get instant booking confirmation and calendar invites.
+                  Pick a time that works. Pay with Stripe. You&apos;ll get instant booking confirmation and calendar invites.
                 </p>
               </div>
             </div>
             <div className="col-md-4">
               <div className={styles.howCard}>
-                <h5>3) Learn & Review</h5>
+                <h5>3) Learn &amp; Review</h5>
                 <p className="mb-0">
                   Meet online via Daily or in person. After both confirm the lesson, the tutor is paid. Leave a review to help others.
                 </p>
@@ -91,7 +90,7 @@ export default function Home() {
           <div className="row g-4">
             <div className="col-md-6">
               <div className={styles.highlightBox}>
-                <h6 className="mb-2">Verified & supported</h6>
+                <h6 className="mb-2">Verified &amp; supported</h6>
                 <p className="mb-0">
                   Each tutor completes an onboarding check and profile review. We spotlight active, well-reviewed teachers.
                 </p>
@@ -110,14 +109,18 @@ export default function Home() {
 
         {/* PRICING TEASER */}
         <section className={`mt-5 ${styles.pricing}`}>
-          <div className={`p-4 rounded-3 border bg-light d-md-flex align-items-center justify-content-between ${styles.pricingBox}`}>
+          <div
+            className={`p-4 rounded-3 border bg-light d-md-flex align-items-center justify-content-between ${styles.pricingBox}`}
+          >
             <div>
               <h3 className="h4 fw-bold mb-1">Simple plans for learners</h3>
-              <p className="mb-0">Starter, Pro, and VIP — pick what fits your learning pace.</p>
+              <p className="mb-0">
+                Starter, Pro, and VIP — pick what fits your learning pace.
+              </p>
             </div>
-            <a href="/student/subscription" className="btn btn-primary mt-3 mt-md-0">
+            <Link href="/student/subscription" className="btn btn-primary mt-3 mt-md-0">
               View plans
-            </a>
+            </Link>
           </div>
         </section>
 
@@ -150,19 +153,21 @@ export default function Home() {
             <p className="mb-3">
               Read our quick FAQ to learn about refunds, rescheduling, and safety.
             </p>
-            <a href="/faq" className="btn btn-outline-secondary">
+            <Link href="/faq" className="btn btn-outline-secondary">
               Read FAQ
-            </a>
+            </Link>
           </div>
         </section>
 
         {/* FINAL CTA */}
         <section className={styles.finalCta}>
           <h2 className="h3 fw-bold mb-2">Ready to start?</h2>
-          <p className="mb-3">Create a free account and book your first lesson today.</p>
-          <a href="/student/register" className="btn btn-primary">
+          <p className="mb-3">
+            Create a free account and book your first lesson today.
+          </p>
+          <Link href="/student/register" className="btn btn-primary">
             Create account
-          </a>
+          </Link>
         </section>
       </div>
     </>
