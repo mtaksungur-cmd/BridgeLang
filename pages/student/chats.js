@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { auth, db } from "../../lib/firebase";
 import { collection, getDocs, doc, getDoc, query } from "firebase/firestore";
+import Image from "next/image";
 import styles from "../../scss/StudentChats.module.scss";
 
 export default function StudentChatsPage() {
@@ -78,10 +79,12 @@ export default function StudentChatsPage() {
               onClick={() => router.push(`/student/chats/${chatId}`)}
             >
               {teacher.profilePhotoUrl && (
-                <img
+                <Image
                   src={teacher.profilePhotoUrl}
                   alt="Teacher"
                   className={styles.chatAvatar}
+                  width={48}
+                  height={48}
                 />
               )}
               <div className={styles.chatInfo}>
