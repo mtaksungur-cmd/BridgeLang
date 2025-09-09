@@ -1,27 +1,20 @@
+// pages/api/upload.js
 import { initializeApp, cert, getApps, getApp } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
-import { readFileSync } from 'fs';
-import path from 'path';
 import Busboy from 'busboy';
-
-const serviceAccount = JSON.parse(
-  readFileSync(path.join(process.cwd(), 'serviceAccountKey.json'), 'utf8')
-);
-
-const BUCKET_NAME = 'bridgelang-uk.firebasestorage.app';
-console.log('ENV Bucket:', process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
-console.log('Apps:', getApps());
 
 let app;
 if (!getApps().length) {
   app = initializeApp({
-    credential: cert(serviceAccount),
-    storageBucket: BUCKET_NAME,
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    }),
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   });
-  console.log('✅ Firebase initialized with bucket:', BUCKET_NAME);
 } else {
   app = getApp();
-  console.log('ℹ️ Firebase already initialized.');
 }
 
 export const config = {
@@ -37,9 +30,7 @@ export default function handler(req, res) {
   let uploadPromise;
 
   busboy.on('file', (fieldname, file, { filename, mimeType }) => {
-    const bucket = getStorage(app).bucket('bridgelang-uk.firebasestorage.app'); // 🔥 dikkat! `app` burada kesin initialize edilmiş!
-    console.log('Bucket name being used:', bucket.name);
-
+    const bucket = getStorage(app).bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
     const fileRef = bucket.file(`uploads/${Date.now()}-${filename}`);
 
     uploadPromise = new Promise((resolve, reject) => {
