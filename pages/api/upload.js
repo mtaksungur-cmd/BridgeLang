@@ -8,7 +8,7 @@ const serviceAccount = JSON.parse(
   readFileSync(path.join(process.cwd(), 'serviceAccountKey.json'), 'utf8')
 );
 
-const BUCKET_NAME = 'bridgelang-3f27c.firebasestorage.app';
+const BUCKET_NAME = 'bridgelang-uk.firebasestorage.app';
 console.log('ENV Bucket:', process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
 console.log('Apps:', getApps());
 
@@ -37,7 +37,7 @@ export default function handler(req, res) {
   let uploadPromise;
 
   busboy.on('file', (fieldname, file, { filename, mimeType }) => {
-    const bucket = getStorage(app).bucket('bridgelang-3f27c.firebasestorage.app'); // 🔥 dikkat! `app` burada kesin initialize edilmiş!
+    const bucket = getStorage(app).bucket('bridgelang-uk.firebasestorage.app'); // 🔥 dikkat! `app` burada kesin initialize edilmiş!
     console.log('Bucket name being used:', bucket.name);
 
     const fileRef = bucket.file(`uploads/${Date.now()}-${filename}`);
