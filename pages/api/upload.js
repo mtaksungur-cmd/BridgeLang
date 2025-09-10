@@ -2,6 +2,7 @@
 import { initializeApp, cert, getApps, getApp } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
 import Busboy from 'busboy';
+import { v4 as uuidv4 } from 'uuid';
 
 let app;
 if (!getApps().length) {
@@ -41,19 +42,24 @@ export default function handler(req, res) {
 
     const bucket = getStorage(app).bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
     const fileRef = bucket.file(`uploads/${Date.now()}-${safeName}`);
+    const uuid = uuidv4();
 
     uploadPromise = new Promise((resolve, reject) => {
-      file.pipe(fileRef.createWriteStream({ contentType: mimeType }))
+      file.pipe(
+        fileRef.createWriteStream({
+          contentType: mimeType,
+          metadata: {
+            metadata: {
+              firebaseStorageDownloadTokens: uuid, // ✅ manuel token ekle
+            },
+          },
+        })
+      )
         .on('error', reject)
         .on('finish', async () => {
           try {
-            // ✅ herkese açık erişim token oluştur
-            const [metadata] = await fileRef.getMetadata();
-            const token = metadata.metadata?.firebaseStorageDownloadTokens;
-
             const publicUrl =
-              `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileRef.name)}?alt=media&token=${token}`;
-
+              `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileRef.name)}?alt=media&token=${uuid}`;
             resolve(publicUrl);
           } catch (err) {
             reject(err);
@@ -66,7 +72,7 @@ export default function handler(req, res) {
     try {
       if (!uploadPromise) throw new Error('No file uploaded.');
       const url = await uploadPromise;
-      res.status(200).json({ url }); // ✅ artık apply.js ile uyumlu
+      res.status(200).json({ url });
     } catch (err) {
       console.error('Upload error:', err);
       res.status(500).json({ error: err.message });
