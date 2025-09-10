@@ -4,6 +4,9 @@ import { db } from '../../lib/firebase';
 import { collection, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import styles from '../../scss/AdminTeachers.module.scss';
 import Image from "next/image";
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+
+const storage = getStorage(undefined, "bridgelang-uk.firebasestorage.app");
 
 export default function AdminTeachers() {
   const [applications, setApplications] = useState([]);
@@ -13,7 +16,21 @@ export default function AdminTeachers() {
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'pendingTeachers'));
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const data = await Promise.all(
+          snap.docs.map(async (d) => {
+            const app = { id: d.id, ...d.data() };
+            if (app.profilePhotoUrl) {
+              try {
+                const gsPath = `gs://bridgelang-uk.firebasestorage.app/${app.profilePhotoUrl}`;
+                app.profilePhotoResolved = await getDownloadURL(ref(storage, gsPath));
+              } catch (e) {
+                console.error("Photo resolve error:", e);
+                app.profilePhotoResolved = null;
+              }
+            }
+            return app;
+          })
+        );
         setApplications(data);
       } finally {
         setLoading(false);
@@ -73,9 +90,9 @@ export default function AdminTeachers() {
             <article key={app.id} className={styles.card}>
               <div className={styles.head}>
                 <div className={styles.identity}>
-                  {app.profilePhotoUrl ? (
+                  {app.profilePhotoResolved ? (
                     <Image
-                      src={app.profilePhotoUrl}
+                      src={app.profilePhotoResolved}
                       alt={`${app.name || 'Teacher'} photo`}
                       className={styles.avatar}
                       width={64}
