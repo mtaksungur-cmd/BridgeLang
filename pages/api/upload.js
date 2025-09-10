@@ -35,9 +35,13 @@ export default function handler(req, res) {
   let uploadPromise;
 
   busboy.on('file', (fieldname, file, { filename, mimeType }) => {
+  // 🔹 Türkçe ve özel karakterleri temizle
+    const safeName = filename.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  
     const bucket = getStorage(app).bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
-    const fileRef = bucket.file(`uploads/${Date.now()}-${filename}`);
-
+    const fileRef = bucket.file(`uploads/${Date.now()}-${safeName}`);
+  
     uploadPromise = new Promise((resolve, reject) => {
       file.pipe(fileRef.createWriteStream({ contentType: mimeType }))
         .on('error', reject)
