@@ -9,20 +9,24 @@ import { onAuthStateChanged } from 'firebase/auth';
 import Image from 'next/image';
 import SubscriptionBanner from '../../components/SubscriptionBanner';
 import LoyaltyBadge from '../../components/LoyaltyBadge';
-import { getLoyaltyInfo } from '../../lib/loyalty'; // <— YENİ
+import { getLoyaltyInfo } from '../../lib/loyalty';
 import { useSubscriptionGuard } from '../../lib/subscriptionGuard';
 import styles from '../../scss/StudentDashboard.module.scss';
 
+// ✅ storage import
+import { getStorage, ref, getDownloadURL } from 'firebase/storage';
+const storage = getStorage();
+
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
-  const [loyalty, setLoyalty] = useState(null);          // <— YENİ
+  const [loyalty, setLoyalty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [bookings, setBookings] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [teachers, setTeachers] = useState({});
+  const [photoUrl, setPhotoUrl] = useState(null); // ✅ resolved download URL
   const router = useRouter();
-
 
   const activeUntilMillis =
     data?.subscription?.activeUntil?._seconds
@@ -58,7 +62,6 @@ export default function StudentDashboard() {
 
       setData({ ...userData, uid: user.uid });
 
-      // Loyalty bilgisini çek
       try {
         const info = await getLoyaltyInfo(user.uid);
         setLoyalty(info);
@@ -67,14 +70,32 @@ export default function StudentDashboard() {
         setLoyalty(null);
       }
 
-      // Rezervasyonları çek
       fetchBookings(user.uid);
-
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  // ✅ fotoğraf URL resolve
+  useEffect(() => {
+    const loadPhoto = async () => {
+      if (data?.profilePhotoUrl) {
+        if (data.profilePhotoUrl.startsWith('http')) {
+          setPhotoUrl(data.profilePhotoUrl);
+        } else {
+          try {
+            const url = await getDownloadURL(ref(storage, data.profilePhotoUrl));
+            setPhotoUrl(url);
+          } catch (e) {
+            console.error('downloadURL error:', e);
+            setPhotoUrl(null);
+          }
+        }
+      }
+    };
+    loadPhoto();
+  }, [data?.profilePhotoUrl]);
 
   const fetchBookings = async (uid) => {
     const q = query(collection(db, 'bookings'), where('studentId', '==', uid));
@@ -82,7 +103,6 @@ export default function StudentDashboard() {
     const bookingsList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setBookings(bookingsList);
 
-    // Öğretmen bilgilerini tek seferde topla
     const teacherIds = [...new Set(bookingsList.map(b => b.teacherId))];
     const teacherMap = {};
     for (let id of teacherIds) {
@@ -91,7 +111,6 @@ export default function StudentDashboard() {
     }
     setTeachers(teacherMap);
 
-    // Yorum yapılmış dersleri getir
     const rSnap = await getDocs(collection(db, 'reviews'));
     const rMap = {};
     rSnap.docs.forEach(d => rMap[d.id] = true);
@@ -113,11 +132,12 @@ export default function StudentDashboard() {
       });
       const result = await res.json();
 
+      // ✅ sadece path kaydediyoruz
       await updateDoc(doc(db, 'users', data.uid), {
-        profilePhotoUrl: result.url,
+        profilePhotoUrl: result.path,
       });
 
-      setData((prev) => ({ ...prev, profilePhotoUrl: result.url }));
+      setData((prev) => ({ ...prev, profilePhotoUrl: result.path }));
     } catch (err) {
       alert('Failed to upload photo.');
       console.error(err);
@@ -128,7 +148,6 @@ export default function StudentDashboard() {
 
   if (loading) return <p>Loading...</p>;
 
-  // ---- SIRALAMA ----
   let sortedBookings = [...bookings];
   const getTime = (b) => new Date(b.date + ' ' + (b.startTime || '00:00')).getTime();
   sortedBookings.sort((a, b) => {
@@ -142,13 +161,11 @@ export default function StudentDashboard() {
   return (
     <div>
       <SubscriptionBanner />
-
-      {/* Loyalty rozet */}
       {loyalty && loyalty.plan !== 'starter' && (
         <LoyaltyBadge
           plan={loyalty.plan}
           loyaltyMonths={loyalty.loyaltyMonths}
-          loyaltyBonusCount={loyalty.loyaltyBonusCount}   // <— isim değişti
+          loyaltyBonusCount={loyalty.loyaltyBonusCount}
           discountEligible={loyalty.discountEligible}
           promoCode={loyalty.promoCode}
         />
@@ -159,9 +176,9 @@ export default function StudentDashboard() {
 
         <div className={styles['dashboard-row']}>
           <div className={styles['dashboard-profile']}>
-            {data?.profilePhotoUrl ? (
+            {photoUrl ? (
               <Image
-                src={data.profilePhotoUrl}
+                src={photoUrl}
                 alt="Profile"
                 className={styles["dashboard-profile-img"]}
                 width={128}
