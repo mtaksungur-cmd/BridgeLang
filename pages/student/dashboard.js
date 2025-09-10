@@ -15,7 +15,7 @@ import styles from '../../scss/StudentDashboard.module.scss';
 
 // ✅ storage import
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
-const storage = getStorage();
+const storage = getStorage(undefined, "bridgelang-uk.firebasestorage.app");
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
