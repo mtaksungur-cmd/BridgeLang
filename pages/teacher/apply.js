@@ -75,14 +75,24 @@ export default function TeacherApply() {
 
   // ✅ Boş dosya varsa null döndürür
   const uploadFileViaApi = async (file) => {
-    if (!file) return null;
+    if (!file) return null;  // ✅ dosya yoksa null
     try {
       const formData = new FormData();
       formData.append('file', file);
+  
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        console.error('upload failed, status:', res.status);
+        return null;
+      }
+  
       const data = await res.json();
-      return data?.url || null;
+      if (!data?.url) {
+        console.error('upload returned no url:', data);
+        return null;
+      }
+  
+      return data.url;   // ✅ string garanti
     } catch (err) {
       console.error('uploadFileViaApi error:', err);
       return null;
