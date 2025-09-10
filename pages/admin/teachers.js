@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import styles from '../../scss/AdminTeachers.module.scss';
 import Image from "next/image";
 
@@ -13,16 +13,7 @@ export default function AdminTeachers() {
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'pendingTeachers'));
-        const data = snap.docs.map((d) => {
-          const app = { id: d.id, ...d.data() };
-          // ✅ Fotoğraf URL'si zaten tam link, direkt kullan
-          if (app.profilePhotoUrl) {
-            app.profilePhotoResolved = app.profilePhotoUrl;
-          } else {
-            app.profilePhotoResolved = null;
-          }
-          return app;
-        });
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setApplications(data);
       } finally {
         setLoading(false);
@@ -32,17 +23,12 @@ export default function AdminTeachers() {
 
   const approveTeacher = async (app) => {
     try {
-      await setDoc(
-        doc(db, 'users', app.id),
-        {
-          ...app,
-          role: 'teacher',
-          status: 'approved',
-          emailVerified: true,
-        },
-        { merge: true }
-      );
-      await deleteDoc(doc(db, 'pendingTeachers', app.id));
+      const res = await fetch('/api/admin/approveTeacher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacher: app })
+      });
+      if (!res.ok) throw new Error('API error');
       setApplications(prev => prev.filter(a => a.id !== app.id));
       alert(`✅ ${app.name || 'Teacher'} approved.`);
     } catch (err) {
@@ -54,7 +40,12 @@ export default function AdminTeachers() {
   const rejectTeacher = async (id) => {
     if (!confirm('Are you sure you want to reject this application?')) return;
     try {
-      await deleteDoc(doc(db, 'pendingTeachers', id));
+      const res = await fetch('/api/admin/rejectTeacher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacherId: id })
+      });
+      if (!res.ok) throw new Error('API error');
       setApplications(prev => prev.filter(a => a.id !== id));
       alert('Application rejected.');
     } catch (err) {
@@ -82,9 +73,9 @@ export default function AdminTeachers() {
             <article key={app.id} className={styles.card}>
               <div className={styles.head}>
                 <div className={styles.identity}>
-                  {app.profilePhotoResolved ? (
+                  {app.profilePhotoUrl ? (
                     <Image
-                      src={app.profilePhotoResolved}
+                      src={app.profilePhotoUrl}
                       alt={`${app.name || 'Teacher'} photo`}
                       className={styles.avatar}
                       width={64}
