@@ -41,22 +41,21 @@ export default function handler(req, res) {
     uploadPromise = new Promise((resolve, reject) => {
       file.pipe(fileRef.createWriteStream({ contentType: mimeType }))
         .on('error', reject)
-        .on('finish', async () => {
-          try {
-            await fileRef.makePublic();
-            const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileRef.name}`;
-            resolve(publicUrl);
-          } catch (err) {
-            reject(err);
-          }
-        });
+        .on('finish', () => resolve(fileRef));
     });
   });
 
   busboy.on('finish', async () => {
     try {
       if (!uploadPromise) throw new Error('No file uploaded.');
-      const url = await uploadPromise;
+      const fileRef = await uploadPromise;
+
+      // ✅ Signed URL al
+      const [url] = await fileRef.getSignedUrl({
+        action: 'read',
+        expires: '03-01-2500',
+      });
+
       res.status(200).json({ url });
     } catch (err) {
       console.error('Upload error:', err);
