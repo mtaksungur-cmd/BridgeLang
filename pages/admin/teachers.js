@@ -5,8 +5,6 @@ import { collection, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore'
 import styles from '../../scss/AdminTeachers.module.scss';
 import Image from "next/image";
 
-const storage = getStorage(undefined, "bridgelang-uk.firebasestorage.app");
-
 export default function AdminTeachers() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
