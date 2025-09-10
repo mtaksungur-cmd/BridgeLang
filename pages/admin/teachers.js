@@ -4,7 +4,6 @@ import { db } from '../../lib/firebase';
 import { collection, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import styles from '../../scss/AdminTeachers.module.scss';
 import Image from "next/image";
-import { getStorage, ref, getDownloadURL } from "firebase/storage";
 
 const storage = getStorage(undefined, "bridgelang-uk.firebasestorage.app");
 
@@ -16,21 +15,16 @@ export default function AdminTeachers() {
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'pendingTeachers'));
-        const data = await Promise.all(
-          snap.docs.map(async (d) => {
-            const app = { id: d.id, ...d.data() };
-            if (app.profilePhotoUrl) {
-              try {
-                const gsPath = `gs://bridgelang-uk.firebasestorage.app/${app.profilePhotoUrl}`;
-                app.profilePhotoResolved = await getDownloadURL(ref(storage, gsPath));
-              } catch (e) {
-                console.error("Photo resolve error:", e);
-                app.profilePhotoResolved = null;
-              }
-            }
-            return app;
-          })
-        );
+        const data = snap.docs.map((d) => {
+          const app = { id: d.id, ...d.data() };
+          // ✅ Fotoğraf URL'si zaten tam link, direkt kullan
+          if (app.profilePhotoUrl) {
+            app.profilePhotoResolved = app.profilePhotoUrl;
+          } else {
+            app.profilePhotoResolved = null;
+          }
+          return app;
+        });
         setApplications(data);
       } finally {
         setLoading(false);
