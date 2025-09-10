@@ -12,41 +12,52 @@ import TeacherNavbar from './TeacherNavbar';
 import AdminNavbar from './AdminNavbar';
 
 export default function NavbarSwitcher() {
-  const [role, setRole] = useState(null);      // 'student' | 'teacher' | 'admin' | null
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const isAdminRoute = router.pathname.startsWith('/admin');
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      try {
-        if (!user) {
-          setRole(null);
-          return;
-        }
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        setRole(snap.exists() ? snap.data().role || null : null);
-      } catch {
+      if (!user) {
         setRole(null);
-      } finally {
         setLoading(false);
+        return;
       }
+
+      const loadRole = async (tries = 3) => {
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) {
+            setRole(snap.data().role || null);
+          } else if (tries > 0) {
+            setTimeout(() => loadRole(tries - 1), 500);
+            return;
+          } else {
+            setRole(null);
+          }
+        } catch (e) {
+          console.error('NavbarSwitcher error:', e);
+          setRole(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      await loadRole();
     });
     return () => unsub();
   }, []);
 
-  // Admin sayfalarında default navbar istemiyoruz:
   if (isAdminRoute) {
-    // auth/role daha yüklenmediyse kısa bir boş header göstermek istersen:
-    if (loading) return <div style={{height:48}} />;
-    return role === 'admin' ? <AdminNavbar /> : null; // admin değilse hiç navbar gösterme
+    if (loading) return <div style={{ height: 48 }} />;
+    return role === 'admin' ? <AdminNavbar /> : null;
   }
 
-  // Normal site
   if (loading) return <DefaultNavbar />;
   if (!role) return <DefaultNavbar />;
   if (role === 'student') return <StudentNavbar />;
   if (role === 'teacher') return <TeacherNavbar />;
-  if (role === 'admin') return <AdminNavbar />; // admin login olup normal route'a gelirse
+  if (role === 'admin') return <AdminNavbar />;
   return <DefaultNavbar />;
 }
