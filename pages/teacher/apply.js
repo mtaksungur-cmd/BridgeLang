@@ -74,11 +74,18 @@ export default function TeacherApply() {
   };
 
   const uploadFileViaApi = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch('/api/upload', { method: 'POST', body: formData });
-    const data = await res.json();
-    return data.url;
+    if (!file) return '';  // ✅ dosya yoksa boş string
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      return data?.url || '';  // ✅ URL yoksa boş string döndür
+    } catch (err) {
+      console.error('uploadFileViaApi error:', err);
+      return '';  // ✅ asla undefined dönmez
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -119,10 +126,10 @@ export default function TeacherApply() {
       await setDoc(doc(db, 'pendingTeachers', uid), {
         ...form,
         email: form.email.trim().toLowerCase(),
-        profilePhotoUrl,
-        cvUrl,
-        introVideoUrl,
-        certificationUrls,
+        profilePhotoUrl: profilePhotoUrl || '',   // ✅ fallback
+        cvUrl: cvUrl || '',
+        introVideoUrl: introVideoUrl || '',
+        certificationUrls: certificationUrls || [],
         status: 'pending',
         createdAt: Timestamp.now(),
         role: 'teacher',
