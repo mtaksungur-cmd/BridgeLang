@@ -9,6 +9,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'storage.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'bridgelang-uk.firebasestorage.app', // 🔹 senin bucket domaini
       }
     ],
   },
