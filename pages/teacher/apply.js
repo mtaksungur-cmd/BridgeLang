@@ -217,20 +217,6 @@ export default function TeacherApply() {
             required
           />
 
-          <select
-            name="timezone"
-            className={styles.select}
-            value={form.timezone}
-            onChange={handleChange}
-            required
-          >
-            {TIMEZONES.map((tz) => (
-              <option key={tz.id} value={tz.id}>
-                {tz.label}
-              </option>
-            ))}
-          </select>
-
           <input
             className={styles.input}
             name="platformExperience"
@@ -299,19 +285,13 @@ export default function TeacherApply() {
             required
           />
 
-          <select
-            name="deliveryMethod"
-            className={styles.select}
-            value={form.deliveryMethod}
-            onChange={handleChange}
-            required
-          >
-            {DELIVERY_OPTIONS.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <input className={styles.input} 
+            name="deliveryMethod" 
+            placeholder="Delivery Method (e.g., Online via Daily, In-person at student’s home)" 
+            value={form.deliveryMethod} 
+            onChange={handleChange} 
+            required 
+          />
         </div>
 
         <h4 className={styles.sectionTitle}>Pricing</h4>
