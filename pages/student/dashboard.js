@@ -14,7 +14,9 @@ import { useSubscriptionGuard } from '../../lib/subscriptionGuard';
 import styles from '../../scss/StudentDashboard.module.scss';
 
 // ✅ storage import
-import { getStorage, ref, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+
+// ✅ bucket adı açıkça belirtildi
 const storage = getStorage(undefined, "bridgelang-uk.firebasestorage.app");
 
 export default function StudentDashboard() {
@@ -81,16 +83,13 @@ export default function StudentDashboard() {
   useEffect(() => {
     const loadPhoto = async () => {
       if (data?.profilePhotoUrl) {
-        if (data.profilePhotoUrl.startsWith('http')) {
-          setPhotoUrl(data.profilePhotoUrl);
-        } else {
-          try {
-            const url = await getDownloadURL(ref(storage, data.profilePhotoUrl));
-            setPhotoUrl(url);
-          } catch (e) {
-            console.error('downloadURL error:', e);
-            setPhotoUrl(null);
-          }
+        try {
+          const gsPath = `gs://bridgelang-uk.firebasestorage.app/${data.profilePhotoUrl}`;
+          const url = await getDownloadURL(ref(storage, gsPath));
+          setPhotoUrl(url);
+        } catch (e) {
+          console.error("downloadURL error:", e);
+          setPhotoUrl(null);
         }
       }
     };
