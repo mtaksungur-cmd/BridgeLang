@@ -1,3 +1,4 @@
+// pages/teacher/apply.js
 import { useState } from 'react';
 import { db, auth } from '../../lib/firebase';
 import Link from 'next/link';
@@ -11,7 +12,6 @@ const TIMEZONES = [
   { id: 'Europe/London', label: 'Europe/London (UK)' },
   { id: 'UTC', label: 'UTC' },
 ];
-
 const DELIVERY_OPTIONS = [
   { id: 'online', label: 'Online' },
   { id: 'in-person', label: 'In person' },
@@ -39,7 +39,7 @@ export default function TeacherApply() {
     pricing45: '',
     pricing60: '',
     platformExperience: '',
-    deliveryMethod: '',
+    deliveryMethod: 'online',
     willingToTravel: false,
     bio: '',
     confirmInfo: false,
@@ -83,18 +83,32 @@ export default function TeacherApply() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const requiredChecks = ['confirmInfo', 'agreeTerms', 'acceptResponsibility', 'cancellationAware', 'acceptPrivacy'];
+    const requiredChecks = [
+      'confirmInfo',
+      'agreeTerms',
+      'acceptResponsibility',
+      'cancellationAware',
+      'acceptPrivacy',
+    ];
     for (let key of requiredChecks) {
       if (!form[key]) return alert('Please check all confirmations before submitting.');
     }
 
     try {
-      const userCred = await createUserWithEmailAndPassword(auth, form.email.trim().toLowerCase(), form.password);
+      const userCred = await createUserWithEmailAndPassword(
+        auth,
+        form.email.trim().toLowerCase(),
+        form.password
+      );
       const uid = userCred.user.uid;
 
-      const profilePhotoUrl = files.profilePhoto ? await uploadFileViaApi(files.profilePhoto) : '';
+      const profilePhotoUrl = files.profilePhoto
+        ? await uploadFileViaApi(files.profilePhoto)
+        : '';
       const cvUrl = files.cvFile ? await uploadFileViaApi(files.cvFile) : '';
-      const introVideoUrl = files.introVideo ? await uploadFileViaApi(files.introVideo) : '';
+      const introVideoUrl = files.introVideo
+        ? await uploadFileViaApi(files.introVideo)
+        : '';
 
       const certificationUrls = [];
       for (let cert of files.certificateFiles) {
@@ -114,9 +128,11 @@ export default function TeacherApply() {
         role: 'teacher',
       });
 
-      // await updateBadgesForTeacher(uid); // aktif etmek istersen aç
+      // await updateBadgesForTeacher(uid); // İstersen açabilirsin
 
-      setSuccess('✅ Your application has been submitted. You will be contacted within 3–5 business days.');
+      setSuccess(
+        '✅ Your application has been submitted. You will be contacted within 3–5 business days.'
+      );
     } catch (err) {
       alert('❌ Failed to submit application');
       console.error(err);
@@ -127,13 +143,288 @@ export default function TeacherApply() {
     <div className={styles.container}>
       <h2 className={styles.title}>Apply to Teach with BridgeLang</h2>
       <p className={styles.lead}>
-        Join our UK-based platform to teach online or in person. Fill in the form below.
+        Join our UK-based platform to teach online or in person. Fill in the form
+        below.
       </p>
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        {/* ... tüm input ve select alanları aynı */}
+        <div className={styles.grid2}>
+          <input
+            className={styles.input}
+            name="name"
+            placeholder="Full Name"
+            value={form.name}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="email"
+            type="email"
+            placeholder="Email Address"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="password"
+            type="password"
+            placeholder="Password (required for login after approval)"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+
+          <input
+            className={styles.input}
+            name="homeAddress"
+            placeholder="Home Address"
+            value={form.homeAddress}
+            onChange={handleChange}
+            required
+          />
+
+          <select
+            name="country"
+            className={styles.select}
+            value={form.country}
+            onChange={handleChange}
+            required
+          >
+            {UK_COUNTRIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+
+          <input
+            className={styles.input}
+            name="city"
+            placeholder="City"
+            value={form.city}
+            onChange={handleChange}
+            required
+          />
+
+          <input
+            className={styles.input}
+            name="postcode"
+            placeholder="Postcode"
+            value={form.postcode}
+            onChange={handleChange}
+            required
+          />
+
+          <select
+            name="timezone"
+            className={styles.select}
+            value={form.timezone}
+            onChange={handleChange}
+            required
+          >
+            {TIMEZONES.map((tz) => (
+              <option key={tz.id} value={tz.id}>
+                {tz.label}
+              </option>
+            ))}
+          </select>
+
+          <input
+            className={styles.input}
+            name="platformExperience"
+            placeholder="Platform Experience (e.g., Zoom, Skype)"
+            value={form.platformExperience}
+            onChange={handleChange}
+          />
+        </div>
+
+        <h4 className={styles.sectionTitle}>Languages & Experience</h4>
+        <div className={styles.grid2}>
+          <input
+            className={styles.input}
+            name="languagesTaught"
+            placeholder="Languages You Teach"
+            value={form.languagesTaught}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="languagesSpoken"
+            placeholder="Languages You Speak Fluently"
+            value={form.languagesSpoken}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="experienceYears"
+            placeholder="Years of Teaching Experience"
+            value={form.experienceYears}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="educationLevel"
+            placeholder="Highest Education Level"
+            value={form.educationLevel}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="lessonTypes"
+            placeholder="Lesson Types (comma-separated)"
+            value={form.lessonTypes}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="studentAges"
+            placeholder="Student Age Groups"
+            value={form.studentAges}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="availability"
+            placeholder="Available Days and Times"
+            value={form.availability}
+            onChange={handleChange}
+            required
+          />
+
+          <select
+            name="deliveryMethod"
+            className={styles.select}
+            value={form.deliveryMethod}
+            onChange={handleChange}
+            required
+          >
+            {DELIVERY_OPTIONS.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <h4 className={styles.sectionTitle}>Pricing</h4>
+        <div className={styles.grid3}>
+          <input
+            className={styles.input}
+            name="pricing30"
+            placeholder="Price for 30 minutes (£)"
+            value={form.pricing30}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="pricing45"
+            placeholder="Price for 45 minutes (£)"
+            value={form.pricing45}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="pricing60"
+            placeholder="Price for 60 minutes (£)"
+            value={form.pricing60}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <h4 className={styles.sectionTitle}>Bio</h4>
+        <textarea
+          className={styles.textarea}
+          name="bio"
+          placeholder="Short Bio (max 300 words)"
+          value={form.bio}
+          onChange={handleChange}
+          maxLength={300}
+        />
+
+        <h4 className={styles.sectionTitle}>Uploads</h4>
+        <div className={styles.files}>
+          <label className={styles.fileLabel}>
+            <span>Profile Photo</span>
+            <input
+              className={styles.fileInput}
+              type="file"
+              name="profilePhoto"
+              accept="image/*"
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>CV (PDF)</span>
+            <input
+              className={styles.fileInput}
+              type="file"
+              name="cvFile"
+              accept=".pdf"
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>Certificates (PDF, JPG, PNG)</span>
+            <input
+              className={styles.fileInput}
+              type="file"
+              name="certificateFiles"
+              accept=".pdf,image/*"
+              multiple
+              onChange={handleChange}
+            />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>Intro Video (MP4)</span>
+            <input
+              className={styles.fileInput}
+              type="file"
+              name="introVideo"
+              accept="video/mp4"
+              onChange={handleChange}
+            />
+          </label>
+        </div>
+
         <h4 className={styles.sectionTitle}>Confirmations</h4>
         <div className={styles.checks}>
+          <label className={styles.checkItem}>
+            <input
+              type="checkbox"
+              name="willingToTravel"
+              checked={form.willingToTravel}
+              onChange={handleChange}
+            />
+            <span>Willing to travel for lessons</span>
+          </label>
+
+          <label className={styles.checkItem}>
+            <input
+              type="checkbox"
+              name="confirmInfo"
+              checked={form.confirmInfo}
+              onChange={handleChange}
+              required
+            />
+            <span>I confirm that all the information is accurate.</span>
+          </label>
+
           <label className={styles.checkItem}>
             <input
               type="checkbox"
@@ -199,14 +490,19 @@ export default function TeacherApply() {
           </label>
         </div>
 
-        <button type="submit" className={styles.submitBtn}>Submit Application</button>
+        <button type="submit" className={styles.submitBtn}>
+          Submit Application
+        </button>
       </form>
 
       {success && (
         <div className={styles.successBox}>
           <p className={styles.successText}>{success}</p>
           <p className={styles.successHint}>
-            Once your application is submitted, our team will review your details and get back to you within 3–5 business days. If approved, you&apos;ll receive a link to create your public teacher profile and get started on the platform!
+            Once your application is submitted, our team will review your details
+            and get back to you within 3–5 business days. If approved, you&apos;ll
+            receive a link to create your public teacher profile and get started on
+            the platform!
           </p>
         </div>
       )}
