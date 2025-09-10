@@ -50,13 +50,8 @@ export default function handler(req, res) {
       if (!uploadPromise) throw new Error('No file uploaded.');
       const fileRef = await uploadPromise;
 
-      // ✅ Signed URL oluştur
-      const [url] = await fileRef.getSignedUrl({
-        action: 'read',
-        expires: '03-01-2500', // 475 yıl geçerli
-      });
-
-      res.status(200).json({ url });
+      // ✅ sadece gs path döndür
+      res.status(200).json({ path: fileRef.name });
     } catch (err) {
       console.error('Upload error:', err);
       res.status(500).json({ error: err.message });
