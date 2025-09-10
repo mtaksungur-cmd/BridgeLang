@@ -73,18 +73,19 @@ export default function TeacherApply() {
     }
   };
 
+  // ✅ Boş dosya varsa null döndürür
   const uploadFileViaApi = async (file) => {
-    if (!file) return '';  // ✅ dosya yoksa boş string
+    if (!file) return null;
     try {
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
-      return data?.url || '';  // ✅ URL yoksa boş string döndür
+      return data?.url || null;
     } catch (err) {
       console.error('uploadFileViaApi error:', err);
-      return '';  // ✅ asla undefined dönmez
+      return null;
     }
   };
 
@@ -109,33 +110,30 @@ export default function TeacherApply() {
       );
       const uid = userCred.user.uid;
 
-      const profilePhotoUrl = files.profilePhoto
-        ? await uploadFileViaApi(files.profilePhoto)
-        : '';
-      const cvUrl = files.cvFile ? await uploadFileViaApi(files.cvFile) : '';
-      const introVideoUrl = files.introVideo
-        ? await uploadFileViaApi(files.introVideo)
-        : '';
+      // ✅ Dosya yükleme
+      const profilePhotoUrl = await uploadFileViaApi(files.profilePhoto);
+      const cvUrl = await uploadFileViaApi(files.cvFile);
+      const introVideoUrl = await uploadFileViaApi(files.introVideo);
 
       const certificationUrls = [];
       for (let cert of files.certificateFiles) {
         const url = await uploadFileViaApi(cert);
-        certificationUrls.push(url);
+        if (url) certificationUrls.push(url);
       }
 
       await setDoc(doc(db, 'pendingTeachers', uid), {
         ...form,
         email: form.email.trim().toLowerCase(),
-        profilePhotoUrl: profilePhotoUrl || '',   // ✅ fallback
-        cvUrl: cvUrl || '',
-        introVideoUrl: introVideoUrl || '',
-        certificationUrls: certificationUrls || [],
+        ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
+        ...(cvUrl ? { cvUrl } : {}),
+        ...(introVideoUrl ? { introVideoUrl } : {}),
+        certificationUrls: certificationUrls.filter(Boolean),
         status: 'pending',
         createdAt: Timestamp.now(),
         role: 'teacher',
       });
 
-      // await updateBadgesForTeacher(uid); // İstersen açabilirsin
+      // await updateBadgesForTeacher(uid); // istersen açabilirsin
 
       setSuccess(
         '✅ Your application has been submitted. You will be contacted within 3–5 business days.'
