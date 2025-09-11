@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { auth } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import styles from '../../scss/AdminReports.module.scss';
 
 function formatDate(ts) {
