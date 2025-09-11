@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { updateBadgesForTeacher } from '../../lib/badgeUtils';
 import styles from '../../scss/AdminTeachers.module.scss';
 import Image from "next/image";
 
@@ -29,6 +30,7 @@ export default function AdminTeachers() {
         body: JSON.stringify({ teacher: app })
       });
       if (!res.ok) throw new Error('API error');
+      await updateBadgesForTeacher(app.id);
       setApplications(prev => prev.filter(a => a.id !== app.id));
       alert(`✅ ${app.name || 'Teacher'} approved.`);
     } catch (err) {
