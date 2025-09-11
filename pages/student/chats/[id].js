@@ -31,6 +31,7 @@ export default function StudentChatPage() {
       await setDoc(chatRef, {
         studentId,
         teacherId,
+        participants: [studentId, teacherId],
         createdAt: new Date(),
       });
       // Mesaj hakkı düşür
