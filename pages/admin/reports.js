@@ -1,8 +1,6 @@
-// pages/admin/reports.js
 'use client';
 import { useEffect, useState } from 'react';
-import { db, auth } from '../../lib/firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { auth } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from '../../scss/AdminReports.module.scss';
 
@@ -17,8 +15,6 @@ function formatDate(ts) {
 
 export default function AdminReportsPage() {
   const [reports, setReports] = useState([]);
-  const [users, setUsers] = useState({});
-  const [teachers, setTeachers] = useState({});
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -29,8 +25,11 @@ export default function AdminReportsPage() {
         return;
       }
 
-      // ✅ Buraya senin admin UID’ni koy
-      if (user.uid === "jRWfXJ68dfXyH06EtWFjGGU1Ux92") {
+      // Firestore’a gitmeden önce sadece rol kontrolü yapabilirsin
+      const token = await user.getIdTokenResult();
+      const role = token?.claims?.role || null;
+
+      if (role === 'admin') {
         setIsAdmin(true);
         fetchReports();
       } else {
@@ -43,66 +42,13 @@ export default function AdminReportsPage() {
 
   const fetchReports = async () => {
     setLoading(true);
-
-    // 1) Şikâyetleri çek
-    const snap = await getDocs(collection(db, 'complaints'));
-    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    // 2) ID’leri topla
-    const userIds = new Set();
-    const teacherIds = new Set();
-
-    for (const r of list) {
-      if (r.userId) userIds.add(r.userId);
-
-      if (r.bookingId) {
-        try {
-          const bSnap = await getDoc(doc(db, 'bookings', r.bookingId));
-          if (bSnap.exists()) {
-            const b = bSnap.data();
-
-            if (!r.teacherId && b.teacherId) r.teacherId = b.teacherId;
-            if (!r.studentId && b.studentId) r.studentId = b.studentId;
-
-            if (b.teacherId) teacherIds.add(b.teacherId);
-            if (b.studentId) userIds.add(b.studentId);
-          }
-        } catch (e) {
-          console.error('Booking fetch failed for complaint:', r.id, e);
-        }
-      } else {
-        if (r.teacherId) teacherIds.add(r.teacherId);
-        if (r.studentId) userIds.add(r.studentId);
-      }
+    try {
+      const res = await fetch('/api/admin/reports');
+      const data = await res.json();
+      setReports(data);
+    } catch (err) {
+      console.error("Failed to fetch reports:", err);
     }
-
-    // 3) Kullanıcı ve öğretmen bilgilerini çek
-    const [userMap, teacherMap] = await Promise.all([
-      (async () => {
-        const map = {};
-        await Promise.all(
-          Array.from(userIds).map(async (uid) => {
-            const s = await getDoc(doc(db, 'users', uid));
-            if (s.exists()) map[uid] = s.data();
-          })
-        );
-        return map;
-      })(),
-      (async () => {
-        const map = {};
-        await Promise.all(
-          Array.from(teacherIds).map(async (tid) => {
-            const s = await getDoc(doc(db, 'users', tid));
-            if (s.exists()) map[tid] = s.data();
-          })
-        );
-        return map;
-      })(),
-    ]);
-
-    setUsers(userMap);
-    setTeachers(teacherMap);
-    setReports(list);
     setLoading(false);
   };
 
@@ -124,9 +70,6 @@ export default function AdminReportsPage() {
       ) : (
         <ul className={styles.list}>
           {reports.map((r) => {
-            const submittedBy = users[r.userId] || {};
-            const teacher = r.teacherId ? (teachers[r.teacherId] || {}) : {};
-            const student = r.studentId ? (users[r.studentId] || {}) : {};
             const statusKey = String(r.status || 'open').toLowerCase();
 
             return (
@@ -135,26 +78,18 @@ export default function AdminReportsPage() {
                   <div className={styles.kv}>
                     <span className={styles.k}>Submitted by</span>
                     <span className={styles.v}>
-                      {submittedBy.name ? `${submittedBy.name} ` : ''}
-                      <span className={styles.muted}>({r.userId || '—'})</span>
-                      {r.role ? <span className={styles.badgeRole}>{r.role}</span> : null}
+                      {r.userId || '—'} ({r.role || '—'})
                     </span>
                   </div>
 
                   <div className={styles.kv}>
                     <span className={styles.k}>Teacher</span>
-                    <span className={styles.v}>
-                      {teacher.name ? `${teacher.name} ` : ''}
-                      <span className={styles.muted}>({r.teacherId || '—'})</span>
-                    </span>
+                    <span className={styles.v}>{r.teacherId || '—'}</span>
                   </div>
 
                   <div className={styles.kv}>
                     <span className={styles.k}>Student</span>
-                    <span className={styles.v}>
-                      {student.name ? `${student.name} ` : ''}
-                      <span className={styles.muted}>({r.studentId || '—'})</span>
-                    </span>
+                    <span className={styles.v}>{r.studentId || '—'}</span>
                   </div>
 
                   <div className={styles.kv}>
