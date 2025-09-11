@@ -141,9 +141,10 @@ export default function TeacherApply() {
         status: 'pending',
         createdAt: Timestamp.now(),
         role: 'teacher',
+        badges: []
       });
 
-      // await updateBadgesForTeacher(uid); // istersen açabilirsin
+      await updateBadgesForTeacher(uid); // istersen açabilirsin
 
       setSuccess(
         '✅ Your application has been submitted. You will be contacted within 3–5 business days.'
