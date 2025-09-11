@@ -1,7 +1,7 @@
 // pages/student/teachers.js
 import { useEffect, useMemo, useState } from 'react';
 import { db, auth } from '../../lib/firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firestore';
 import Link from 'next/link';
 import Image from 'next/image';
 import SubscriptionBanner from "../../components/SubscriptionBanner";
@@ -19,10 +19,14 @@ export default function TeachersList() {
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      const snap = await getDocs(collection(db, 'users'));
-      const data = snap.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(user => user.role === 'teacher' && user.status === 'approved');
+      // ✅ sadece approved teacher’lar için query
+      const q = query(
+        collection(db, 'users'),
+        where('role', '==', 'teacher'),
+        where('status', '==', 'approved')
+      );
+      const snap = await getDocs(q);
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       // Yorumlar
       const reviewSnap = await getDocs(collection(db, 'reviews'));
@@ -35,7 +39,9 @@ export default function TeachersList() {
 
       const withRatings = data.map(t => {
         const ratings = reviewMap[t.id] || [];
-        const avg = ratings.length ? (ratings.reduce((s, r) => s + r, 0) / ratings.length).toFixed(1) : null;
+        const avg = ratings.length
+          ? (ratings.reduce((s, r) => s + r, 0) / ratings.length).toFixed(1)
+          : null;
         const badges = t.badges || [];
         const latestBadge = badges.length ? badges[badges.length - 1] : null;
         return { ...t, avgRating: avg, reviewCount: ratings.length, latestBadge };
@@ -78,9 +84,9 @@ export default function TeachersList() {
   useEffect(() => {
     const f = allTeachers.filter(t => {
       const ctry = (t.country || '').toLowerCase();
-      const cty  = (t.city || '').toLowerCase();
+      const cty = (t.city || '').toLowerCase();
       const okCountry = country ? ctry === country.toLowerCase() : true;
-      const okCity    = city ? cty === city.toLowerCase() : true;
+      const okCity = city ? cty === city.toLowerCase() : true;
       return okCountry && okCity;
     });
     setTeachers(f);
@@ -125,7 +131,6 @@ export default function TeachersList() {
               list="cities"
               disabled={!country && citiesForCountry.length === 0}
             />
-            {/* Country girilince şehir önerileri */}
             <datalist id="cities">
               {citiesForCountry.map(ct => <option key={ct} value={ct} />)}
             </datalist>
@@ -188,19 +193,16 @@ export default function TeachersList() {
                       src={t.profilePhotoUrl}
                       alt="Profile"
                       className={styles.profileImg}
-                      width={100}   // istediğin boyutu yaz
+                      width={100}
                       height={100}
                     />
                   )}
 
-                  {/* Yeni alanlar */}
                   <p><strong>Location:</strong> {cityTxt}, {countryTxt}</p>
                   <p><strong>Willing to travel:</strong> {travel}</p>
                   <p><strong>Delivery method:</strong> {delivery}</p>
-
                   <p><strong>Languages:</strong> {t.languagesTaught || '—'}</p>
                   <p><strong>Experience:</strong> {t.experienceYears ? `${t.experienceYears} years` : '—'}</p>
-
                   <p><strong>Price:</strong><br />
                     30 min: £{t.pricing30 ?? '—'}<br />
                     45 min: £{t.pricing45 ?? '—'}<br />
@@ -216,12 +218,7 @@ export default function TeachersList() {
                     </button>
                   )}
                 </div>
-
-                {isLocked && (
-                  <div className={styles.overlay}>
-                    <span>Subscription required</span>
-                  </div>
-                )}
+                {isLocked && <div className={styles.overlay}><span>Subscription required</span></div>}
               </div>
             );
           })}
