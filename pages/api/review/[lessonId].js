@@ -1,7 +1,7 @@
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { isInappropriate } from '../../../lib/messageFilter';
-import { updateBadgesForTeacher } from '../../../lib/badgeUtils';
+import { updateBadgesForTeacher } from '../../../lib/badgeUtilsServer';
 
 // Admin SDK initialize
 if (!getApps().length) {
