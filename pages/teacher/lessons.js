@@ -62,13 +62,7 @@ export default function TeacherLessons() {
       const q = query(
         collection(db, 'bookings'),
         where('teacherId', '==', user.uid),
-        where('status', 'in', [
-          'pending-approval',
-          'confirmed',
-          'teacher_approved',
-          'student_approved',
-          'approved'
-        ])
+        where('status', 'in', ['pending-approval','confirmed','teacher_approved','student_approved','approved'])
       );
 
       const snap = await getDocs(q);
