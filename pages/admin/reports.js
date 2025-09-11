@@ -26,7 +26,7 @@ export default function AdminReportsPage() {
       }
   
       // 🔹 Firestore'dan role çek
-      const snap = await getDoc(doc(db, "users", user.uid));
+      const snap = await getDocs(collection(db, 'complaints'));
       const data = snap.data();
   
       if (data?.role === "admin") {
