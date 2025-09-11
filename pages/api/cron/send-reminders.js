@@ -2,15 +2,7 @@
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { sendMail, buildReminderEmail } from '../../../lib/mailer';
 
-// OPTIONAL: secret check en başta
 export default async function handler(req, res) {
-  if (process.env.REMINDER_CRON_SECRET) {
-    const sec = req.query.secret || req.headers['x-cron-secret'];
-    if (sec !== process.env.REMINDER_CRON_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-  }
-
   // --- FORCE PATH (tek booking'i anında gönder) ---
   const { forceBookingId } = req.query;
   if (forceBookingId) {
@@ -32,11 +24,11 @@ export default async function handler(req, res) {
         studentName: student?.name,
         date: b.date,
         startTime: b.startTime,
-        endTime: b.endTime,              // <-- yeni
-        duration: b.duration,            // <-- yeni
-        location: b.location,            // <-- yeni
+        endTime: b.endTime,
+        duration: b.duration,
+        location: b.location,
         meetingLink: b.meetingLink || '',
-        timezone: b.timezone || null,    // varsa
+        timezone: b.timezone || null,
       });
 
       const forTeacher = buildReminderEmail({
@@ -59,9 +51,7 @@ export default async function handler(req, res) {
       const results = await Promise.allSettled(tasks);
       console.log('[force] mail results:', results);
 
-      // rejected varsa sebebini görürüz
       const allOk = results.every(r => r.status === 'fulfilled');
-
       if (allOk) {
         await snap.ref.update({ reminderSent: true, reminderSentAt: new Date() });
       }
@@ -76,7 +66,7 @@ export default async function handler(req, res) {
   try {
     const now = Date.now();
     const in60 = now + 60 * 60 * 1000;
-    const toleranceMs = 5 * 60 * 1000; // ±5 dk
+    const toleranceMs = 5 * 60 * 1000;
     const minTs = in60 - toleranceMs;
     const maxTs = in60 + toleranceMs;
 
@@ -114,6 +104,7 @@ export default async function handler(req, res) {
         startTime: b.startTime,
         meetingLink: b.meetingLink || '',
       });
+
       const forTeacher = buildReminderEmail({
         who: 'teacher',
         teacherName: teacher?.name || 'Teacher',
