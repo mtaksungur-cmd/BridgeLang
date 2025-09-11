@@ -59,16 +59,13 @@ export default function BookLessonPage() {
 
   const convertToMinutes = (time) => {
     if (!time) return 0;
-  
     if (time.includes("AM") || time.includes("PM")) {
-      // 12 saatlik format
       const [timePart, modifier] = time.split(' ');
       let [hours, minutes] = timePart.split(':').map(Number);
       if (modifier === 'PM' && hours !== 12) hours += 12;
       if (modifier === 'AM' && hours === 12) hours = 0;
       return hours * 60 + minutes;
     } else {
-      // 24 saatlik format (örn: "09:00")
       const [hours, minutes] = time.split(':').map(Number);
       return hours * 60 + minutes;
     }
@@ -80,7 +77,6 @@ export default function BookLessonPage() {
     return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   };
 
-  // ✅ useCallback ile dependency fix
   const generateSlots = useCallback(() => {
     if (!teacher || !selectedDate) return [];
     const day = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
@@ -98,20 +94,11 @@ export default function BookLessonPage() {
         const slotStart = t;
         const slotEnd = t + duration;
 
-        const convertToMinutes = (time) => {
-          if (!time) return 0;
-          if (time.includes("AM") || time.includes("PM")) {
-            const [timePart, modifier] = time.split(' ');
-            let [hours, minutes] = timePart.split(':').map(Number);
-            if (modifier === 'PM' && hours !== 12) hours += 12;
-            if (modifier === 'AM' && hours === 12) hours = 0;
-            return hours * 60 + minutes;
-          } else {
-            // 24 saatlik format (örn: "09:00")
-            const [hours, minutes] = time.split(':').map(Number);
-            return hours * 60 + minutes;
-          }
-        };
+        const isTaken = bookedSlots.some(b => {
+          const bookedStart = convertToMinutes(b.startTime);
+          const bookedEnd = convertToMinutes(b.endTime);
+          return slotStart < bookedEnd && slotEnd > bookedStart;
+        });
 
         if (selected.toDateString() === today.toDateString()) {
           const nowMinutes = today.getHours() * 60 + today.getMinutes();
