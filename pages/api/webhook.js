@@ -19,8 +19,14 @@ function toStartAtUtc({ date, startTime, timezone }) {
   }
 }
 
-async function createDailyRoom({ teacherId, durationMinutes }) {
+async function createDailyRoom({ teacherId, date, startTime, durationMinutes, timezone }) {
   if (!process.env.DAILY_API_KEY) throw new Error('DAILY_API_KEY missing');
+
+  // Başlangıç saatini UTC epoch seconds olarak hesapla
+  const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', { zone: timezone || 'UTC' });
+  const startSec = dt.toSeconds();
+  const expSec = startSec + (durationMinutes || 60) * 60; // ders süresi kadar açık
+
   const resp = await fetch('https://api.daily.co/v1/rooms', {
     method: 'POST',
     headers: {
@@ -30,13 +36,15 @@ async function createDailyRoom({ teacherId, durationMinutes }) {
     body: JSON.stringify({
       name: `lesson-${teacherId || 't'}-${Date.now()}`,
       properties: {
-        exp: Math.floor(Date.now() / 1000) + (durationMinutes || 60) * 60,
+        nbf: Math.floor(startSec), // oda sadece derste açılır
+        exp: Math.floor(expSec),   // dersten sonra kapanır
         enable_screenshare: true,
         enable_chat: true,
         start_video_off: false,
       },
     }),
   });
+
   const data = await resp.json();
   if (!resp.ok || !data?.url) throw new Error(`Daily API error: ${data?.error || 'unknown'}`);
   return data.url;
@@ -218,7 +226,16 @@ export default async function handler(req, res) {
 
       let meetingLink = existing.exists ? (existing.data()?.meetingLink || '') : '';
       if (location === 'Online' && !meetingLink) {
-        try { meetingLink = await createDailyRoom({ teacherId, durationMinutes }); }
+        try 
+        { 
+          meetingLink = await createDailyRoom({
+            teacherId,
+            date,
+            startTime,
+            durationMinutes,
+            timezone
+          }); 
+        }
         catch (e) { console.error('Daily create exception (webhook):', e); }
       }
 
