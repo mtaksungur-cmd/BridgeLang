@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import styles from '../../scss/AdminReports.module.scss';
 
 function formatDate(ts) {
@@ -25,19 +25,19 @@ export default function AdminReportsPage() {
         setIsAdmin(false);
         return;
       }
-  
-      // 🔹 Firestore'dan role çek
-      const snap = await getDocs(collection(db, 'complaints'));
-      const data = snap.data();
-  
-      if (data?.role === "admin") {
+
+      // 🔹 Users koleksiyonundan rolü kontrol et
+      const ref = doc(db, 'users', user.uid);
+      const snap = await getDoc(ref);
+
+      if (snap.exists() && snap.data().role === "admin") {
         setIsAdmin(true);
         fetchReports();
       } else {
         setIsAdmin(false);
       }
     });
-  
+
     return () => unsubscribe();
   }, []);
 
