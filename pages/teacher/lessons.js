@@ -6,7 +6,6 @@ import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'fireb
 import Image from 'next/image';
 import styles from '../../scss/TeacherLessons.module.scss';
 
-/** Esnek saat parse: "14:30" veya "2:30 PM" */
 function parseFlexibleTime(timeStr) {
   if (!timeStr) return null;
   const m = timeStr.match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
@@ -21,11 +20,9 @@ function parseFlexibleTime(timeStr) {
     if (p === 'PM' && hour !== 12) hour += 12;
     if (p === 'AM' && hour === 12) hour = 0;
   }
-  // 24h ise direkt geçer
   return { hour, minute };
 }
 
-/** Dersten bitiş milisaniyesi: öncelik startAtUtc + duration */
 function getLessonEndMs(b) {
   const durMin = parseInt(b?.duration, 10) || 60;
 
@@ -33,7 +30,6 @@ function getLessonEndMs(b) {
     return b.startAtUtc + durMin * 60_000;
   }
 
-  // endTime varsa onu, yoksa startTime + duration kullan
   const tEnd = parseFlexibleTime(b?.endTime);
   const tStart = parseFlexibleTime(b?.startTime);
   const useStartPlusDur = !tEnd && tStart;
@@ -57,54 +53,81 @@ export default function TeacherLessons() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) return router.push('/login');
+      if (!user) {
+        console.log("❌ No user, redirecting to login");
+        return router.push('/login');
+      }
 
-      const q = query(
-        collection(db, 'bookings'),
-        where('teacherId', '==', user.uid),
-      );
+      console.log("✅ Logged in as:", user.uid, "email:", user.email);
 
-      const snap = await getDocs(q);
-      let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      try {
+        const q = query(
+          collection(db, 'bookings'),
+          where('teacherId', '==', user.uid),
+        );
+        console.log("🔎 Running query for teacherId:", user.uid);
 
-      // Öğrenciler
-      const studentIds = [...new Set(data.map(b => b.studentId).filter(Boolean))];
-      const map = {};
-      await Promise.all(studentIds.map(async (id) => {
-        const s = await getDoc(doc(db, 'users', id));
-        if (s.exists()) map[id] = s.data();
-      }));
-      setStudents(map);
+        const snap = await getDocs(q);
+        console.log("📦 Query result count:", snap.size);
 
-      // Sıralama: önce öğretmen onayı bekleyen geçmiş dersler
-      const nowMs = Date.now();
-      data.sort((a, b) => {
-        const aEnd = getLessonEndMs(a) ?? 0;
-        const bEnd = getLessonEndMs(b) ?? 0;
+        let data = snap.docs.map(d => {
+          console.log("➡️ Booking doc:", d.id, d.data());
+          return { id: d.id, ...d.data() };
+        });
 
-        const aWaiting =
-          ['pending-approval','confirmed','student_approved','teacher_approved'].includes(a.status) &&
-          aEnd && nowMs > aEnd && !a.teacherApproved;
-        const bWaiting =
-          ['pending-approval','confirmed','student_approved','teacher_approved'].includes(b.status) &&
-          bEnd && nowMs > bEnd && !b.teacherApproved;
+        // Öğrenciler
+        const studentIds = [...new Set(data.map(b => b.studentId).filter(Boolean))];
+        console.log("👩‍🎓 Student IDs found:", studentIds);
 
-        if (aWaiting && !bWaiting) return -1;
-        if (!aWaiting && bWaiting) return 1;
-        return (bEnd || 0) - (aEnd || 0);
-      });
+        const map = {};
+        await Promise.all(studentIds.map(async (id) => {
+          const s = await getDoc(doc(db, 'users', id));
+          if (s.exists()) {
+            console.log("👩‍🎓 Loaded student:", id, s.data());
+            map[id] = s.data();
+          } else {
+            console.warn("⚠️ Student not found in users:", id);
+          }
+        }));
+        setStudents(map);
 
-      setBookings(data);
+        // Sıralama
+        const nowMs = Date.now();
+        data.sort((a, b) => {
+          const aEnd = getLessonEndMs(a) ?? 0;
+          const bEnd = getLessonEndMs(b) ?? 0;
+
+          const aWaiting =
+            ['pending-approval','confirmed','student_approved','teacher_approved'].includes(a.status) &&
+            aEnd && nowMs > aEnd && !a.teacherApproved;
+          const bWaiting =
+            ['pending-approval','confirmed','student_approved','teacher_approved'].includes(b.status) &&
+            bEnd && nowMs > bEnd && !b.teacherApproved;
+
+          if (aWaiting && !bWaiting) return -1;
+          if (!aWaiting && bWaiting) return 1;
+          return (bEnd || 0) - (aEnd || 0);
+        });
+
+        console.log("📊 Final sorted bookings:", data);
+        setBookings(data);
+
+      } catch (err) {
+        console.error("🔥 Firestore query failed:", err);
+      }
     });
 
     return () => unsub();
   }, [router]);
 
   const handleComplete = async (booking) => {
+    console.log("✅ Teacher completing booking:", booking.id);
     const updates = { teacherApproved: true };
+
     if (booking.studentConfirmed) {
       updates.status = 'approved';
       updates.payoutSent = false;
+      console.log("💰 Sending payout for booking:", booking.id);
 
       await fetch('/api/transfer-payout', {
         method: 'POST',
@@ -117,6 +140,7 @@ export default function TeacherLessons() {
 
     await updateDoc(doc(db, 'bookings', booking.id), updates);
     setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
+    console.log("✅ Booking updated:", booking.id, updates);
   };
 
   return (
@@ -129,6 +153,7 @@ export default function TeacherLessons() {
         <div className={styles.grid}>
           {bookings.map((r) => {
             const student = students[r.studentId] || {};
+            console.log("🎨 Rendering booking:", r.id, r);
 
             const endMs = getLessonEndMs(r);
             const showCompleteBtn =
@@ -144,7 +169,7 @@ export default function TeacherLessons() {
                       src={student.profilePhotoUrl}
                       alt="Student"
                       className={styles.avatar}
-                      width={44}    // avatar boyutu için uygun değer
+                      width={44}
                       height={44}
                     />
                   )}
