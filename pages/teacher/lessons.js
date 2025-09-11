@@ -53,45 +53,27 @@ export default function TeacherLessons() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        console.log("❌ No user, redirecting to login");
-        return router.push('/login');
-      }
-
-      console.log("✅ Logged in as:", user.uid, "email:", user.email);
+      if (!user) return router.push('/login');
 
       try {
         const q = query(
           collection(db, 'bookings'),
           where('teacherId', '==', user.uid),
         );
-        console.log("🔎 Running query for teacherId:", user.uid);
 
         const snap = await getDocs(q);
-        console.log("📦 Query result count:", snap.size);
-
-        let data = snap.docs.map(d => {
-          console.log("➡️ Booking doc:", d.id, d.data());
-          return { id: d.id, ...d.data() };
-        });
+        let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
         // Öğrenciler
         const studentIds = [...new Set(data.map(b => b.studentId).filter(Boolean))];
-        console.log("👩‍🎓 Student IDs found:", studentIds);
-
         const map = {};
         await Promise.all(studentIds.map(async (id) => {
           const s = await getDoc(doc(db, 'users', id));
-          if (s.exists()) {
-            console.log("👩‍🎓 Loaded student:", id, s.data());
-            map[id] = s.data();
-          } else {
-            console.warn("⚠️ Student not found in users:", id);
-          }
+          if (s.exists()) map[id] = s.data();
         }));
         setStudents(map);
 
-        // Sıralama
+        // Sıralama: önce öğretmen onayı bekleyen geçmiş dersler
         const nowMs = Date.now();
         data.sort((a, b) => {
           const aEnd = getLessonEndMs(a) ?? 0;
@@ -109,11 +91,9 @@ export default function TeacherLessons() {
           return (bEnd || 0) - (aEnd || 0);
         });
 
-        console.log("📊 Final sorted bookings:", data);
         setBookings(data);
-
       } catch (err) {
-        console.error("🔥 Firestore query failed:", err);
+        console.error("Firestore query failed:", err);
       }
     });
 
@@ -121,13 +101,11 @@ export default function TeacherLessons() {
   }, [router]);
 
   const handleComplete = async (booking) => {
-    console.log("✅ Teacher completing booking:", booking.id);
     const updates = { teacherApproved: true };
 
     if (booking.studentConfirmed) {
       updates.status = 'approved';
       updates.payoutSent = false;
-      console.log("💰 Sending payout for booking:", booking.id);
 
       await fetch('/api/transfer-payout', {
         method: 'POST',
@@ -140,7 +118,6 @@ export default function TeacherLessons() {
 
     await updateDoc(doc(db, 'bookings', booking.id), updates);
     setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
-    console.log("✅ Booking updated:", booking.id, updates);
   };
 
   return (
@@ -153,7 +130,6 @@ export default function TeacherLessons() {
         <div className={styles.grid}>
           {bookings.map((r) => {
             const student = students[r.studentId] || {};
-            console.log("🎨 Rendering booking:", r.id, r);
 
             const endMs = getLessonEndMs(r);
             const showCompleteBtn =
