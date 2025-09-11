@@ -26,7 +26,6 @@ export default function AdminReportsPage() {
         return;
       }
 
-      // 🔹 Users koleksiyonundan rolü kontrol et
       const ref = doc(db, 'users', user.uid);
       const snap = await getDoc(ref);
 
@@ -46,7 +45,32 @@ export default function AdminReportsPage() {
     try {
       const res = await fetch('/api/admin/reports');
       const data = await res.json();
-      setReports(data);
+
+      // 🔹 Teacher & Student isimlerini getir
+      const enriched = await Promise.all(
+        data.map(async (r) => {
+          let teacherName = '—';
+          let studentName = '—';
+
+          if (r.teacherId) {
+            const tSnap = await getDoc(doc(db, 'users', r.teacherId));
+            if (tSnap.exists()) teacherName = tSnap.data().name || '—';
+          }
+
+          if (r.studentId) {
+            const sSnap = await getDoc(doc(db, 'users', r.studentId));
+            if (sSnap.exists()) studentName = sSnap.data().name || '—';
+          }
+
+          return {
+            ...r,
+            teacherName,
+            studentName,
+          };
+        })
+      );
+
+      setReports(enriched);
     } catch (err) {
       console.error("Failed to fetch reports:", err);
     }
@@ -85,12 +109,16 @@ export default function AdminReportsPage() {
 
                   <div className={styles.kv}>
                     <span className={styles.k}>Teacher</span>
-                    <span className={styles.v}>{r.teacherId || '—'}</span>
+                    <span className={styles.v}>
+                      {r.teacherName} ({r.teacherId || '—'})
+                    </span>
                   </div>
 
                   <div className={styles.kv}>
                     <span className={styles.k}>Student</span>
-                    <span className={styles.v}>{r.studentId || '—'}</span>
+                    <span className={styles.v}>
+                      {r.studentName} ({r.studentId || '—'})
+                    </span>
                   </div>
 
                   <div className={styles.kv}>
