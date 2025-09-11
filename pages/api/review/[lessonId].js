@@ -1,10 +1,9 @@
 import { adminDb } from '../../../lib/firebaseAdmin';
-import { doc, getDoc, setDoc, collection, getDocs, query, where, updateDoc } from 'firebase/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import '../../../lib/firebaseAdmin';
 import { isInappropriate } from '../../../lib/messageFilter';
 import { updateBadgesForTeacher } from '../../../lib/badgeUtils';
 
+// Admin SDK initialize
 if (!getApps().length) {
   initializeApp({
     credential: cert({
@@ -20,14 +19,15 @@ export default async function handler(req, res) {
 
   const { lessonId } = req.query;
   const { rating, comment } = req.body;
-  
+
   if (!lessonId || !rating || typeof rating !== 'number') {
     return res.status(400).json({ error: 'Invalid input' });
   }
-  
+
   if (comment && isInappropriate(comment)) {
     return res.status(400).json({ error: 'Inappropriate comment content' });
   }
+
   try {
     // 1. Get lesson
     const bookingSnap = await adminDb.collection('bookings').doc(lessonId).get();
@@ -51,19 +51,27 @@ export default async function handler(req, res) {
     });
 
     // 3. Recalculate teacher ratings
-    const rSnap = await adminDb.collection('reviews').where('teacherId', '==', teacherId).get();
+    const rSnap = await adminDb
+      .collection('reviews')
+      .where('teacherId', '==', teacherId)
+      .get();
+
     const all = rSnap.docs.map(d => d.data());
     const total = all.reduce((sum, r) => sum + (r.rating || 0), 0);
     const avg = all.length > 0 ? total / all.length : 0;
 
     // 4. Update teacher document
-    await adminDb.collection('users').doc(teacherId).update({ avgRating: avg, reviewCount: all.length });
+    await adminDb.collection('users').doc(teacherId).update({
+      avgRating: avg,
+      reviewCount: all.length,
+    });
 
+    // 5. Update badges
     await updateBadgesForTeacher(teacherId);
 
     res.status(200).json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    console.error('🔥 Review API error:', err);
+    res.status(500).json({ error: err.message || 'Internal error' });
   }
 }
