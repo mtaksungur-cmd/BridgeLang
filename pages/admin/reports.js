@@ -24,19 +24,19 @@ export default function AdminReportsPage() {
         setIsAdmin(false);
         return;
       }
-
-      // Firestore’a gitmeden önce sadece rol kontrolü yapabilirsin
-      const token = await user.getIdTokenResult();
-      const role = token?.claims?.role || null;
-
-      if (role === 'admin') {
+  
+      // Firestore'dan user dokümanını çek
+      const res = await fetch(`/api/users/${user.uid}`); // ya da direkt Firestore getDoc
+      const data = await res.json();
+  
+      if (data?.role === "admin") {
         setIsAdmin(true);
         fetchReports();
       } else {
         setIsAdmin(false);
       }
     });
-
+  
     return () => unsubscribe();
   }, []);
 
