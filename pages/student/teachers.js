@@ -29,13 +29,15 @@ export default function TeachersList() {
       const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       // Yorumlar
-      const reviewSnap = await getDocs(collection(db, 'reviews'));
       const reviewMap = {};
-      reviewSnap.docs.forEach(doc => {
-        const d = doc.data();
-        if (!reviewMap[d.teacherId]) reviewMap[d.teacherId] = [];
-        reviewMap[d.teacherId].push(d.rating);
-      });
+      for (const t of data) {
+        const q = query(
+          collection(db, 'reviews'),
+          where('teacherId', '==', t.id)
+        );
+        const rs = await getDocs(q);
+        reviewMap[t.id] = rs.docs.map(d => d.data().rating);
+      }
 
       const withRatings = data.map(t => {
         const ratings = reviewMap[t.id] || [];
