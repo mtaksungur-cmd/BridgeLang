@@ -1,16 +1,21 @@
+import { DateTime } from 'luxon';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const DAILY_API_KEY = process.env.DAILY_API_KEY;
-  const { duration } = req.body; // dakika cinsinden bekleniyor
+  const { date, startTime, duration, timezone } = req.body; 
+  // dikkat: artık date + startTime + timezone de alıyoruz
 
   if (!duration || typeof duration !== 'number') {
     return res.status(400).json({ error: 'Missing or invalid duration' });
   }
 
   try {
-    const nowInSeconds = Math.floor(Date.now() / 1000);
-    const exp = nowInSeconds + duration * 60; // dakika → saniye
+    // Başlangıç saatini UTC’ye çevir
+    const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', { zone: timezone || 'UTC' });
+    const startSec = dt.toSeconds();
+    const expSec = startSec + duration * 60; // ders süresi kadar açık
 
     const response = await fetch('https://api.daily.co/v1/rooms', {
       method: 'POST',
@@ -20,7 +25,8 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         properties: {
-          exp,
+          nbf: Math.floor(startSec), // odayı erken açma
+          exp: Math.floor(expSec),   // dersten sonra kapanma
           enable_screenshare: true,
           enable_chat: true,
           start_video_off: false,
