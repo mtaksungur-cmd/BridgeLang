@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
 import Image from 'next/image';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import styles from "../../../scss/TeacherProfile.module.scss";
 
 const badgeDescriptions = {
@@ -135,7 +135,7 @@ export default function TeacherProfilePage() {
           studentId,
           teacherId,
           participants: [studentId, teacherId],
-          createdAt: new Date(),
+          createdAt: serverTimestamp(),
         });
         console.log("Chat created ✅");
   
