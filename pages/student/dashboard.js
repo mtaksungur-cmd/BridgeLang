@@ -73,6 +73,7 @@ export default function StudentDashboard() {
       }
 
       fetchBookings(user.uid);
+      fetchReviews(user.uid);
       setLoading(false);
     });
 
@@ -84,8 +85,7 @@ export default function StudentDashboard() {
     const loadPhoto = async () => {
       if (data?.profilePhotoUrl) {
         try {
-          const gsPath = `gs://bridgelang-uk.firebasestorage.app/${data.profilePhotoUrl}`;
-          const url = await getDownloadURL(ref(storage, gsPath));
+          const url = await getDownloadURL(ref(storage, data.profilePhotoUrl));
           setPhotoUrl(url);
         } catch (e) {
           console.error("downloadURL error:", e);
@@ -109,10 +109,13 @@ export default function StudentDashboard() {
       if (tSnap.exists()) teacherMap[id] = tSnap.data();
     }
     setTeachers(teacherMap);
+  };
 
-    const rSnap = await getDocs(collection(db, 'reviews'));
+  const fetchReviews = async (uid) => {
+    const q = query(collection(db, 'reviews'), where('studentId', '==', uid));
+    const snap = await getDocs(q);
     const rMap = {};
-    rSnap.docs.forEach(d => rMap[d.id] = true);
+    snap.docs.forEach(d => rMap[d.id] = true);
     setReviews(rMap);
   };
 
@@ -131,7 +134,6 @@ export default function StudentDashboard() {
       });
       const result = await res.json();
 
-      // ✅ sadece path kaydediyoruz
       await updateDoc(doc(db, 'users', data.uid), {
         profilePhotoUrl: result.path,
       });
