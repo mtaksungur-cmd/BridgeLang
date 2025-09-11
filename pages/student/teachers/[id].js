@@ -124,10 +124,28 @@ export default function TeacherProfilePage() {
   
     const studentId = auth.currentUser.uid;
     const teacherId = id;
-  
-    // chatId kesin formatlı olsun
     const chatId = `${studentId}_${teacherId}`;
   
+    // 🔹 Firestore’da chat dokümanı hazırla (yoksa)
+    const chatRef = doc(db, "chats", chatId);
+    const snap = await getDoc(chatRef);
+    if (!snap.exists()) {
+      await setDoc(chatRef, {
+        studentId,
+        teacherId,
+        participants: [studentId, teacherId],
+        createdAt: new Date(),
+      });
+  
+      // mesaj hakkı düşür
+      await fetch("/api/decrement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: studentId, type: "message" }),
+      });
+    }
+  
+    // 🔹 chat sayfasına yönlendir
     router.push(`/student/chats/${chatId}`);
   };
 
