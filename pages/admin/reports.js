@@ -52,14 +52,20 @@ export default function AdminReportsPage() {
           let teacherName = '—';
           let studentName = '—';
 
+          // öğretmen adı
           if (r.teacherId) {
             const tSnap = await getDoc(doc(db, 'users', r.teacherId));
             if (tSnap.exists()) teacherName = tSnap.data().name || '—';
           }
 
+          // öğrenci adı
           if (r.studentId) {
             const sSnap = await getDoc(doc(db, 'users', r.studentId));
             if (sSnap.exists()) studentName = sSnap.data().name || '—';
+          } else if (r.role === "student" && r.userId) {
+            // öğrenci şikayet etmiş ama studentId yok → userId öğrenci
+            const uSnap = await getDoc(doc(db, 'users', r.userId));
+            if (uSnap.exists()) studentName = uSnap.data().name || '—';
           }
 
           return {
@@ -117,7 +123,7 @@ export default function AdminReportsPage() {
                   <div className={styles.kv}>
                     <span className={styles.k}>Student</span>
                     <span className={styles.v}>
-                      {r.studentName} ({r.studentId || '—'})
+                      {r.studentName} ({r.studentId || r.userId || '—'})
                     </span>
                   </div>
 
