@@ -30,7 +30,7 @@ export default function AdminReportsPage() {
       }
 
       // ✅ Buraya senin admin UID’ni koy
-      if (user.uid === "ADMIN_UIDIN_BURAYA") {
+      if (user.uid === "jRWfXJ68dfXyH06EtWFjGGU1Ux92") {
         setIsAdmin(true);
         fetchReports();
       } else {
