@@ -121,7 +121,14 @@ export default function TeacherProfilePage() {
       alert("You have no chat rights left for this month.");
       return;
     }
-    router.push(`/student/chats/${auth.currentUser.uid}_${id}`);
+  
+    const studentId = auth.currentUser.uid;
+    const teacherId = id;
+  
+    // chatId kesin formatlı olsun
+    const chatId = `${studentId}_${teacherId}`;
+  
+    router.push(`/student/chats/${chatId}`);
   };
 
   if (loading) return <p>Loading...</p>;
