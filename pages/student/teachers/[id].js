@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
 import Image from 'next/image';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import styles from "../../../scss/TeacherProfile.module.scss";
 
 const badgeDescriptions = {
@@ -117,36 +117,39 @@ export default function TeacherProfilePage() {
   };
 
   const handleStartChat = async () => {
-    if (chatsLeft === 0) {
-      alert("You have no chat rights left for this month.");
-      return;
+    try {
+      if (chatsLeft === 0) {
+        alert("You have no chat rights left for this month.");
+        return;
+      }
+  
+      const studentId = auth.currentUser.uid;
+      const teacherId = id;
+      const chatId = `${studentId}_${teacherId}`;
+  
+      const chatRef = doc(db, "chats", chatId);
+      const snap = await getDoc(chatRef);
+  
+      if (!snap.exists()) {
+        await setDoc(chatRef, {
+          studentId,
+          teacherId,
+          participants: [studentId, teacherId],
+          createdAt: new Date(),
+        });
+        console.log("Chat created ✅");
+  
+        await fetch("/api/decrement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: studentId, type: "message" }),
+        });
+      }
+  
+      router.push(`/student/chats/${chatId}`);
+    } catch (err) {
+      console.error("Chat error:", err);
     }
-  
-    const studentId = auth.currentUser.uid;
-    const teacherId = id;
-    const chatId = `${studentId}_${teacherId}`;
-  
-    // 🔹 Firestore’da chat dokümanı hazırla (yoksa)
-    const chatRef = doc(db, "chats", chatId);
-    const snap = await getDoc(chatRef);
-    if (!snap.exists()) {
-      await setDoc(chatRef, {
-        studentId,
-        teacherId,
-        participants: [studentId, teacherId],
-        createdAt: new Date(),
-      });
-  
-      // mesaj hakkı düşür
-      await fetch("/api/decrement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: studentId, type: "message" }),
-      });
-    }
-  
-    // 🔹 chat sayfasına yönlendir
-    router.push(`/student/chats/${chatId}`);
   };
 
   if (loading) return <p>Loading...</p>;
