@@ -25,9 +25,9 @@ export default function AdminReportsPage() {
         return;
       }
   
-      // Firestore'dan user dokümanını çek
-      const res = await fetch(`/api/users/${user.uid}`); // ya da direkt Firestore getDoc
-      const data = await res.json();
+      // 🔹 Firestore'dan role çek
+      const snap = await getDoc(doc(db, "users", user.uid));
+      const data = snap.data();
   
       if (data?.role === "admin") {
         setIsAdmin(true);
