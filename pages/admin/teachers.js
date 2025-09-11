@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import { updateBadgesForTeacher } from '../../lib/badgeUtils';
+import { updateBadgesForTeacher } from '../../lib/badgeUtilsClient';
 import styles from '../../scss/AdminTeachers.module.scss';
 import Image from "next/image";
 
