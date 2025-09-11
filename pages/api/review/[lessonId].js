@@ -1,4 +1,4 @@
-import { db } from '../../../lib/firebase';
+import { adminDb } from '../../../lib/firebaseAdmin';
 import { doc, getDoc, setDoc, collection, getDocs, query, where, updateDoc } from 'firebase/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import '../../../lib/firebaseAdmin';
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   }
   try {
     // 1. Get lesson
-    const bookingSnap = await getDoc(doc(db, 'bookings', lessonId));
+    const bookingSnap = await adminDb.collection('bookings').doc(lessonId).get();
     if (!bookingSnap.exists()) return res.status(404).end();
     const booking = bookingSnap.data();
 
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     const teacherId = booking.teacherId;
 
     // 2. Save review
-    await setDoc(doc(collection(db, 'reviews'), lessonId), {
+    await adminDb.collection('reviews').doc(lessonId).set({
       lessonId,
       teacherId,
       studentId: booking.studentId,
@@ -51,16 +51,13 @@ export default async function handler(req, res) {
     });
 
     // 3. Recalculate teacher ratings
-    const rSnap = await getDocs(query(collection(db, 'reviews'), where('teacherId', '==', teacherId)));
+    const rSnap = await adminDb.collection('reviews').where('teacherId', '==', teacherId).get();
     const all = rSnap.docs.map(d => d.data());
     const total = all.reduce((sum, r) => sum + (r.rating || 0), 0);
     const avg = all.length > 0 ? total / all.length : 0;
 
     // 4. Update teacher document
-    await updateDoc(doc(db, 'users', teacherId), {
-      avgRating: avg,
-      reviewCount: all.length,
-    });
+    await adminDb.collection('users').doc(teacherId).update({ avgRating: avg, reviewCount: all.length });
 
     await updateBadgesForTeacher(teacherId);
 
