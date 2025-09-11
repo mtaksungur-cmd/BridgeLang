@@ -32,13 +32,6 @@ export default function StudentChatPage() {
         participants: [user.uid, teacherId], // 🔥 student’ın gerçek UID’si
         createdAt: new Date(),
       });
-
-      // Mesaj hakkı düşür
-      await fetch("/api/decrement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid, type: "message" }),
-      });
     }
   };
 
