@@ -102,16 +102,24 @@ export default async function handler(req, res) {
         studentName: student?.name || 'Student',
         date: b.date,
         startTime: b.startTime,
+        endTime: b.endTime || null,
+        duration: b.duration || null,
+        location: b.location || '—',
         meetingLink: b.meetingLink || '',
+        timezone: b.timezone || null,
       });
-
+      
       const forTeacher = buildReminderEmail({
         who: 'teacher',
         teacherName: teacher?.name || 'Teacher',
         studentName: student?.name || 'Student',
         date: b.date,
         startTime: b.startTime,
+        endTime: b.endTime || null,
+        duration: b.duration || null,
+        location: b.location || '—',
         meetingLink: b.meetingLink || '',
+        timezone: b.timezone || null,
       });
 
       const tasks = [];
