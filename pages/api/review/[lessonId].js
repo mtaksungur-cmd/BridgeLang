@@ -31,7 +31,7 @@ export default async function handler(req, res) {
   try {
     // 1. Get lesson
     const bookingSnap = await adminDb.collection('bookings').doc(lessonId).get();
-    if (!bookingSnap.exists()) return res.status(404).end();
+    if (!bookingSnap.exists) return res.status(404).end();
     const booking = bookingSnap.data();
 
     if (booking.status !== 'approved') {
