@@ -4,7 +4,7 @@ import { db, auth } from '../../lib/firebase';
 import Link from 'next/link';
 import { setDoc, doc, Timestamp } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { updateBadgesForTeacher } from '../../lib/badgeUtilsClient';
+import { updateBadgesForTeacher } from '../../lib/badgeUtilsServer';
 import styles from '../../scss/TeacherApply.module.scss';
 
 const UK_COUNTRIES = ['England', 'Scotland', 'Wales', 'Northern Ireland'];
