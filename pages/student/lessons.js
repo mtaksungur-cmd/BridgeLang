@@ -8,13 +8,13 @@ import { useRouter } from 'next/router';
 import { DateTime } from 'luxon';
 import SubscriptionBanner from '../../components/SubscriptionBanner';
 import LoyaltyBadge from '../../components/LoyaltyBadge';
-import { getLoyaltyInfo } from '../../lib/loyalty'; // ← eklendi
+import { getLoyaltyInfo } from '../../lib/loyalty';
 import styles from '../../scss/StudentLessons.module.scss';
 
 export default function StudentLessons() {
   const [bookings, setBookings] = useState([]);
   const [user, setUser] = useState(null);
-  const [loyalty, setLoyalty] = useState(null);         // ← eklendi
+  const [loyalty, setLoyalty] = useState(null);
   const [teachers, setTeachers] = useState({});
   const router = useRouter();
 
@@ -27,7 +27,6 @@ export default function StudentLessons() {
       const userSnap = await getDoc(doc(db, 'users', _uid));
       if (userSnap.exists()) setUser(userSnap.data());
 
-      // Loyalty bilgisi
       try {
         const info = await getLoyaltyInfo(_uid);
         setLoyalty(info);
@@ -62,32 +61,29 @@ export default function StudentLessons() {
 
   const confirmLesson = async (booking) => {
     const updates = { studentConfirmed: true };
-  
+
     if (booking.teacherApproved) {
       updates.status = 'approved';
       updates.payoutSent = false;
     } else {
       updates.status = 'student_approved';
     }
-  
+
     await updateDoc(doc(db, 'bookings', booking.id), updates);
     setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...updates } : b));
     alert('You confirmed the lesson.');
-  
-    // 🔥 sadece status approved olunca payout çağır
+
     if (updates.status === 'approved') {
       setTimeout(async () => {
         await fetch('/api/transfer-payout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ booking: { ...booking, ...updates } })
+          body: JSON.stringify({ bookingId: booking.id })
         });
       }, 60000); // 1 dk gecikme
     }
-  
   };
 
-  // AM/PM → 24 saat
   const parseTimeTo24h = (timeStr) => {
     const [_, time, modifier] = timeStr?.match(/(\d{1,2}:\d{2})\s?(AM|PM)/i) || [];
     if (!time || !modifier) return timeStr;
@@ -114,7 +110,6 @@ export default function StudentLessons() {
     <div>
       <SubscriptionBanner />
 
-      {/* Loyalty rozet – dashboard ile aynı model */}
       {loyalty && loyalty.plan !== 'starter' && (
         <LoyaltyBadge
           plan={loyalty.plan}
@@ -135,7 +130,6 @@ export default function StudentLessons() {
               <div key={b.id} className="col-12 col-md-6 col-lg-4 col-xl-3">
                 <div className={`card h-100 shadow-sm ${styles.lessonCard}`}>
                   <div className="card-body">
-                    {/* Header */}
                     <div className="d-flex align-items-center mb-3">
                       {t.profilePhotoUrl ? (
                           <Image
@@ -156,7 +150,6 @@ export default function StudentLessons() {
                       </div>
                     </div>
 
-                    {/* Date & Time */}
                     <div className="mb-2">
                       <div className="small text-muted">Date:</div>
                       <div className="fw-semibold">{b.date}</div>
@@ -170,14 +163,12 @@ export default function StudentLessons() {
                       <div className="fw-semibold">{b.location || "Not specified"}</div>
                     </div>
 
-                    {/* Status pill */}
                     <div className="mb-3">
                       <span className={`${styles.pill} ${b.status === 'approved' ? styles.pillApproved : styles.pillDefault}`}>
                         {b.status === 'approved' ? 'Approved' : b.status.replace('_', ' ')}
                       </span>
                     </div>
 
-                    {/* Join link */}
                     {b.meetingLink && (
                       <div className="mb-3">
                         <a className={styles.joinLink} href={b.meetingLink} target="_blank" rel="noopener noreferrer">
@@ -186,19 +177,16 @@ export default function StudentLessons() {
                       </div>
                     )}
 
-                    {/* Approved message */}
                     {b.status === 'approved' && (
                       <p className={`mb-3 ${styles.approvedMsg}`}>🎉 Lesson approved by both sides.</p>
                     )}
 
-                    {/* Confirm attended (only past & not confirmed) */}
                     {isPastLesson(b.date, b.endTime, b.timezone) && !b.studentConfirmed && (
                       <button className={`btn btn-success w-100 mb-2 ${styles.confirmBtn}`} onClick={() => confirmLesson(b)}>
                         ✅ I attended
                       </button>
                     )}
 
-                    {/* Report */}
                     <button
                       className={`btn w-100 ${styles.reportBtn}`}
                       onClick={() => router.push(`/student/report?bookingId=${b.id}`)}
