@@ -111,6 +111,7 @@ export default function TeacherLessons() {
     }
   
     await updateDoc(doc(db, 'bookings', booking.id), updates);
+    setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
   
     // 🔥 sadece status approved olunca payout çağır
     if (updates.status === 'approved') {
@@ -118,12 +119,11 @@ export default function TeacherLessons() {
         await fetch('/api/transfer-payout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ booking: { ...booking, ...updates } })
+          body: JSON.stringify({ bookingId: booking.id })
         });
       }, 60000); // 1 dk gecikme
     }
   
-    setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
   };
 
   return (
