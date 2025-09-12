@@ -125,7 +125,8 @@ export default function Home() {
         </section>
 
         {/* TESTIMONIALS */}
-        <section className={`mt-5 ${styles.testimonials}`}>
+{/*
+       <section className={`mt-5 ${styles.testimonials}`}>
           <h2 className="h4 fw-bold mb-3">What learners say</h2>
           <div className="row g-4">
             <div className="col-md-4">
@@ -145,6 +146,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+        */}
 
         {/* FAQ TEASER */}
         <section className={`mt-5 ${styles.faq}`}>
