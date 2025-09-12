@@ -1,3 +1,4 @@
+// pages/api/transfer-payout.js
 import { completeLessonAndTransfer } from '../../lib/completeLessonAndTransfer';
 import { adminDb } from '../../lib/firebaseAdmin';
 
@@ -8,7 +9,6 @@ export default async function handler(req, res) {
   if (!bookingId) return res.status(400).json({ error: 'Missing bookingId' });
 
   try {
-    // 🔥 en güncel booking Firestore’dan alınır
     const snap = await adminDb.collection('bookings').doc(bookingId).get();
     if (!snap.exists) throw new Error('Booking not found');
 
