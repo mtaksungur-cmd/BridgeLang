@@ -1,3 +1,4 @@
+// pages/teacher/lessons.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
@@ -56,15 +57,10 @@ export default function TeacherLessons() {
       if (!user) return router.push('/login');
 
       try {
-        const q = query(
-          collection(db, 'bookings'),
-          where('teacherId', '==', user.uid),
-        );
-
+        const q = query(collection(db, 'bookings'), where('teacherId', '==', user.uid));
         const snap = await getDocs(q);
         let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        // Öğrenciler
         const studentIds = [...new Set(data.map(b => b.studentId).filter(Boolean))];
         const map = {};
         await Promise.all(studentIds.map(async (id) => {
@@ -73,7 +69,6 @@ export default function TeacherLessons() {
         }));
         setStudents(map);
 
-        // Sıralama: önce öğretmen onayı bekleyen geçmiş dersler
         const nowMs = Date.now();
         data.sort((a, b) => {
           const aEnd = getLessonEndMs(a) ?? 0;
@@ -102,18 +97,17 @@ export default function TeacherLessons() {
 
   const handleComplete = async (booking) => {
     const updates = { teacherApproved: true };
-  
+
     if (booking.studentConfirmed) {
       updates.status = 'approved';
       updates.payoutSent = false;
     } else {
       updates.status = 'teacher_approved';
     }
-  
+
     await updateDoc(doc(db, 'bookings', booking.id), updates);
     setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
-  
-    // 🔥 sadece status approved olunca payout çağır
+
     if (updates.status === 'approved') {
       setTimeout(async () => {
         await fetch('/api/transfer-payout', {
@@ -121,9 +115,8 @@ export default function TeacherLessons() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ bookingId: booking.id })
         });
-      }, 60000); // 1 dk gecikme
+      }, 60000);
     }
-  
   };
 
   return (
