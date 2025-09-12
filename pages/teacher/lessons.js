@@ -102,21 +102,27 @@ export default function TeacherLessons() {
 
   const handleComplete = async (booking) => {
     const updates = { teacherApproved: true };
-
+  
     if (booking.studentConfirmed) {
       updates.status = 'approved';
       updates.payoutSent = false;
-
-      await fetch('/api/transfer-payout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking })
-      });
     } else {
       updates.status = 'teacher_approved';
     }
-
+  
     await updateDoc(doc(db, 'bookings', booking.id), updates);
+  
+    // 🔥 sadece status approved olunca payout çağır
+    if (updates.status === 'approved') {
+      setTimeout(async () => {
+        await fetch('/api/transfer-payout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ booking: { ...booking, ...updates } })
+        });
+      }, 60000); // 1 dk gecikme
+    }
+  
     setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
   };
 
