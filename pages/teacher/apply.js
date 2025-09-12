@@ -4,7 +4,7 @@ import { db, auth } from '../../lib/firebase';
 import Link from 'next/link';
 import { setDoc, doc, Timestamp } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { updateBadgesForTeacher } from '../../lib/badgeUtilsClient';
+import { getBadgesForTeacher } from '../../lib/badgeUtilsClient';
 import styles from '../../scss/TeacherApply.module.scss';
 
 const UK_COUNTRIES = ['England', 'Scotland', 'Wales', 'Northern Ireland'];
@@ -144,7 +144,7 @@ export default function TeacherApply() {
         badges: []
       });
 
-      await updateBadgesForTeacher(uid); // istersen açabilirsin
+      await getBadgesForTeacher(uid); // istersen açabilirsin
 
       setSuccess(
         '✅ Your application has been submitted. You will be contacted within 3–5 business days.'
