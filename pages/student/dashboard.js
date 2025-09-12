@@ -134,11 +134,13 @@ export default function StudentDashboard() {
       });
       const result = await res.json();
 
-      await updateDoc(doc(db, 'users', data.uid), {
-        profilePhotoUrl: result.path,
-      });
+      if (!result.url) throw new Error("Upload failed: no URL returned");
 
-      setData((prev) => ({ ...prev, profilePhotoUrl: result.path }));
+      await updateDoc(doc(db, 'users', data.uid), {
+        profilePhotoUrl: result.url,
+      });
+      setData((prev) => ({ ...prev, profilePhotoUrl: result.url }));
+      
     } catch (err) {
       alert('Failed to upload photo.');
       console.error(err);
