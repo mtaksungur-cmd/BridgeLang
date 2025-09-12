@@ -71,6 +71,8 @@ export default function StudentLessons() {
     }
   
     await updateDoc(doc(db, 'bookings', booking.id), updates);
+    setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...updates } : b));
+    alert('You confirmed the lesson.');
   
     // 🔥 sadece status approved olunca payout çağır
     if (updates.status === 'approved') {
@@ -83,8 +85,6 @@ export default function StudentLessons() {
       }, 60000); // 1 dk gecikme
     }
   
-    setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...updates } : b));
-    alert('You confirmed the lesson.');
   };
 
   // AM/PM → 24 saat
