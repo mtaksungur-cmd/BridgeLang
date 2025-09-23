@@ -57,7 +57,7 @@ export default function Footer() {
 
         <div className={styles.bottomRow}>
           <small>
-            © {new Date().getFullYear()} BridgeLang UK Ltd. | Company No: 16555217 | Registered in England and Wales
+            © {new Date().getFullYear()} BridgeLang Ltd. | Company No: 16555217 | Registered in England and Wales
           </small>
         </div>
       </div>
