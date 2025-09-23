@@ -230,7 +230,7 @@ export default function Contact() {
 
           {/* ŞİRKET BİLGİLERİ (sağ kart) */}
           <aside className={styles.company} aria-label="Company details">
-            <h2 className={styles.company__title}>BridgeLang Ltd.</h2>
+            <h2 className={styles.company__title}>BridgeLang Ltd</h2>
             <ul className={styles.company__list}>
               <li><strong>Company Number:</strong> 16555217</li>
               <li><strong>Registered in:</strong> England and Wales</li>
