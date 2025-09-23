@@ -1,3 +1,4 @@
+// pages/student/register.js
 import { useState, useRef } from 'react';
 import { auth, db } from '../../lib/firebase';
 import Link from 'next/link';
@@ -92,7 +93,6 @@ export default function StudentRegister() {
 
     setSubmitting(true);
     try {
-      // reCAPTCHA
       const token = await recaptchaRef.current.executeAsync();
       recaptchaRef.current.reset();
       const verifyRes = await fetch('/api/verify-recaptcha', {
@@ -104,15 +104,11 @@ export default function StudentRegister() {
       if (!verifyData.success) throw new Error('reCAPTCHA verification failed.');
 
       const email = form.email.trim().toLowerCase();
-
-      // Auth
       const { user } = await createUserWithEmailAndPassword(auth, email, form.password);
 
-      // Fotoğraf (opsiyonel)
       let profilePhotoUrl = '';
       if (form.profilePhoto) profilePhotoUrl = await uploadFileViaApi(form.profilePhoto);
 
-      // Firestore – tüm gerekli alanlar
       await setDoc(doc(db, 'users', user.uid), {
         name: form.name.trim(),
         email,
@@ -131,7 +127,6 @@ export default function StudentRegister() {
         parentConsent: null,
       });
 
-      // Eğer 14–17 yaş arası ise → parent-consent API
       if (age < 18) {
         if (!form.parentEmail || !form.parentName) {
           throw new Error('Parent information is required for students under 18.');
@@ -150,7 +145,6 @@ export default function StudentRegister() {
         setSuccess(true);
         setError('');
       } else {
-        // Normal kullanıcı → verification mail
         await sendEmailVerification(user);
         setSuccess(true);
       }
@@ -209,7 +203,19 @@ export default function StudentRegister() {
         <textarea className={styles.textarea} name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} />
 
         <label>Profile Photo (optional)</label>
-        <input className={styles.fileInput} type="file" name="profilePhoto" accept="image/*" onChange={handleChange} />
+        <label className={styles.fileLabel}>
+          <span>Select File</span>
+          <input
+            className={styles.hiddenFileInput}
+            type="file"
+            name="profilePhoto"
+            accept="image/*"
+            onChange={handleChange}
+          />
+        </label>
+        <span className={styles.fileName}>
+          {form.profilePhoto ? form.profilePhoto.name : "No file chosen"}
+        </span>
 
         <p><strong>Your English Learning Goals</strong> (select at least one)</p>
         <div className={styles.checkboxGroup}>
