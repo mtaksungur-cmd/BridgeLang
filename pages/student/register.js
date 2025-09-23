@@ -171,7 +171,7 @@ export default function StudentRegister() {
         <input className={styles.input} name="password" type="password" placeholder="Password (min 6 chars)" onChange={handleChange} required />
         
         <label>Date of Birth</label>
-        <input className={styles.input} name="dob" type="date" onChange={handleChange} required />
+        <input className={styles.input} name="dob" type="date" placeholder="dd.mm.yyyy" onChange={handleChange} required />
 
         {(() => {
           const age = calcAge(form.dob);
