@@ -247,7 +247,7 @@ export default function Contact() {
             </ul>
 
             <div className={styles.company__help}>
-              Prefer self-service first? Check{" "}
+              Need quick help? Check{" "}
               <Link href="/faq">FAQ</Link> or{" "}
               <Link href="/how-it-works">How it Works</Link>.
             </div>
