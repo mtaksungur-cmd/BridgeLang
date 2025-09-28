@@ -303,7 +303,7 @@ export default function TeacherApply() {
 
           <input className={styles.input} 
             name="deliveryMethod" 
-            placeholder="Delivery Method (e.g., Online via Daily, In-person at student’s home)" 
+            placeholder="Delivery Method (e.g., Online or In-person)" 
             value={form.deliveryMethod} 
             onChange={handleChange} 
             required 
@@ -496,7 +496,7 @@ export default function TeacherApply() {
           <p className={styles.successText}>{success}</p>
           <p className={styles.successHint}>
             Once your application is submitted, our team will review your details
-            and get back to you within 3–5 business days. If approved, you&apos;ll
+            and get back to you within 1–2 business days. If approved, you&apos;ll
             receive a link to create your public teacher profile and get started on
             the platform!
           </p>
