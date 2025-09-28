@@ -159,7 +159,7 @@ export default function HowItWorks() {
               <h2 className={styles.h2}>For Teachers</h2>
               <ul className={styles.list}>
                 <li>
-                  <strong>Create Your Profile:</strong> Add qualifications, experience, teaching specialization
+                  <strong>Create Your Profile:</strong> Add qualifications, experience, class format
                   (online or in-person), pricing and availability.
                 </li>
                 <li>
