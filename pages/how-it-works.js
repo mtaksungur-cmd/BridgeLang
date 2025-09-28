@@ -110,7 +110,7 @@ export default function HowItWorks() {
                   and lesson credits to schedule sessions.
                 </li>
                 <li>
-                  <strong>Attend Lessons:</strong> Online via Zoom, Google Meet or Microsoft Teams, or
+                  <strong>Attend Lessons:</strong> Online via our built-in video platform (powered by Daily), or
                   preferably in-person.
                 </li>
                 <li>
