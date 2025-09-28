@@ -15,7 +15,7 @@ export default function FAQ() {
       <div className="container py-5">
         {/* Header */}
         <header className="text-center mb-4">
-          <h1 className="h3 fw-bold">Frequently Asked Questions (FAQ) – BridgeLang UK Ltd.</h1>
+          <h1 className="h3 fw-bold">Frequently Asked Questions (FAQ) – BridgeLang Ltd.</h1>
         </header>
 
         {/* Quick category links */}
@@ -250,7 +250,7 @@ export default function FAQ() {
               <div id="tc4" className="accordion-collapse collapse" data-bs-parent="#accTeachers">
                 <div className="accordion-body">
                   Yes. Teachers may set their lesson rates within platform guidelines, but BridgeLang applies
-                  the agreed service fee to all bookings.
+                  a service fee to each booking.
                 </div>
               </div>
             </div>
