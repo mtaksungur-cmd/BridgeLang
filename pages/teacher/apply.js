@@ -32,7 +32,7 @@ export default function TeacherApply() {
     languagesSpoken: '',
     experienceYears: '',
     educationLevel: '',
-    lessonTypes: '',
+    teachingSpecializations: '',
     studentAges: '',
     availability: '',
     pricing30: '',
