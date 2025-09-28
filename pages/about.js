@@ -8,7 +8,7 @@ export default function About() {
         <title>About Us | BridgeLang Ltd.</title>
         <meta
           name="description"
-          content="About BridgeLang UK Ltd. – Who we are, our mission, vision, values, and company details."
+          content="About BridgeLang Ltd. – Who we are, our mission, vision, values, and company details."
         />
         <meta name="robots" content="index,follow" />
       </Head>
@@ -16,14 +16,14 @@ export default function About() {
       <main className={`container py-4 ${styles.page}`} style={{ '--nav-height': '64px' }}>
         {/* Header */}
         <header className={styles.header}>
-          <h1>About Us – BridgeLang UK Ltd.</h1>
+          <h1>About Us – BridgeLang Ltd.</h1>
         </header>
 
         <article className={styles.article}>
           <section>
             <h2>Who We Are</h2>
             <p>
-              BridgeLang UK Ltd. is a language learning platform based in the United Kingdom,
+              BridgeLang Ltd. is a language learning platform based in the United Kingdom,
               dedicated to connecting learners and teachers in a safe, professional, and inclusive
               environment. We help students improve their communication skills, integrate into UK
               life, and build confidence in both personal and professional contexts.
@@ -65,7 +65,7 @@ export default function About() {
           <section>
             <h2>Company Details</h2>
             <address>
-              <p>BridgeLang UK Ltd.<br/>
+              <p>BridgeLang Ltd.<br/>
                 Registered in England &amp; Wales<br/>
                 Company Number: 16555217<br/>
                 The Apex, Derriford Business Park,<br/>
