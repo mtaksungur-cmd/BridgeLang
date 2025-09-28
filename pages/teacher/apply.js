@@ -278,9 +278,9 @@ export default function TeacherApply() {
           />
           <input
             className={styles.input}
-            name="lessonTypes"
-            placeholder="Lesson Types (comma-separated)"
-            value={form.lessonTypes}
+            name="teachingSpecializations"
+            placeholder="Teaching Specializations (comma-separated)"
+            value={form.teachingSpecializations}
             onChange={handleChange}
             required
           />
