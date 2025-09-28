@@ -34,7 +34,7 @@ export default function StudentRegister() {
     'Improve my speaking and fluency',
     'Prepare for IELTS or TOEFL',
     'Business English',
-    'Academic English (writing, reading, etc.)',
+    'Academic English',
     'English for Specific Purposes (ESP)',
     'Grammar',
     'Prepare for job interviews',
