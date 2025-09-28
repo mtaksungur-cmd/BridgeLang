@@ -100,7 +100,7 @@ export default function Home() {
               <div className={styles.highlightBox}>
                 <h6 className="mb-2">Flexible lesson types</h6>
                 <p className="mb-0">
-                  Online via Daily video or in person. IELTS/TOEFL prep, conversation practice, business English and more.
+                  Online or in person. IELTS/TOEFL prep, conversation practice, business English and more.
                 </p>
               </div>
             </div>
