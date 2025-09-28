@@ -33,7 +33,7 @@ export default function StudentRegister() {
   const goalsList = [
     'Improve my speaking and fluency',
     'Prepare for IELTS or TOEFL',
-    'Business English for work',
+    'Business English',
     'Academic English (writing, reading, etc.)',
     'English for Specific Purposes (ESP)',
     'Grammar',
