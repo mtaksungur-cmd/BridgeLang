@@ -5,7 +5,7 @@ export default function About() {
   return (
     <>
       <Head>
-        <title>About Us | BridgeLang UK Ltd.</title>
+        <title>About Us | BridgeLang Ltd.</title>
         <meta
           name="description"
           content="About BridgeLang UK Ltd. – Who we are, our mission, vision, values, and company details."
