@@ -159,7 +159,7 @@ export default function HowItWorks() {
               <h2 className={styles.h2}>For Teachers</h2>
               <ul className={styles.list}>
                 <li>
-                  <strong>Create Your Profile:</strong> Add qualifications, experience, lesson types
+                  <strong>Create Your Profile:</strong> Add qualifications, experience, teaching specialization
                   (online or in-person), pricing and availability.
                 </li>
                 <li>
@@ -171,7 +171,7 @@ export default function HowItWorks() {
                   notifications via email and your dashboard.
                 </li>
                 <li>
-                  <strong>Deliver Lessons:</strong> Run sessions online (Zoom, Google Meet, Microsoft Teams)
+                  <strong>Deliver Lessons:</strong> Run sessions online (through our built-in video platform, powered by Daily)
                   or in-person. Be punctual and prepared.
                 </li>
                 <li>
