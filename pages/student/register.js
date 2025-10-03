@@ -30,7 +30,7 @@ export default function StudentRegister() {
   const [error, setError] = useState('');
   const recaptchaRef = useRef(null);
 
-   const goalCategories = {
+  const goalCategories = {
     "Communication & Fluency": [
       "Improve my speaking and fluency",
       "Pronunciation and accent training",
@@ -202,7 +202,7 @@ export default function StudentRegister() {
 
         <input className={styles.input} name="city" placeholder="City" onChange={handleChange} required />
         
-        <select name="country" className={styles.select} onChange={handleChange} value={form.country}>
+        <select name="country" className={styles.input} onChange={handleChange} value={form.country}>
           <option>England</option>
           <option>Scotland</option>
           <option>Wales</option>
@@ -210,7 +210,7 @@ export default function StudentRegister() {
         </select>
 
         <input className={styles.input} name="phone" placeholder="Phone (optional)" onChange={handleChange} />
-        <select name="level" className={styles.select} onChange={handleChange}>
+        <select name="level" className={styles.input} onChange={handleChange}>
           <option value="">Select your level (optional)</option>
           <option>Beginner</option>
           <option>Elementary</option>
@@ -220,28 +220,29 @@ export default function StudentRegister() {
         </select>
         <textarea className={styles.textarea} name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} />
 
-        <label>Profile Photo (optional)</label>
-        <label className={styles.fileLabel}>
-          <span>Select File</span>
-          <input
-            className={styles.hiddenFileInput}
-            type="file"
-            name="profilePhoto"
-            accept="image/*"
-            onChange={handleChange}
-          />
-        </label>
-        <span className={styles.fileName}>
-          {form.profilePhoto ? form.profilePhoto.name : "No file chosen"}
-        </span>
+        <div className={styles.files}>
+          <label className={styles.fileLabel}>
+            <span>Profile Photo (optional)</span>
+            <input
+              className={styles.hiddenFileInput}
+              type="file"
+              name="profilePhoto"
+              accept="image/*"
+              onChange={handleChange}
+            />
+          </label>
+          <span className={styles.fileName}>
+            {form.profilePhoto ? form.profilePhoto.name : "No file chosen"}
+          </span>
+        </div>
 
-        <p><strong>Your English Learning Goals</strong> (select at least one)</p>
+        <p className={styles.sectionTitle}>Your English Learning Goals (select at least one)</p>
         {Object.entries(goalCategories).map(([category, goals]) => (
           <div key={category} className={styles.goalCategory}>
             <p className={styles.categoryTitle}>{category}</p>
-            <div className={styles.checkboxGroup}>
+            <div className={styles.checks}>
               {goals.map((goal) => (
-                <label key={goal} className={styles.checkboxLabel}>
+                <label key={goal} className={styles.checkItem}>
                   <input
                     type="checkbox"
                     name="goals"
@@ -266,7 +267,7 @@ export default function StudentRegister() {
           </div>
         ))}
 
-        <label className="mt-2 d-flex align-items-center gap-2">
+        <label className={styles.checkItem}>
           <input
             type="checkbox"
             name="acceptTerms"
@@ -287,19 +288,21 @@ export default function StudentRegister() {
 
         <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} size="invisible" ref={recaptchaRef} />
 
-        <button type="submit" className={styles.button} disabled={submitting}>
+        <button type="submit" className={styles.submitBtn} disabled={submitting}>
           {submitting ? 'Creating your account…' : 'Register'}
         </button>
       </form>
 
       {error && <p className={styles.error}>❌ {error}</p>}
       {success && (
-        <p className={styles.success}>
-          ✅ Registration successful! <br/>
-          {calcAge(form.dob) < 18 
-            ? `We’ve emailed a parental consent request to ${form.parentEmail}.`
-            : `We’ve sent a verification email to ${form.email}. Please check Inbox/Spam.`}
-        </p>
+        <div className={styles.successBox}>
+          <p className={styles.successText}>✅ Registration successful!</p>
+          <p className={styles.successHint}>
+            {calcAge(form.dob) < 18 
+              ? `We’ve emailed a parental consent request to ${form.parentEmail}.`
+              : `We’ve sent a verification email to ${form.email}. Please check Inbox/Spam.`}
+          </p>
+        </div>
       )}
     </div>
   );
