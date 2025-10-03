@@ -4,9 +4,9 @@ import { adminDb } from '../../../lib/firebaseAdmin';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
 const PRICE_IDS = {
-  starter: process.env.STRIPE_PRICE_ID_STARTER,
-  pro: process.env.STRIPE_PRICE_ID_PRO,
-  vip: process.env.STRIPE_PRICE_ID_VIP
+  starter: process.env.STRIPE_PRICE_ID_STARTER, // £4.99
+  pro: process.env.STRIPE_PRICE_ID_PRO,         // £9.99
+  vip: process.env.STRIPE_PRICE_ID_VIP          // £14.99
 };
 
 async function getOrCreateCustomer(userId, email) {
@@ -14,10 +14,10 @@ async function getOrCreateCustomer(userId, email) {
   const usnap = await uref.get();
   const saved = usnap.exists ? usnap.data()?.stripeCustomerId : null;
   if (saved) {
-    try { return await stripe.customers.retrieve(saved); } catch { /* create below */ }
+    try { return await stripe.customers.retrieve(saved); } catch {}
   }
   const c = await stripe.customers.create({ email, metadata: { userId } });
-  try { await uref.update({ stripeCustomerId: c.id }); } catch {}
+  await uref.set({ stripeCustomerId: c.id }, { merge: true });
   return c;
 }
 
@@ -34,8 +34,8 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer: customer.id,
-      allow_promotion_codes: true,      // VIP’e 5. ödemeden sonra vereceğimiz kod burada girilecek
       line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       metadata: { bookingType: 'plan', userId, planKey }
