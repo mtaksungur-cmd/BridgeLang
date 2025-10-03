@@ -30,18 +30,36 @@ export default function StudentRegister() {
   const [error, setError] = useState('');
   const recaptchaRef = useRef(null);
 
-  const goalsList = [
-    'Improve my speaking and fluency',
-    'Prepare for IELTS or TOEFL',
-    'Business English',
-    'Academic English',
-    'English for Specific Purposes (ESP)',
-    'Grammar',
-    'Prepare for job interviews',
-    'British citizenship or visa test preparation',
-    'Pronunciation and accent training',
-    'I am a complete beginner',
-  ];
+   const goalCategories = {
+    "Communication & Fluency": [
+      "Improve my speaking and fluency",
+      "Pronunciation and accent training",
+      "Everyday English for daily life",
+      "Conversation practice with native speakers",
+      "Confidence building in English communication",
+      "I am a complete beginner"
+    ],
+    "Academic & Exams": [
+      "Academic English (essays, presentations, etc.)",
+      "Grammar and writing skills",
+      "Prepare for IELTS",
+      "Prepare for TOEFL",
+      "Prepare for Cambridge exams (KET, PET, FCE, CAE, CPE)",
+      "Improve listening and comprehension"
+    ],
+    "Career & Professional": [
+      "Business English (meetings, emails, negotiations)",
+      "English for job interviews & CV preparation",
+      "English for Specific Purposes (Medicine, Law, IT, etc.)"
+    ],
+    "Life & Migration": [
+      "British citizenship or visa test preparation",
+      "English for travel and tourism"
+    ],
+    "Other": [
+      "Other"
+    ]
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -218,16 +236,35 @@ export default function StudentRegister() {
         </span>
 
         <p><strong>Your English Learning Goals</strong> (select at least one)</p>
-        <div className={styles.checkboxGroup}>
-          {goalsList.map((goal) => (
-            <label key={goal} className={styles.checkboxLabel}>
-              <input type="checkbox" name="goals" value={goal} onChange={handleChange} /> {goal}
-            </label>
-          ))}
-        </div>
-
-        <label>Other Goal:</label>
-        <input className={styles.input} type="text" name="otherGoal" onChange={handleChange} />
+        {Object.entries(goalCategories).map(([category, goals]) => (
+          <div key={category} className={styles.goalCategory}>
+            <p className={styles.categoryTitle}>{category}</p>
+            <div className={styles.checkboxGroup}>
+              {goals.map((goal) => (
+                <label key={goal} className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="goals"
+                    value={goal}
+                    checked={form.goals.includes(goal)}
+                    onChange={handleChange}
+                  />{" "}
+                  {goal}
+                </label>
+              ))}
+            </div>
+            {category === "Other" && form.goals.includes("Other") && (
+              <input
+                className={styles.input}
+                type="text"
+                name="otherGoal"
+                placeholder="Please specify"
+                value={form.otherGoal}
+                onChange={handleChange}
+              />
+            )}
+          </div>
+        ))}
 
         <label className="mt-2 d-flex align-items-center gap-2">
           <input
