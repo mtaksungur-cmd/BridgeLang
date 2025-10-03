@@ -1,4 +1,4 @@
-// pages/api/review/[lessonId].js
+// pages/api/reviews/[lessonId].js
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { isInappropriate } from '../../../lib/messageFilter';
@@ -92,4 +92,6 @@ export default async function handler(req, res) {
     res.status(200).json({ success: true });
   } catch (err) {
     console.error('🔥 Review API error:', err);
-    res.status(500).json({ error: err
+    res.status(500).json({ error: err.message || 'Internal error' });
+  }
+}
