@@ -28,12 +28,22 @@
 
 .checkboxGroup {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .checkboxLabel {
   font-size: 14px;
+}
+
+.goalCategory {
+  margin-bottom: 15px;
+}
+
+.categoryTitle {
+  font-weight: bold;
+  margin-bottom: 6px;
 }
 
 .button {
