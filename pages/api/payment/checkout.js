@@ -1,5 +1,5 @@
-// pages/api/payment/checkout.js
 import Stripe from 'stripe';
+import { adminDb } from '../../../lib/firebaseAdmin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
@@ -10,12 +10,12 @@ export default async function handler(req, res) {
     const {
       teacherId,
       studentId,
-      date,        // "yyyy-MM-dd"
-      startTime,   // "HH:mm"
-      endTime,     // "HH:mm"
-      duration,    // number or string
+      date,
+      startTime,
+      endTime,
+      duration,
       location,
-      price,       // number (GBP)
+      price,        // base lesson price
       studentEmail,
       timezone
     } = req.body;
@@ -24,12 +24,28 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const durationMinutes = Number.parseInt(duration, 10);
-    if (Number.isNaN(durationMinutes) || durationMinutes <= 0) {
+    const durationMinutes = parseInt(duration, 10);
+    if (!durationMinutes || durationMinutes <= 0) {
       return res.status(400).json({ error: 'Invalid duration' });
     }
 
-    // SADECE Stripe Checkout oluştur; tüm bilgileri metadata'ya koy
+    // 🔹 Öğrenci planını Firestore’dan çek
+    const uref = adminDb.collection('users').doc(studentId);
+    const usnap = await uref.get();
+    let discountedPrice = Number(price);
+    if (usnap.exists) {
+      const u = usnap.data();
+      const plan = u?.subscriptionPlan || 'free';
+      const totalLessons = u?.lessonsTaken || 0;
+
+      // İlk 6 derse özel indirimler
+      if (totalLessons < 6) {
+        if (plan === 'starter') discountedPrice *= 0.9;  // %10
+        if (plan === 'pro') discountedPrice *= 0.85;    // %15
+        if (plan === 'vip') discountedPrice *= 0.8;     // %20
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [
@@ -37,7 +53,7 @@ export default async function handler(req, res) {
           price_data: {
             currency: 'gbp',
             product_data: { name: 'Private Lesson' },
-            unit_amount: Math.round(Number(price) * 100), // £ → pence
+            unit_amount: Math.round(discountedPrice * 100),
           },
           quantity: 1,
         },
@@ -54,8 +70,7 @@ export default async function handler(req, res) {
         endTime: endTime || '',
         duration: String(durationMinutes),
         location,
-        timezone: timezone || '',
-        // bookingId BİLEREK YOK → DB kaydı sadece webhook’ta oluşacak
+        timezone: timezone || ''
       },
     });
 
