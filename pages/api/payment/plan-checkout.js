@@ -1,12 +1,13 @@
+// pages/api/payment/plan-checkout.js
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
 const PRICE_IDS = {
-  starter: process.env.STRIPE_PRICE_ID_STARTER, // £4.99
-  pro: process.env.STRIPE_PRICE_ID_PRO,         // £9.99
-  vip: process.env.STRIPE_PRICE_ID_VIP          // £14.99
+  starter: process.env.STRIPE_PRICE_ID_STARTER,
+  pro: process.env.STRIPE_PRICE_ID_PRO,
+  vip: process.env.STRIPE_PRICE_ID_VIP
 };
 
 async function getOrCreateCustomer(userId, email) {
@@ -23,7 +24,7 @@ async function getOrCreateCustomer(userId, email) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
-  const { userId, planKey, userEmail } = req.body;
+  const { userId, planKey, userEmail, couponCode } = req.body;
   if (!userId || !planKey || !userEmail) return res.status(400).json({ error: 'Missing fields' });
 
   const priceId = PRICE_IDS[planKey];
@@ -36,6 +37,7 @@ export default async function handler(req, res) {
       customer: customer.id,
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
+      discounts: couponCode ? [{ promotion_code: couponCode }] : undefined,
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       metadata: { bookingType: 'plan', userId, planKey }
