@@ -1,4 +1,3 @@
-// pages/student/dashboard.js
 import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import {
@@ -12,11 +11,8 @@ import LoyaltyBadge from '../../components/LoyaltyBadge';
 import { getLoyaltyInfo } from '../../lib/loyalty';
 import { useSubscriptionGuard } from '../../lib/subscriptionGuard';
 import styles from '../../scss/StudentDashboard.module.scss';
-
-// ✅ storage import
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 
-// ✅ bucket adı açıkça belirtildi
 const storage = getStorage(undefined, "bridgelang-uk.firebasestorage.app");
 
 export default function StudentDashboard() {
@@ -27,7 +23,7 @@ export default function StudentDashboard() {
   const [bookings, setBookings] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [teachers, setTeachers] = useState({});
-  const [photoUrl, setPhotoUrl] = useState(null); // ✅ resolved download URL
+  const [photoUrl, setPhotoUrl] = useState(null);
   const router = useRouter();
 
   const activeUntilMillis =
@@ -80,7 +76,6 @@ export default function StudentDashboard() {
     return () => unsubscribe();
   }, []);
 
-  // ✅ fotoğraf URL resolve
   useEffect(() => {
     const loadPhoto = async () => {
       if (data?.profilePhotoUrl) {
@@ -140,7 +135,6 @@ export default function StudentDashboard() {
         profilePhotoUrl: result.url,
       });
       setData((prev) => ({ ...prev, profilePhotoUrl: result.url }));
-      
     } catch (err) {
       alert('Failed to upload photo.');
       console.error(err);
@@ -177,13 +171,13 @@ export default function StudentDashboard() {
       <div className={styles.dashboard}>
         <h2>🎓 Student Dashboard</h2>
 
-        <div className={styles['dashboard-row']}>
-          <div className={styles['dashboard-profile']}>
+        <div className={styles.dashboardRow}>
+          <div className={styles.dashboardProfile}>
             {photoUrl ? (
               <Image
                 src={photoUrl}
                 alt="Profile"
-                className={styles["dashboard-profile-img"]}
+                className={styles.dashboardProfileImg}
                 width={128}
                 height={128}
               />
@@ -191,7 +185,7 @@ export default function StudentDashboard() {
               <p style={{ fontStyle: "italic" }}>No profile photo uploaded</p>
             )}
             <br />
-            <label className={styles['dashboard-profile-label']}>
+            <label className={styles.dashboardProfileLabel}>
               {uploading ? 'Uploading...' : 'Change Photo:'}
               <input
                 type="file"
@@ -205,7 +199,7 @@ export default function StudentDashboard() {
             <p><strong>Phone:</strong> {data.phone || '-'}</p>
           </div>
 
-          <div className={styles['dashboard-info']}>
+          <div className={styles.dashboardInfo}>
             <p><strong>City:</strong> {data.city || '-'}</p>
             <p><strong>Country:</strong> {data.country || '-'}</p>
             <p><strong>Level:</strong> {data.level || '-'}</p>
@@ -220,28 +214,64 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        <div className={styles['dashboard-reservations']}>
+        {/* 🔹 Kuponlar Alanı */}
+        <div className={styles.couponSection}>
+          <h3>🎟️ Your Coupons</h3>
+          {(!data.lessonCoupons || data.lessonCoupons.length === 0) &&
+           (!data.subscriptionCoupons || data.subscriptionCoupons.length === 0) ? (
+            <p>No coupons available.</p>
+          ) : (
+            <>
+              {data.lessonCoupons && data.lessonCoupons.length > 0 && (
+                <div>
+                  <h4>Lesson Coupons</h4>
+                  <ul>
+                    {data.lessonCoupons.map((c, i) => (
+                      <li key={i}>
+                        <b>{c.code}</b> — {c.discount}% off {c.used ? "(Used)" : "(Available)"}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {data.subscriptionCoupons && data.subscriptionCoupons.length > 0 && (
+                <div>
+                  <h4>Subscription Coupons</h4>
+                  <ul>
+                    {data.subscriptionCoupons.map((c, i) => (
+                      <li key={i}>
+                        <b>{c.code}</b> — {c.discount}% off {c.used ? "(Used)" : "(Available)"}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* REZERVASYONLAR */}
+        <div className={styles.dashboardReservations}>
           <h3>Your Reservations</h3>
-          <div className={styles['dashboard-reservations-list']}>
+          <div className={styles.dashboardReservationsList}>
             {sortedBookings.length === 0 ? (
               <p>No reservations yet.</p>
             ) : (
               sortedBookings.map((b, i) => {
                 const reviewed = reviews[b.id];
                 const teacher = teachers[b.teacherId] || {};
-
                 return (
-                  <div key={i} className={styles['dashboard-card']}>
+                  <div key={i} className={styles.dashboardCard}>
                     {teacher.profilePhotoUrl && (
                       <Image
                         src={teacher.profilePhotoUrl}
                         alt="Teacher"
-                        className={styles["dashboard-card-img"]}
+                        className={styles.dashboardCardImg}
                         width={150}
                         height={150}
                       />
                     )}
-                    <div className={styles['dashboard-card-body']}>
+                    <div className={styles.dashboardCardBody}>
                       <p><strong>Teacher:</strong> {teacher.name || 'N/A'}</p>
                       <p><strong>Date:</strong> {b.date}</p>
                       <p><strong>Time:</strong> {b.startTime} – {b.endTime}</p>
