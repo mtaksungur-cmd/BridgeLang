@@ -1,186 +1,180 @@
 @use '../styles/variables' as v;
 
 .dashboard {
-  padding: 2rem;
-  background: #faf9f6;
-  min-height: 100vh;
+  padding: v.$spacer-lg;
 
   h2 {
     text-align: center;
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 2rem;
-    color: #111;
   }
 
   &-row {
     display: flex;
-    flex-wrap: wrap;
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    padding: 2rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    gap: 2rem;
-    justify-content: center;
+    background-color: v.$primary-color;
+    color: #fff;
+    border-radius: 9px;
+    border: 3px solid #ddd;
   }
 
   &-profile {
-    flex: 1 1 320px;
-    text-align: center;
-    border-right: 1px solid #eee;
-    padding-right: 1rem;
-
-    &-img {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 1rem;
-      border: 3px solid v.$primary-color;
-    }
-
-    &-label {
-      display: inline-block;
-      margin: 0.5rem 0 1rem;
-      font-size: 0.9rem;
-    }
-
-    p {
-      margin: 0.3rem 0;
-      font-size: 0.95rem;
-      color: #333;
-    }
-  }
-
-  &-info {
-    flex: 2 1 400px;
     text-align: left;
-    padding-left: 1rem;
-
-    p {
-      margin: 0.5rem 0;
-      font-size: 0.95rem;
-      color: #333;
-
-      ul {
-        margin-top: 0.25rem;
-        margin-left: 1rem;
-        list-style: disc;
-      }
-    }
-  }
-
-  .couponSection {
-    margin-top: 3rem;
-    background: #fff;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-
-    h3 {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
-
-    h4 {
-      font-size: 1rem;
-      margin: 1rem 0 0.5rem;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-
-      li {
-        padding: 0.4rem 0;
-        border-bottom: 1px solid #eee;
-        font-size: 0.95rem;
-      }
-    }
-  }
-
-  &-reservations {
-    margin-top: 3rem;
-
-    h3 {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
-
-    &-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1.5rem;
-    }
-  }
-
-  &-card {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #eee;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    margin-top: v.$spacer-lg;
+    margin-bottom: v.$spacer-lg;
+    margin-left: 200px;
+    width: 50%;
 
     &-img {
       width: 120px;
       height: 120px;
       border-radius: 50%;
       object-fit: cover;
-      margin-bottom: 1rem;
-      border: 2px solid v.$primary-color;
+      margin-bottom: v.$spacer;
+    }
+
+    &-label {
+      font-size: 0.875rem;
+      display: block;
+      margin-top: v.$spacer;
+    }
+
+    h2 {
+      margin-bottom: v.$spacer;
+    }
+
+    p {
+      margin: v.$spacer-sm 0;
+    }
+
+    ul {
+      list-style: none;
+      margin: v.$spacer-sm 0;
+    }
+  }
+
+  &-info {
+    text-align: right;
+    margin-top: v.$spacer-lg;
+    margin-bottom: v.$spacer-lg;
+    margin-right: 200px;
+    width: 50%;
+
+    h2 {
+      margin-bottom: v.$spacer;
+    }
+
+    p {
+      margin: v.$spacer-sm 0;
+    }
+
+    ul {
+      list-style: none;
+      margin: v.$spacer-sm 0;
+    }
+  }
+
+  &-reservations {
+    margin-top: v.$spacer-lg;
+
+    h3 {
+      margin-bottom: v.$spacer;
+    }
+
+    &-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: v.$spacer-lg;
+    }
+  }
+
+  &-card {
+    border: 3px solid #ddd;
+    border-radius: 8px;
+    padding: v.$spacer;
+    display: flex;
+    gap: v.$spacer;
+    align-items: flex-start;
+
+    &-img {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
     }
 
     &-body {
+      flex: 1;
+
       p {
-        margin: 0.3rem 0;
-        font-size: 0.95rem;
+        margin: v.$spacer-sm 0;
       }
 
-      a, button {
+      a {
         display: inline-block;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        margin-top: 0.5rem;
-        border: none;
-        cursor: pointer;
-        background: v.$accent-color;
-        color: white;
-        font-weight: 500;
+        padding: v.$spacer-sm v.$spacer;
+        border-radius: 4px;
+        margin-bottom: v.$spacer-sm;
+        background-color: v.$accent-color;
+        color: #fff;
         text-decoration: none;
       }
 
-      a:hover, button:hover {
-        opacity: 0.9;
+      button {
+        background: v.$accent-color;
+        color: white;
+        border: none;
+        padding: v.$spacer-sm v.$spacer;
+        border-radius: 4px;
+        cursor: pointer;
       }
     }
   }
 }
-
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .dashboard {
-    padding: 1rem;
-
     &-row {
       flex-direction: column;
       align-items: center;
-      text-align: center;
+      padding: v.$spacer;
     }
 
     &-profile {
-      border-right: none;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 1rem;
-      margin-bottom: 1rem;
+      margin: v.$spacer auto;
+      width: 80%;
+      text-align: center;
     }
 
     &-info {
-      padding-left: 0;
+      margin: v.$spacer auto;
+      width: 80%;
+      text-align: center;
+
+      ul {
+        padding: 0;
+      }
+    }
+
+    &-reservations {
+      &-list {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: v.$spacer;
+      }
+    }
+
+    &-card {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+
+      &-img {
+        width: 100px;
+        height: 100px;
+      }
+
+      &-body {
+        a, button {
+          width: 100%;
+        }
+      }
     }
   }
 }
