@@ -55,7 +55,7 @@ export default function BookLessonPage() {
   /* 🔹 Yardımcılar */
   const convertToMinutes = (time) => {
     if (!time) return 0;
-    if (time.includes("AM") || time.includes("PM")) {
+    if (time.includes('AM') || time.includes('PM')) {
       const [timePart, modifier] = time.split(' ');
       let [hours, minutes] = timePart.split(':').map(Number);
       if (modifier === 'PM' && hours !== 12) hours += 12;
@@ -91,7 +91,7 @@ export default function BookLessonPage() {
       let endMinutes = convertToMinutes(end);
 
       // 🔹 Eğer end 00:00 ise, 24:00 olarak yorumla (ertesi gün)
-      if (end === "00:00") endMinutes = 24 * 60;
+      if (end === '00:00') endMinutes = 24 * 60;
 
       for (let t = startMinutes; t + duration <= endMinutes; t += 15) {
         const slotStart = t;
@@ -205,8 +205,8 @@ export default function BookLessonPage() {
           >
             <option value="">-- Select --</option>
             <option value="Online">Online</option>
-            <option value="Teacher's Home">Teacher's Home</option>
-            <option value="Student's Home">Student's Home</option>
+            <option value="Teacher&apos;s Home">Teacher&apos;s Home</option>
+            <option value="Student&apos;s Home">Student&apos;s Home</option>
             <option value="Other">Other</option>
           </select>
         </label>
