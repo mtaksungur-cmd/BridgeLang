@@ -158,13 +158,15 @@ export default function StudentDashboard() {
   return (
     <div>
       <SubscriptionBanner />
-      {loyalty && loyalty.plan !== 'starter' && (
+      {loyalty && (
         <LoyaltyBadge
           plan={loyalty.plan}
           loyaltyMonths={loyalty.loyaltyMonths}
           loyaltyBonusCount={loyalty.loyaltyBonusCount}
           discountEligible={loyalty.discountEligible}
           promoCode={loyalty.promoCode}
+          lessonCoupons={data.lessonCoupons || []}
+          subscriptionCoupons={data.subscriptionCoupons || []}
         />
       )}
 
