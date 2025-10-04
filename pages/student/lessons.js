@@ -110,13 +110,15 @@ export default function StudentLessons() {
     <div>
       <SubscriptionBanner />
 
-      {loyalty && loyalty.plan !== 'starter' && (
+      {loyalty && (
         <LoyaltyBadge
           plan={loyalty.plan}
           loyaltyMonths={loyalty.loyaltyMonths}
           loyaltyBonusCount={loyalty.loyaltyBonusCount}
           discountEligible={loyalty.discountEligible}
           promoCode={loyalty.promoCode}
+          lessonCoupons={user?.lessonCoupons || []}
+          subscriptionCoupons={user?.subscriptionCoupons || []}
         />
       )}
 
