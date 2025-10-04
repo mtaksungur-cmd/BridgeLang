@@ -4,15 +4,17 @@ import { doc, getDoc } from "firebase/firestore";
 import Link from "next/link";
 
 const PLAN_LABELS = {
+  free: "Free",
   starter: "Starter",
   pro: "Pro",
-  vip: "VIP"
+  vip: "VIP",
 };
 
 const PLAN_COLORS = {
+  free: "#666",
   starter: "#36a",
   pro: "#eab308",
-  vip: "#1464ff"
+  vip: "#1464ff",
 };
 
 export default function SubscriptionBanner({ hideIfNoPlan = false }) {
@@ -52,7 +54,8 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
         boxShadow: "0 1px 8px #f1f3fa",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        flexWrap: "wrap",
       }}
     >
       {!plan ? (
@@ -70,10 +73,51 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
                 borderRadius: 7,
                 padding: "7px 18px",
                 fontWeight: 600,
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               Choose Plan
+            </button>
+          </Link>
+        </>
+      ) : plan === "free" ? (
+        <>
+          <span
+            style={{
+              color: PLAN_COLORS.free,
+              fontWeight: 700,
+              fontSize: 17,
+              marginRight: 12,
+            }}
+          >
+            🆓 Free Plan Active
+          </span>
+          <span
+            style={{
+              background: "#fff",
+              border: "1px solid #ccc",
+              borderRadius: 7,
+              padding: "5px 13px",
+              fontWeight: 600,
+              color: "#333",
+              marginRight: 12,
+            }}
+          >
+            10 profiles / 3 messages this month
+          </span>
+          <Link href="/student/subscription">
+            <button
+              style={{
+                background: "#fff",
+                color: "#1464ff",
+                border: "1.5px solid #1464ff",
+                borderRadius: 7,
+                padding: "6px 15px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Upgrade
             </button>
           </Link>
         </>
@@ -84,7 +128,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
               color: PLAN_COLORS[plan] || "#1464ff",
               fontWeight: 700,
               fontSize: 17,
-              marginRight: 18
+              marginRight: 18,
             }}
           >
             {PLAN_LABELS[plan]} Plan Active
@@ -98,7 +142,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
                 padding: "5px 13px",
                 fontWeight: 600,
                 color: "#333",
-                marginRight: 12
+                marginRight: 12,
               }}
             >
               {credits} lesson credits left
@@ -113,7 +157,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
                 borderRadius: 7,
                 padding: "6px 15px",
                 fontWeight: 600,
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               Change Plan
