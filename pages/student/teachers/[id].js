@@ -1,4 +1,3 @@
-// pages/student/teachers/[id].js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../../lib/firebase';
@@ -17,14 +16,13 @@ function to24Hour(timeStr) {
   if (!timeStr) return "";
   const parts = timeStr.split(" ");
   if (parts.length === 2) {
-    // Örn: "09:30 AM"
     const [hh, mm] = parts[0].split(":").map(x => parseInt(x, 10));
     const ampm = parts[1];
     let hours = hh % 12;
     if (ampm === "PM") hours += 12;
     return `${String(hours).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
   }
-  return timeStr; // zaten 24 saat formatındaysa dokunma
+  return timeStr;
 }
 
 export default function TeacherProfilePage() {
@@ -55,9 +53,7 @@ export default function TeacherProfilePage() {
       for (let r of reviews) {
         if (r.studentId && !userMap[r.studentId]) {
           const snap = await getDoc(doc(db, 'users', r.studentId));
-          if (snap.exists()) {
-            userMap[r.studentId] = snap.data();
-          }
+          if (snap.exists()) userMap[r.studentId] = snap.data();
         }
       }
       setReviewUsers(userMap);
@@ -65,7 +61,7 @@ export default function TeacherProfilePage() {
     fetchReviewUsers();
   }, [reviews]);
 
-  // Görüntüleme hakkını azalt
+  // 🔹 Görüntüleme hakkını azalt (ama erişimi engelleme)
   useEffect(() => {
     if (!id) return;
     const user = auth.currentUser;
@@ -84,7 +80,7 @@ export default function TeacherProfilePage() {
       });
   }, [id]);
 
-  // Öğretmen bilgisi
+  // 🔹 Öğretmen bilgisi
   useEffect(() => {
     if (!id) return;
     const fetchTeacher = async () => {
@@ -101,7 +97,7 @@ export default function TeacherProfilePage() {
     fetchUserLimits();
   }, [id]);
 
-  // Yorumlar
+  // 🔹 Yorumlar
   useEffect(() => {
     if (!id) return;
     const fetchReviews = async () => {
@@ -167,7 +163,7 @@ export default function TeacherProfilePage() {
                 src={teacher.profilePhotoUrl}
                 alt="Profile"
                 className={styles.profileImg}
-                width={180}   // istediğin boyutu verebilirsin
+                width={180}
                 height={180}
               />
             )}
@@ -193,7 +189,7 @@ export default function TeacherProfilePage() {
             </div>
           </div>
 
-          {/* orta panel */}
+          {/* Orta panel */}
           <div className={styles.centerPanel}>
             <p><strong>Bio:</strong> {teacher.bio || 'No bio provided.'}</p>
             <p><strong>Languages Taught:</strong> {teacher.languagesTaught}</p>
@@ -252,7 +248,7 @@ export default function TeacherProfilePage() {
           </button>
           {viewLimit !== null && (
             <span className={styles.viewInfo}>
-              Views left: <b>{viewLimit}</b>
+              Views left this month: <b>{viewLimit}</b>
             </span>
           )}
         </div>
@@ -274,7 +270,7 @@ export default function TeacherProfilePage() {
                           src={student.profilePhotoUrl}
                           alt={student.name}
                           className={styles.reviewAvatar}
-                          width={40}   // istediğin boyutu verebilirsin
+                          width={40}
                           height={40}
                         />
                       )}
