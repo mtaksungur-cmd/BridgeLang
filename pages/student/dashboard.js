@@ -167,6 +167,7 @@ export default function StudentDashboard() {
           promoCode={loyalty.promoCode}
           lessonCoupons={data.lessonCoupons || []}
           subscriptionCoupons={data.subscriptionCoupons || []}
+          lessonsTaken={data.lessonsTaken || 0}
         />
       )}
 
