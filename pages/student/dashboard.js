@@ -156,7 +156,7 @@ export default function StudentDashboard() {
   });
 
   return (
-    <div>
+    <div className={styles.dashboard}>
       <SubscriptionBanner />
       {loyalty && (
         <LoyaltyBadge
@@ -170,132 +170,128 @@ export default function StudentDashboard() {
         />
       )}
 
-      <div className={styles.dashboard}>
-        <h2>🎓 Student Dashboard</h2>
+      <h2>🎓 Student Dashboard</h2>
 
-        <div className={styles.dashboardRow}>
-          <div className={styles.dashboardProfile}>
-            {photoUrl ? (
-              <Image
-                src={photoUrl}
-                alt="Profile"
-                className={styles.dashboardProfileImg}
-                width={128}
-                height={128}
-              />
-            ) : (
-              <p style={{ fontStyle: "italic" }}>No profile photo uploaded</p>
-            )}
-            <br />
-            <label className={styles.dashboardProfileLabel}>
-              {uploading ? 'Uploading...' : 'Change Photo:'}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                disabled={uploading}
-              />
-            </label>
-            <p><strong>Full Name:</strong> {data.name}</p>
-            <p><strong>Email:</strong> {data.email} {auth.currentUser?.emailVerified ? '✅' : '❌'}</p>
-            <p><strong>Phone:</strong> {data.phone || '-'}</p>
-          </div>
-
-          <div className={styles.dashboardInfo}>
-            <p><strong>City:</strong> {data.city || '-'}</p>
-            <p><strong>Country:</strong> {data.country || '-'}</p>
-            <p><strong>Level:</strong> {data.level || '-'}</p>
-            <p><strong>Bio:</strong><br />{data.intro || '-'}</p>
-            <p><strong>Goals:</strong>
-              <ul>
-                {data.goals && data.goals.map((g, i) => (
-                  <li key={i}>{g}</li>
-                ))}
-              </ul>
-            </p>
-          </div>
-        </div>
-
-        {/* 🔹 Kuponlar Alanı */}
-        <div className={styles.couponSection}>
-          <h3>🎟️ Your Coupons</h3>
-          {(!data.lessonCoupons || data.lessonCoupons.length === 0) &&
-           (!data.subscriptionCoupons || data.subscriptionCoupons.length === 0) ? (
-            <p>No coupons available.</p>
+      {/* PROFIL ALANI */}
+      <div className={styles['dashboard-row']}>
+        <div className={styles['dashboard-profile']}>
+          {photoUrl ? (
+            <Image
+              src={photoUrl}
+              alt="Profile"
+              className={styles['dashboard-profile-img']}
+              width={140}
+              height={140}
+            />
           ) : (
-            <>
-              {data.lessonCoupons && data.lessonCoupons.length > 0 && (
-                <div>
-                  <h4>Lesson Coupons</h4>
-                  <ul>
-                    {data.lessonCoupons.map((c, i) => (
-                      <li key={i}>
-                        <b>{c.code}</b> — {c.discount}% off {c.used ? "(Used)" : "(Available)"}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {data.subscriptionCoupons && data.subscriptionCoupons.length > 0 && (
-                <div>
-                  <h4>Subscription Coupons</h4>
-                  <ul>
-                    {data.subscriptionCoupons.map((c, i) => (
-                      <li key={i}>
-                        <b>{c.code}</b> — {c.discount}% off {c.used ? "(Used)" : "(Available)"}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </>
+            <p style={{ fontStyle: "italic" }}>No profile photo uploaded</p>
           )}
+          <label className={styles['dashboard-profile-label']}>
+            {uploading ? 'Uploading...' : 'Change Photo:'}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+          </label>
+          <p><strong>Full Name:</strong> {data.name}</p>
+          <p><strong>Email:</strong> {data.email} {auth.currentUser?.emailVerified ? '✅' : '❌'}</p>
+          <p><strong>Phone:</strong> {data.phone || '-'}</p>
         </div>
 
-        {/* REZERVASYONLAR */}
-        <div className={styles.dashboardReservations}>
-          <h3>Your Reservations</h3>
-          <div className={styles.dashboardReservationsList}>
-            {sortedBookings.length === 0 ? (
-              <p>No reservations yet.</p>
-            ) : (
-              sortedBookings.map((b, i) => {
-                const reviewed = reviews[b.id];
-                const teacher = teachers[b.teacherId] || {};
-                return (
-                  <div key={i} className={styles.dashboardCard}>
-                    {teacher.profilePhotoUrl && (
-                      <Image
-                        src={teacher.profilePhotoUrl}
-                        alt="Teacher"
-                        className={styles.dashboardCardImg}
-                        width={150}
-                        height={150}
-                      />
-                    )}
-                    <div className={styles.dashboardCardBody}>
-                      <p><strong>Teacher:</strong> {teacher.name || 'N/A'}</p>
-                      <p><strong>Date:</strong> {b.date}</p>
-                      <p><strong>Time:</strong> {b.startTime} – {b.endTime}</p>
-                      <p><strong>Duration:</strong> {b.duration} min</p>
-                      <p><strong>Location:</strong> {b.location}</p>
-                      <p><strong>Status:</strong> {b.status}</p>
-                      {b.meetingLink && (
-                        <a href={b.meetingLink} target="_blank" rel="noopener noreferrer">
-                          Join Online Lesson
-                        </a>
-                      )}
-                      {b.status === 'approved' && !reviewed && (
-                        <button onClick={() => router.push(`/student/review/${b.id}`)}>
-                          ✍️ Leave a Review
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
+        <div className={styles['dashboard-info']}>
+          <p><strong>City:</strong> {data.city || '-'}</p>
+          <p><strong>Country:</strong> {data.country || '-'}</p>
+          <p><strong>Level:</strong> {data.level || '-'}</p>
+          <p><strong>Bio:</strong><br />{data.intro || '-'}</p>
+          <p><strong>Goals:</strong></p>
+          <ul>
+            {data.goals && data.goals.map((g, i) => (
+              <li key={i}>{g}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* KUPONLAR */}
+      <div className={styles.couponSection}>
+        <h3>🎟️ Your Coupons</h3>
+        {(!data.lessonCoupons?.length && !data.subscriptionCoupons?.length) ? (
+          <p>No coupons available.</p>
+        ) : (
+          <>
+            {data.lessonCoupons?.length > 0 && (
+              <div>
+                <h4>Lesson Coupons</h4>
+                <ul>
+                  {data.lessonCoupons.map((c, i) => (
+                    <li key={i}>
+                      <b>{c.code}</b> — {c.discount}% off {c.used ? "(Used)" : "(Available)"}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
-          </div>
+            {data.subscriptionCoupons?.length > 0 && (
+              <div>
+                <h4>Subscription Coupons</h4>
+                <ul>
+                  {data.subscriptionCoupons.map((c, i) => (
+                    <li key={i}>
+                      <b>{c.code}</b> — {c.discount}% off {c.used ? "(Used)" : "(Available)"}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* REZERVASYONLAR */}
+      <div className={styles['dashboard-reservations']}>
+        <h3>Your Reservations</h3>
+        <div className={styles['dashboard-reservations-list']}>
+          {sortedBookings.length === 0 ? (
+            <p>No reservations yet.</p>
+          ) : (
+            sortedBookings.map((b, i) => {
+              const reviewed = reviews[b.id];
+              const teacher = teachers[b.teacherId] || {};
+              return (
+                <div key={i} className={styles['dashboard-card']}>
+                  {teacher.profilePhotoUrl && (
+                    <Image
+                      src={teacher.profilePhotoUrl}
+                      alt="Teacher"
+                      className={styles['dashboard-card-img']}
+                      width={120}
+                      height={120}
+                    />
+                  )}
+                  <div className={styles['dashboard-card-body']}>
+                    <p><strong>Teacher:</strong> {teacher.name || 'N/A'}</p>
+                    <p><strong>Date:</strong> {b.date}</p>
+                    <p><strong>Time:</strong> {b.startTime} – {b.endTime}</p>
+                    <p><strong>Duration:</strong> {b.duration} min</p>
+                    <p><strong>Location:</strong> {b.location}</p>
+                    <p><strong>Status:</strong> {b.status}</p>
+                    {b.meetingLink && (
+                      <a href={b.meetingLink} target="_blank" rel="noopener noreferrer">
+                        Join Online Lesson
+                      </a>
+                    )}
+                    {b.status === 'approved' && !reviewed && (
+                      <button onClick={() => router.push(`/student/review/${b.id}`)}>
+                        ✍️ Leave a Review
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
