@@ -1,4 +1,3 @@
-// pages/student/teachers.js
 import { useEffect, useMemo, useState } from 'react';
 import { db, auth } from '../../lib/firebase';
 import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firestore';
@@ -19,7 +18,6 @@ export default function TeachersList() {
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      // ✅ sadece approved teacher’lar için query
       const q = query(
         collection(db, 'users'),
         where('role', '==', 'teacher'),
@@ -28,7 +26,6 @@ export default function TeachersList() {
       const snap = await getDocs(q);
       const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      // Yorumlar
       const reviewMap = {};
       for (const t of data) {
         const q = query(
@@ -49,7 +46,6 @@ export default function TeachersList() {
         return { ...t, avgRating: avg, reviewCount: ratings.length, latestBadge };
       });
 
-      // Sıralama
       withRatings.sort((a, b) => {
         if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount;
         return (b.avgRating || 0) - (a.avgRating || 0);
@@ -64,14 +60,13 @@ export default function TeachersList() {
       const user = auth.currentUser;
       if (!user) return;
       const sSnap = await getDoc(doc(db, "users", user.uid));
-      if (sSnap.exists()) setActivePlan(sSnap.data().subscriptionPlan || "");
+      if (sSnap.exists()) setActivePlan(sSnap.data().subscriptionPlan || "free");
     };
 
     fetchTeachers();
     checkPlan();
   }, []);
 
-  // Ülkeye bağlı şehir seçenekleri
   const citiesForCountry = useMemo(() => {
     const set = new Set(
       allTeachers
@@ -82,7 +77,6 @@ export default function TeachersList() {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [allTeachers, country]);
 
-  // Filtreleme
   useEffect(() => {
     const f = allTeachers.filter(t => {
       const ctry = (t.country || '').toLowerCase();
@@ -100,16 +94,13 @@ export default function TeachersList() {
   };
 
   if (loading) return <p className={styles.loading}>Loading teachers...</p>;
-  const isLocked = !activePlan;
 
   return (
     <div>
       <SubscriptionBanner />
-
       <div className={styles.container}>
         <h2>Browse Our Teachers</h2>
 
-        {/* Filtre çubuğu */}
         <div className={styles.filters} role="region" aria-label="Filters">
           <div className={styles.filterItem}>
             <label htmlFor="country">Country</label>
@@ -148,16 +139,6 @@ export default function TeachersList() {
           </div>
         </div>
 
-        {isLocked && (
-          <div className={styles.lockedMessage}>
-            <b>You need a subscription to view teachers.</b>
-            <br />
-            <Link href="/student/subscription">
-              <button className={styles.seePlansBtn}>See Plans</button>
-            </Link>
-          </div>
-        )}
-
         <div className={styles.grid}>
           {teachers.map(t => {
             const cityTxt = t.city || '—';
@@ -171,15 +152,14 @@ export default function TeachersList() {
             return (
               <div
                 key={t.id}
-                className={`${styles.card} ${isLocked ? styles.locked : ''}`}
-                onClick={isLocked ? () => router.push("/student/subscription") : undefined}
+                className={styles.card}
+                onClick={() => router.push(`/student/teachers/${t.id}`)}
               >
-                <div className={styles.cardContent} style={{ pointerEvents: isLocked ? "none" : "auto" }}>
+                <div className={styles.cardContent}>
                   <Link href={`/student/teachers/${t.id}`}>
                     <h3 className={styles.teacherName}>{t.name}</h3>
                   </Link>
 
-                  {/* Rating */}
                   {t.avgRating ? (
                     <p className={styles.rating}>
                       ⭐ {t.avgRating} <span className={styles.reviewCount}>({t.reviewCount})</span>
@@ -211,16 +191,13 @@ export default function TeachersList() {
                     60 min: £{t.pricing60 ?? '—'}
                   </p>
 
-                  {!isLocked && (
-                    <button
-                      className={styles.reportBtn}
-                      onClick={() => router.push(`/student/report?target=${t.id}`)}
-                    >
-                      🛑 Report
-                    </button>
-                  )}
+                  <button
+                    className={styles.reportBtn}
+                    onClick={() => router.push(`/student/report?target=${t.id}`)}
+                  >
+                    🛑 Report
+                  </button>
                 </div>
-                {isLocked && <div className={styles.overlay}><span>Subscription required</span></div>}
               </div>
             );
           })}
