@@ -119,6 +119,7 @@ export default function StudentLessons() {
           promoCode={loyalty.promoCode}
           lessonCoupons={user?.lessonCoupons || []}
           subscriptionCoupons={user?.subscriptionCoupons || []}
+          lessonsTaken={data.lessonsTaken || 0}
         />
       )}
 
