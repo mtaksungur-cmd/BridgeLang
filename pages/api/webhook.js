@@ -69,7 +69,7 @@ async function createCouponForPlan(plan, type = 'lesson') {
     max_redemptions: 1,
     active: true,
   });
-  return { code: promo.code, percent, type };
+  return { code: promo.code, discount: percent, type };
 }
 
 /* -------------------- Handler -------------------- */
