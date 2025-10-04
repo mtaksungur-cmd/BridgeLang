@@ -4,19 +4,20 @@ export default function LoyaltyBadge({
   loyaltyBonusCount,
   discountEligible,
   promoCode,
-  lessonCoupons = [],     // 🔹 Firestore’dan gelecek ders kuponları
-  subscriptionCoupons = [] // 🔹 Abonelik kuponları (VIP özel)
+  lessonCoupons = [],
+  subscriptionCoupons = [],
+  lessonsTaken = 0 // 🔹 Yeni: Toplam ders sayısı
 }) {
   let text = "";
   let badge = "";
 
-  if (!plan || plan === 'starter') {
+  if (!plan || plan === "starter") {
     badge = "🎟️";
     text = "Starter Plan – 10% discount on your first 6 lessons.";
-  } else if (plan === 'pro') {
+  } else if (plan === "pro") {
     badge = "🥈";
     text = `Pro Plan – 15% discount on your first 6 lessons.`;
-  } else if (plan === 'vip') {
+  } else if (plan === "vip") {
     badge = "🥇";
     text = `VIP Plan – 20% discount on your first 6 lessons.`;
   }
@@ -41,13 +42,25 @@ export default function LoyaltyBadge({
       <span style={{ fontSize: 32 }}>{badge}</span>
       <div style={{ fontWeight: 600, marginTop: 8 }}>{text}</div>
 
-      {plan !== 'starter' && (
+      {plan !== "starter" && (
         <div style={{ fontSize: 12, marginTop: 5, color: "#999" }}>
-          Stay on {plan === 'vip' ? "VIP" : "Pro"} plan for 3+ months to unlock loyalty bonuses.
+          Stay on {plan === "vip" ? "VIP" : "Pro"} plan for 3+ months to unlock
+          loyalty bonuses.
         </div>
       )}
 
-      {/* 🔹 İlk 6 Ders İndirimi (bilgilendirme) */}
+      {/* 🔹 Ders Sayısı */}
+      <div
+        style={{
+          marginTop: 10,
+          fontWeight: 600,
+          color: "#444",
+        }}
+      >
+        📘 Lessons Taken: <span style={{ color: "#1464ff" }}>{lessonsTaken}</span>
+      </div>
+
+      {/* 🔹 İlk 6 Ders İndirimi */}
       <div
         style={{
           marginTop: 16,
@@ -64,7 +77,7 @@ export default function LoyaltyBadge({
         {plan === "vip" && "20% off each lesson"}
       </div>
 
-      {/* 🔹 Ders Kuponları (Yorum ve Sadakat kuponları) */}
+      {/* 🔹 Ders Kuponları */}
       {lessonCoupons && lessonCoupons.length > 0 && (
         <div
           style={{
@@ -152,7 +165,7 @@ export default function LoyaltyBadge({
         </div>
       )}
 
-      {/* 🔹 VIP Sadakat Abonelik Kuponları */}
+      {/* 🔹 VIP Sadakat Kuponları */}
       {plan === "vip" && subscriptionCoupons && subscriptionCoupons.length > 0 && (
         <div
           style={{
