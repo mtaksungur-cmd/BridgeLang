@@ -28,6 +28,7 @@ async function createReviewCoupon(plan) {
     code: randCode(),
     max_redemptions: 1,
     active: true,
+    metadata: { type: 'review_bonus' }
   });
 
   return { code: promo.code, discount: percent };
@@ -47,31 +48,38 @@ export default async function handler(req, res) {
   const plan = u.subscriptionPlan || 'free';
   const lessonsTaken = u.lessonsTaken || 0;
 
-  // 🔹 Sadece 6. dersten sonra kupon üret
-  if (lessonsTaken < 6) {
-    return res.status(200).json({
-      bonusGiven: false,
-      message: 'Coupon will activate after 6 lessons.',
-    });
-  }
-
-  // 🔹 Daha önce kullanılmamış bir yorum kuponu varsa yeniden oluşturma
-  const existing = (u.lessonCoupons || []).find(c => !c.used && c.type === 'review');
+  // 🔹 Önceden bir yorum kuponu varsa tekrar oluşturma
+  const existing = (u.lessonCoupons || []).find(c => c.type === 'review');
   if (existing) {
     return res.status(200).json({
       bonusGiven: false,
-      message: 'Existing review coupon already available.',
+      message: 'Review coupon already exists.',
     });
   }
 
   // 🔹 Kupon oluştur
   const c = await createReviewCoupon(plan);
   if (c) {
-    const coupon = { ...c, type: 'review', createdAt: new Date(), used: false };
+    const coupon = {
+      ...c,
+      type: 'review',
+      createdAt: new Date(),
+      used: false,
+      active: lessonsTaken >= 6, // 🔸 6. dersten önce aktif değil
+    };
+
     await userRef.update({
       lessonCoupons: adminDb.FieldValue.arrayUnion(coupon),
     });
-    return res.status(200).json({ bonusGiven: true, coupon });
+
+    return res.status(200).json({
+      bonusGiven: true,
+      coupon,
+      active: coupon.active,
+      message: coupon.active
+        ? 'Coupon is active and ready to use.'
+        : 'Coupon created but will activate after your 6th lesson.',
+    });
   }
 
   res.status(200).json({ bonusGiven: false });
