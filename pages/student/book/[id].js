@@ -16,6 +16,7 @@ export default function BookLessonPage() {
   const [location, setLocation] = useState('');
   const [availableSlots, setAvailableSlots] = useState([]);
   const [bookedSlots, setBookedSlots] = useState([]);
+  const [couponCode, setCouponCode] = useState(''); // ✅ kupon inputu
   const [msg, setMsg] = useState('');
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -55,18 +56,9 @@ export default function BookLessonPage() {
   /* 🔹 Yardımcılar */
   const convertToMinutes = (time) => {
     if (!time) return 0;
-    if (time.includes('AM') || time.includes('PM')) {
-      const [timePart, modifier] = time.split(' ');
-      let [hours, minutes] = timePart.split(':').map(Number);
-      if (modifier === 'PM' && hours !== 12) hours += 12;
-      if (modifier === 'AM' && hours === 12) hours = 0;
-      return hours * 60 + minutes;
-    } else {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-    }
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
   };
-
   const formatTo24Hour = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -89,21 +81,17 @@ export default function BookLessonPage() {
     daySlots.forEach(({ start, end }) => {
       let startMinutes = convertToMinutes(start);
       let endMinutes = convertToMinutes(end);
-
-      // 🔹 Eğer end 00:00 ise, 24:00 olarak yorumla (ertesi gün)
       if (end === '00:00') endMinutes = 24 * 60;
 
       for (let t = startMinutes; t + duration <= endMinutes; t += 15) {
         const slotStart = t;
         const slotEnd = t + duration;
-
         const isTaken = bookedSlots.some((b) => {
           const bookedStart = convertToMinutes(b.startTime);
           const bookedEnd = convertToMinutes(b.endTime);
           return slotStart < bookedEnd && slotEnd > bookedStart;
         });
 
-        // 🔹 Aynı gün geçmiş saatleri gizle
         if (selected.toDateString() === today.toDateString()) {
           const nowMinutes = today.getHours() * 60 + today.getMinutes();
           if (slotStart <= nowMinutes) continue;
@@ -112,7 +100,6 @@ export default function BookLessonPage() {
         result.push({
           start: formatTo24Hour(slotStart),
           end: formatTo24Hour(slotEnd),
-          rawStart: slotStart,
           taken: isTaken,
         });
       }
@@ -128,10 +115,7 @@ export default function BookLessonPage() {
   /* 🔹 Rezervasyon oluşturma */
   const handleBooking = async (slot) => {
     setMsg('');
-    if (!location) {
-      setMsg('❌ Please select a lesson location.');
-      return;
-    }
+    if (!location) return setMsg('❌ Please select a lesson location.');
 
     try {
       const res = await fetch('/api/payment/checkout', {
@@ -148,12 +132,13 @@ export default function BookLessonPage() {
           price: teacher[`pricing${duration}`],
           studentEmail: auth.currentUser.email,
           timezone: userTimezone,
+          couponCode: couponCode.trim() || null // ✅ gönder
         }),
       });
       const data = await res.json();
 
       if (data.url) window.location.href = data.url;
-      else setMsg(data.error ? `❌ ${data.error}` : '❌ Payment initiation failed.');
+      else setMsg(data.error ? `❌ ${data.error}` : '❌ Payment failed.');
     } catch (err) {
       console.error(err);
       setMsg('❌ Booking failed.');
@@ -173,22 +158,13 @@ export default function BookLessonPage() {
       <div className={styles.row}>
         <label className={styles.label}>
           Date
-          <input
-            type="date"
-            min={new Date().toISOString().split('T')[0]}
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className={styles.input}
-          />
+          <input type="date" min={new Date().toISOString().split('T')[0]} value={selectedDate}
+                 onChange={(e) => setSelectedDate(e.target.value)} className={styles.input}/>
         </label>
 
         <label className={styles.label}>
           Lesson Duration
-          <select
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className={styles.select}
-          >
+          <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} className={styles.select}>
             <option value={30}>30 minutes</option>
             <option value={45}>45 minutes</option>
             <option value={60}>60 minutes</option>
@@ -197,49 +173,39 @@ export default function BookLessonPage() {
 
         <label className={styles.label}>
           Location
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            required
-            className={styles.select}
-          >
+          <select value={location} onChange={(e) => setLocation(e.target.value)} required className={styles.select}>
             <option value="">-- Select --</option>
             <option value="Online">Online</option>
-            <option value="Teacher&apos;s Home">Teacher&apos;s Home</option>
-            <option value="Student&apos;s Home">Student&apos;s Home</option>
+            <option value="Teacher's Home">Teacher's Home</option>
+            <option value="Student's Home">Student's Home</option>
             <option value="Other">Other</option>
           </select>
         </label>
       </div>
+
+      {/* ✅ Coupon input alanı */}
+      <label className={styles.label}>
+        Coupon Code (optional)
+        <input
+          type="text"
+          placeholder="Enter coupon code"
+          value={couponCode}
+          onChange={(e) => setCouponCode(e.target.value)}
+          className={styles.input}
+        />
+      </label>
 
       <h3 className={styles.subtitle}>Available Time Slots</h3>
       {availableSlots.length === 0 ? (
         <p className={styles.empty}>No available time slots for selected day.</p>
       ) : (
         <div className={styles.slots}>
-          {availableSlots.map((slot, i) => {
-            const disabled =
-              slot.taken ||
-              !teacher ||
-              !studentId ||
-              !duration ||
-              !location ||
-              !teacher[`pricing${duration}`] ||
-              !auth.currentUser;
-
-            return (
-              <button
-                key={i}
-                onClick={() => handleBooking(slot)}
-                disabled={disabled}
-                className={`${styles.slotBtn} ${
-                  disabled ? styles.slotBtnDisabled : ''
-                }`}
-              >
-                {slot.start} – {slot.end} {slot.taken && ' (Booked)'}
-              </button>
-            );
-          })}
+          {availableSlots.map((slot, i) => (
+            <button key={i} onClick={() => handleBooking(slot)} disabled={slot.taken}
+              className={`${styles.slotBtn} ${slot.taken ? styles.slotBtnDisabled : ''}`}>
+              {slot.start} – {slot.end} {slot.taken && ' (Booked)'}
+            </button>
+          ))}
         </div>
       )}
 
