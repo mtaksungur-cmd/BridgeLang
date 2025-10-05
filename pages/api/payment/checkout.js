@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       }
 
       // 2️⃣ Kullanıcının yorum sonrası veya sadakat kuponu varsa
-      const lessonCoupons = (u.lessonCoupons || []).filter(c => !c.used);
+      const lessonCoupons = (u.lessonCoupons || []).filter(c => !c.used && c.active);
       const found = lessonCoupons.find(c => c.code === couponCode);
       if (found) {
         discountedPrice *= (1 - found.discount / 100);
