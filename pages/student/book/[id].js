@@ -30,7 +30,7 @@ export default function BookLessonPage() {
 
   /* 🔹 Öğretmen */
   useEffect(() => {
-    if (!teacherId) return;
+    if (!Id) return;
     const fetchTeacher = async () => {
       const snap = await getDoc(doc(db, 'users', teacherId));
       if (snap.exists()) setTeacher(snap.data());
@@ -176,8 +176,8 @@ export default function BookLessonPage() {
           <select value={location} onChange={(e) => setLocation(e.target.value)} required className={styles.select}>
             <option value="">-- Select --</option>
             <option value="Online">Online</option>
-            <option value="Teacher's Home">Teacher's Home</option>
-            <option value="Student's Home">Student's Home</option>
+            <option value="Teacher&apos;s Home">Teacher&apos;s Home</option>
+            <option value="Student&apos;s Home">Student&apos;s Home</option>
             <option value="Other">Other</option>
           </select>
         </label>
