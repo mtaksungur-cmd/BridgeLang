@@ -38,7 +38,7 @@ export default function StudentLessons() {
       const q = query(
         collection(db, 'bookings'),
         where('studentId', '==', _uid),
-        where('status', 'in', ['pending-approval','confirmed','teacher_approved','student_approved','approved'])
+        where('status', 'in', ['pending-approval', 'confirmed', 'teacher_approved', 'student_approved', 'approved'])
       );
       const snap = await getDocs(q);
       const lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -119,7 +119,7 @@ export default function StudentLessons() {
           promoCode={loyalty.promoCode}
           lessonCoupons={user?.lessonCoupons || []}
           subscriptionCoupons={user?.subscriptionCoupons || []}
-          lessonsTaken={data.lessonsTaken || 0}
+          lessonsTaken={user?.lessonsTaken || 0}
         />
       )}
 
@@ -135,13 +135,13 @@ export default function StudentLessons() {
                   <div className="card-body">
                     <div className="d-flex align-items-center mb-3">
                       {t.profilePhotoUrl ? (
-                          <Image
-                            src={t.profilePhotoUrl}
-                            alt="Teacher"
-                            className={styles.avatar}
-                            width={44}
-                            height={44}
-                          />
+                        <Image
+                          src={t.profilePhotoUrl}
+                          alt="Teacher"
+                          className={styles.avatar}
+                          width={44}
+                          height={44}
+                        />
                       ) : (
                         <div className={styles.avatarPlaceholder}>T</div>
                       )}
