@@ -7,16 +7,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 const PRICE_IDS = {
   starter: process.env.STRIPE_PRICE_ID_STARTER,
   pro: process.env.STRIPE_PRICE_ID_PRO,
-  vip: process.env.STRIPE_PRICE_ID_VIP
+  vip: process.env.STRIPE_PRICE_ID_VIP,
 };
 
 async function getOrCreateCustomer(userId, email) {
   const uref = adminDb.collection('users').doc(userId);
   const usnap = await uref.get();
   const saved = usnap.exists ? usnap.data()?.stripeCustomerId : null;
+
   if (saved) {
-    try { return await stripe.customers.retrieve(saved); } catch {}
+    try {
+      return await stripe.customers.retrieve(saved);
+    } catch {}
   }
+
   const c = await stripe.customers.create({ email, metadata: { userId } });
   await uref.set({ stripeCustomerId: c.id }, { merge: true });
   return c;
@@ -24,24 +28,69 @@ async function getOrCreateCustomer(userId, email) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
-  const { userId, planKey, userEmail, couponCode } = req.body;
+  const { userId, planKey, userEmail } = req.body;
   if (!userId || !planKey || !userEmail) return res.status(400).json({ error: 'Missing fields' });
 
   const priceId = PRICE_IDS[planKey];
   if (!priceId) return res.status(400).json({ error: 'Invalid planKey' });
 
   try {
+    const userRef = adminDb.collection('users').doc(userId);
+    const userSnap = await userRef.get();
+    const user = userSnap.exists ? userSnap.data() : {};
+    const plan = user?.subscriptionPlan || planKey;
+    const loyaltyMonths = user?.loyaltyMonths || 0;
+
+    let discountPercent = 0;
+    let discountReason = '';
+
+    // 🔹 Sadakat ve kalıcı indirim mantığı
+    if (plan === 'pro') {
+      if (loyaltyMonths > 0 && loyaltyMonths % 3 === 0) {
+        discountPercent = 10;
+        discountReason = 'Pro 3-month loyalty';
+      }
+    }
+
+    if (plan === 'vip') {
+      if (loyaltyMonths > 0 && loyaltyMonths % 3 === 0) {
+        discountPercent = 20;
+        discountReason = 'VIP 3-month loyalty';
+      }
+      if ([6, 12, 18].includes(loyaltyMonths)) {
+        discountPercent = Math.max(discountPercent, 10);
+        discountReason = 'VIP permanent discount';
+      }
+    }
+
+    // 🔹 Stripe kupon oluştur
+    let discountCoupon = null;
+    if (discountPercent > 0) {
+      discountCoupon = await stripe.coupons.create({
+        percent_off: discountPercent,
+        duration: 'once',
+        name: discountReason,
+      });
+    }
+
     const customer = await getOrCreateCustomer(userId, userEmail);
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer: customer.id,
       line_items: [{ price: priceId, quantity: 1 }],
-      allow_promotion_codes: true,
-      discounts: couponCode ? [{ promotion_code: couponCode }] : undefined,
+      allow_promotion_codes: false,
+      discounts: discountCoupon ? [{ coupon: discountCoupon.id }] : undefined,
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
-      metadata: { bookingType: 'plan', userId, planKey }
+      metadata: {
+        bookingType: 'plan',
+        userId,
+        planKey,
+        discountReason: discountReason || 'none',
+      },
     });
+
     return res.status(200).json({ url: session.url });
   } catch (e) {
     console.error('plan-checkout error:', e);
