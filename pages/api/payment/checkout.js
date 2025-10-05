@@ -41,6 +41,7 @@ export default async function handler(req, res) {
     }
 
     console.log('💰 Final discountedPrice:', discountedPrice);
+    console.log('🎟️ Coupon code sent:', couponCode);
 
     // 🔹 Stripe Checkout Session oluştur
     const session = await stripe.checkout.sessions.create({
@@ -50,14 +51,14 @@ export default async function handler(req, res) {
           price_data: {
             currency: 'gbp',
             product_data: { name: 'Private Lesson' },
-            unit_amount: Math.round(discountedPrice * 100), // ✅ artık kesin sayı
+            unit_amount: Math.round(discountedPrice * 100),
           },
           quantity: 1,
         },
       ],
       customer_email: studentEmail || undefined,
-      // 🔹 Kupon desteği
-      discounts: couponCode ? [{ coupon: couponCode }] : undefined,
+      // ✅ Promotion Code düzeltildi
+      discounts: couponCode ? [{ promotion_code: couponCode }] : undefined,
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       metadata: {
