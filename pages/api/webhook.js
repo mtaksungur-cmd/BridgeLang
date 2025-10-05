@@ -196,7 +196,7 @@ export default async function handler(req, res) {
         if (lessonsTaken >= 6) {
           const updatedCoupons = [];
           for (const c of lessonCoupons) {
-            if (c.active === false && c.used === false && c.type === 'lesson') {
+            if ((c.active === false || c.active === undefined) && c.used !== true && c.type === 'lesson') {
               try {
                 // Stripe tarafında da aktif hale getir
                 await stripe.promotionCodes.update(c.code, { active: true });
