@@ -1,4 +1,3 @@
-// pages/api/webhook.js
 import { buffer } from 'micro';
 import Stripe from 'stripe';
 import { adminDb } from '../../lib/firebaseAdmin';
@@ -85,12 +84,67 @@ export default async function handler(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // ✅ STRIPE Checkout Event
+  const PLAN_LIMITS = {
+    free: { viewLimit: 10, messagesLeft: 3 },
+    starter: { viewLimit: 30, messagesLeft: 8 },
+    pro: { viewLimit: 60, messagesLeft: 20 },
+    vip: { viewLimit: 9999, messagesLeft: 9999 },
+  };
+
+  /* ✅ 1️⃣ Recurring ödeme (subscription yenileme) */
+  if (event.type === 'invoice.payment_succeeded') {
+    const invoice = event.data.object;
+    const customerId = invoice.customer;
+    if (!customerId) return res.status(200).json({ received: true });
+
+    const customers = await adminDb.collection('users').where('stripeCustomerId', '==', customerId).get();
+    if (customers.empty) return res.status(200).json({ received: true });
+
+    const userDoc = customers.docs[0];
+    const userId = userDoc.id;
+    const uref = adminDb.collection('users').doc(userId);
+    const u = userDoc.data();
+    const planKey = u?.subscriptionPlan || 'free';
+
+    const baseMs = Math.max(u?.subscription?.activeUntilMillis || 0, Date.now());
+    const newUntil = baseMs + 30 * 86400000;
+    const lifetime = Number(u?.subscription?.lifetimePayments || 0) + 1;
+
+    const base = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
+
+    let subscriptionCoupons = u?.subscriptionCoupons || [];
+    if (planKey === 'vip' && lifetime % 3 === 0) {
+      const c = await createCouponForPlan('vip', 'subscription');
+      if (c) subscriptionCoupons.push({ ...c, createdAt: new Date() });
+    }
+
+    await uref.set(
+      {
+        subscriptionPlan: planKey,
+        viewLimit: base.viewLimit,
+        messagesLeft: base.messagesLeft,
+        subscription: {
+          planKey,
+          activeUntil: new Date(newUntil),
+          activeUntilMillis: newUntil,
+          lastPaymentAt: new Date(),
+          lifetimePayments: lifetime,
+        },
+        subscriptionCoupons,
+      },
+      { merge: true }
+    );
+
+    console.log(`🔁 Subscription renewed for ${userId} (${planKey})`);
+    return res.status(200).json({ received: true });
+  }
+
+  /* ✅ 2️⃣ Checkout (ilk ödeme veya lesson) */
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const meta = session.metadata || {};
 
-    /* 🔹 A) Plan Satın Alma */
+    // 🔹 A) Abonelik ilk satın alma
     if (meta.bookingType === 'plan') {
       const { userId, planKey } = meta;
       if (!userId || !planKey) return res.status(200).json({ received: true });
@@ -103,19 +157,11 @@ export default async function handler(req, res) {
       const baseMs = Math.max(existed, Date.now());
       const newUntil = baseMs + 30 * 86400000;
       const lifetime = Number(u?.subscription?.lifetimePayments || 0) + 1;
-
-      const PLAN = {
-        free: { viewLimit: 10, messagesLeft: 3 },
-        starter: { viewLimit: 30, messagesLeft: 8 },
-        pro: { viewLimit: 60, messagesLeft: 20 },
-        vip: { viewLimit: 9999, messagesLeft: 9999 },
-      };
-      const base = PLAN[planKey] || PLAN.free;
+      const base = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
 
       let lessonCoupons = u?.lessonCoupons || [];
       let subscriptionCoupons = u?.subscriptionCoupons || [];
 
-      // 🔹 VIP her 3. ayda bir abonelik kuponu
       if (planKey === 'vip' && lifetime % 3 === 0) {
         const c = await createCouponForPlan('vip', 'subscription');
         if (c) subscriptionCoupons.push({ ...c, createdAt: new Date() });
@@ -139,10 +185,11 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
+      console.log(`✅ First subscription created for ${userId} (${planKey})`);
       return res.status(200).json({ received: true });
     }
 
-    /* 🔹 B) Ders Ödemesi */
+    // 🔹 B) Ders ödemesi
     if (meta.bookingType === 'lesson') {
       const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
@@ -182,23 +229,20 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
-      // 🔹 Öğrenci toplam ders sayısını güncelle
       if (studentId) {
         const uref = adminDb.collection('users').doc(studentId);
         const usnap = await uref.get();
         const current = usnap.exists ? usnap.data()?.lessonsTaken || 0 : 0;
         const plan = usnap.exists ? usnap.data()?.subscriptionPlan || 'free' : 'free';
         const lessonsTaken = current + 1;
-
         let lessonCoupons = usnap.exists ? usnap.data()?.lessonCoupons || [] : [];
 
-        // 🔹 6. dersten sonra — pasif review kuponlarını aktif et
+        // 6. dersten sonra pasif kuponlar aktifleşsin
         if (lessonsTaken >= 6) {
           const updatedCoupons = [];
           for (const c of lessonCoupons) {
-            if ((c.active === false || c.active === undefined) && c.used !== true && c.type === 'lesson') {
+            if (!c.active && !c.used && c.type === 'lesson') {
               try {
-                // Stripe tarafında da aktif hale getir
                 await stripe.promotionCodes.update(c.code, { active: true });
                 console.log(`✅ Activated review coupon ${c.code}`);
                 c.active = true;
@@ -211,7 +255,7 @@ export default async function handler(req, res) {
           lessonCoupons = updatedCoupons;
         }
 
-        // 🔹 3 ayda bir sadakat kuponu (6. dersten sonra)
+        // 3 ayda bir sadakat kuponu
         if (lessonsTaken > 6 && lessonsTaken % 90 === 0) {
           const c = await createCouponForPlan(plan, 'lesson');
           if (c) lessonCoupons.push({ ...c, createdAt: new Date() });
