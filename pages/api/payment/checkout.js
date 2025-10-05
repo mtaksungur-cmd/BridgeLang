@@ -1,3 +1,4 @@
+// pages/api/payment/checkout.js
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
 
@@ -9,44 +10,39 @@ export default async function handler(req, res) {
   try {
     const { teacherId, studentId, date, startTime, endTime, duration, location, price, studentEmail, timezone, couponCode } = req.body;
 
-    if (!teacherId || !studentId || !date || !startTime || !duration || !location)
+    if (!teacherId || !studentId || !date || !startTime || !duration || !location) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-    const userRef = adminDb.collection('users').doc(studentId);
-    const userSnap = await userRef.get();
+    // 🔹 Sayısal fiyat kontrolü
+    const numericPrice = Number(price);
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      console.error('❌ Invalid price received:', price);
+      return res.status(400).json({ error: 'Invalid or missing price.' });
+    }
 
-    let discountedPrice = Number(price);
-    let appliedCoupon = null;
+    let discountedPrice = numericPrice;
 
-    if (userSnap.exists) {
-      const userData = userSnap.data();
-      const plan = userData.subscriptionPlan || 'free';
-      const totalLessons = userData.lessonsTaken || 0;
+    // 🔹 Firestore'dan öğrenci verisini çek
+    const uref = adminDb.collection('users').doc(studentId);
+    const usnap = await uref.get();
 
-      // 🔹 İlk 6 derste abonelik indirimi
+    if (usnap.exists) {
+      const u = usnap.data();
+      const plan = u?.subscriptionPlan || 'free';
+      const totalLessons = u?.lessonsTaken || 0;
+
+      // 🔹 İlk 6 derste indirim uygula
       if (totalLessons < 6) {
         if (plan === 'starter') discountedPrice *= 0.9;
         if (plan === 'pro') discountedPrice *= 0.85;
         if (plan === 'vip') discountedPrice *= 0.8;
       }
-
-      // 🔹 Firestore kupon kodu kontrolü
-      if (couponCode) {
-        const coupons = userData.lessonCoupons || [];
-        const match = coupons.find(c => c.code === couponCode && !c.used);
-        if (match) {
-          discountedPrice -= (discountedPrice * match.discount) / 100;
-          appliedCoupon = match.code;
-
-          // kuponu used yap
-          const updatedCoupons = coupons.map(c =>
-            c.code === match.code ? { ...c, used: true } : c
-          );
-          await userRef.update({ lessonCoupons: updatedCoupons });
-        }
-      }
     }
 
+    console.log('💰 Final discountedPrice:', discountedPrice);
+
+    // 🔹 Stripe Checkout Session oluştur
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [
@@ -54,15 +50,27 @@ export default async function handler(req, res) {
           price_data: {
             currency: 'gbp',
             product_data: { name: 'Private Lesson' },
-            unit_amount: Math.round(discountedPrice * 100),
+            unit_amount: Math.round(discountedPrice * 100), // ✅ artık kesin sayı
           },
           quantity: 1,
         },
       ],
       customer_email: studentEmail || undefined,
+      // 🔹 Kupon desteği
+      discounts: couponCode ? [{ coupon: couponCode }] : undefined,
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
-      metadata: { teacherId, studentId, date, startTime, endTime, duration, location, timezone, appliedCoupon },
+      metadata: {
+        bookingType: 'lesson',
+        teacherId,
+        studentId,
+        date,
+        startTime,
+        endTime: endTime || '',
+        duration: String(duration),
+        location,
+        timezone: timezone || '',
+      },
     });
 
     return res.status(200).json({ url: session.url });
