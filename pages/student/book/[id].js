@@ -16,11 +16,11 @@ export default function BookLessonPage() {
   const [location, setLocation] = useState('');
   const [availableSlots, setAvailableSlots] = useState([]);
   const [bookedSlots, setBookedSlots] = useState([]);
-  const [couponCode, setCouponCode] = useState(''); // ✅ kupon inputu
+  const [couponCode, setCouponCode] = useState(''); // ✅ Kupon alanı
   const [msg, setMsg] = useState('');
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  /* 🔹 Öğrenci */
+  // 🔹 Öğrenci oturumu
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) setStudentId(user.uid);
@@ -28,9 +28,9 @@ export default function BookLessonPage() {
     return () => unsubscribe();
   }, []);
 
-  /* 🔹 Öğretmen */
+  // 🔹 Öğretmen bilgisi
   useEffect(() => {
-    if (!Id) return;
+    if (!teacherId) return;
     const fetchTeacher = async () => {
       const snap = await getDoc(doc(db, 'users', teacherId));
       if (snap.exists()) setTeacher(snap.data());
@@ -38,7 +38,7 @@ export default function BookLessonPage() {
     fetchTeacher();
   }, [teacherId]);
 
-  /* 🔹 Rezervasyonlar */
+  // 🔹 Rezervasyonlar
   useEffect(() => {
     if (!teacherId || !selectedDate) return;
     const fetchBookings = async () => {
@@ -53,19 +53,20 @@ export default function BookLessonPage() {
     fetchBookings();
   }, [selectedDate, teacherId]);
 
-  /* 🔹 Yardımcılar */
+  // 🔹 Zaman yardımcıları
   const convertToMinutes = (time) => {
     if (!time) return 0;
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
   };
+
   const formatTo24Hour = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   };
 
-  /* 🔹 Slot oluşturma */
+  // 🔹 Slot üretimi
   const generateSlots = useCallback(() => {
     if (!teacher || !selectedDate) return [];
 
@@ -112,7 +113,7 @@ export default function BookLessonPage() {
     generateSlots();
   }, [generateSlots]);
 
-  /* 🔹 Rezervasyon oluşturma */
+  // 🔹 Rezervasyon oluşturma
   const handleBooking = async (slot) => {
     setMsg('');
     if (!location) return setMsg('❌ Please select a lesson location.');
@@ -132,11 +133,11 @@ export default function BookLessonPage() {
           price: teacher[`pricing${duration}`],
           studentEmail: auth.currentUser.email,
           timezone: userTimezone,
-          couponCode: couponCode.trim() || null // ✅ gönder
+          couponCode: couponCode.trim() || null
         }),
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (data.url) window.location.href = data.url;
       else setMsg(data.error ? `❌ ${data.error}` : '❌ Payment failed.');
     } catch (err) {
@@ -145,7 +146,7 @@ export default function BookLessonPage() {
     }
   };
 
-  /* 🔹 UI */
+  // 🔹 UI
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>Book a Lesson</h2>
@@ -158,13 +159,22 @@ export default function BookLessonPage() {
       <div className={styles.row}>
         <label className={styles.label}>
           Date
-          <input type="date" min={new Date().toISOString().split('T')[0]} value={selectedDate}
-                 onChange={(e) => setSelectedDate(e.target.value)} className={styles.input}/>
+          <input
+            type="date"
+            min={new Date().toISOString().split('T')[0]}
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className={styles.input}
+          />
         </label>
 
         <label className={styles.label}>
           Lesson Duration
-          <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} className={styles.select}>
+          <select
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            className={styles.select}
+          >
             <option value={30}>30 minutes</option>
             <option value={45}>45 minutes</option>
             <option value={60}>60 minutes</option>
@@ -173,7 +183,12 @@ export default function BookLessonPage() {
 
         <label className={styles.label}>
           Location
-          <select value={location} onChange={(e) => setLocation(e.target.value)} required className={styles.select}>
+          <select
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            required
+            className={styles.select}
+          >
             <option value="">-- Select --</option>
             <option value="Online">Online</option>
             <option value="Teacher&apos;s Home">Teacher&apos;s Home</option>
@@ -183,7 +198,7 @@ export default function BookLessonPage() {
         </label>
       </div>
 
-      {/* ✅ Coupon input alanı */}
+      {/* ✅ Kupon alanı */}
       <label className={styles.label}>
         Coupon Code (optional)
         <input
@@ -201,8 +216,12 @@ export default function BookLessonPage() {
       ) : (
         <div className={styles.slots}>
           {availableSlots.map((slot, i) => (
-            <button key={i} onClick={() => handleBooking(slot)} disabled={slot.taken}
-              className={`${styles.slotBtn} ${slot.taken ? styles.slotBtnDisabled : ''}`}>
+            <button
+              key={i}
+              onClick={() => handleBooking(slot)}
+              disabled={slot.taken}
+              className={`${styles.slotBtn} ${slot.taken ? styles.slotBtnDisabled : ''}`}
+            >
               {slot.start} – {slot.end} {slot.taken && ' (Booked)'}
             </button>
           ))}
