@@ -12,7 +12,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 
 function toStartAtUtc({ date, startTime, timezone }) {
   try {
-    const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', { zone: timezone || 'UTC' });
+    const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', {
+      zone: timezone || 'UTC',
+    });
     return dt.isValid ? dt.toUTC().toMillis() : null;
   } catch {
     return null;
@@ -22,7 +24,9 @@ function toStartAtUtc({ date, startTime, timezone }) {
 async function createDailyRoom({ teacherId, date, startTime, durationMinutes, timezone }) {
   if (!process.env.DAILY_API_KEY) throw new Error('DAILY_API_KEY missing');
 
-  const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', { zone: timezone || 'UTC' });
+  const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', {
+    zone: timezone || 'UTC',
+  });
   const startSec = dt.toSeconds();
   const expSec = startSec + (durationMinutes || 60) * 60;
 
@@ -34,18 +38,24 @@ async function createDailyRoom({ teacherId, date, startTime, durationMinutes, ti
     },
     body: JSON.stringify({
       name: `lesson-${teacherId || 't'}-${Date.now()}`,
-      properties: { nbf: Math.floor(startSec), exp: Math.floor(expSec), enable_screenshare: true, enable_chat: true },
+      properties: {
+        nbf: Math.floor(startSec),
+        exp: Math.floor(expSec),
+        enable_screenshare: true,
+        enable_chat: true,
+      },
     }),
   });
 
   const data = await resp.json();
-  if (!resp.ok || !data?.url) throw new Error(`Daily API error: ${data?.error || 'unknown'}`);
+  if (!resp.ok || !data?.url)
+    throw new Error(`Daily API error: ${data?.error || 'unknown'}`);
   return data.url;
 }
 
-function randCode(n = 8) {
+function randCode(n = 8, prefix = 'BL-') {
   const s = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let out = 'BL-';
+  let out = prefix;
   for (let i = 0; i < n; i++) out += s[Math.floor(Math.random() * s.length)];
   return out;
 }
@@ -62,7 +72,10 @@ async function createCouponForPlan(plan, type = 'lesson') {
   }
   if (!percent) return null;
 
-  const coupon = await stripe.coupons.create({ percent_off: percent, duration: 'once' });
+  const coupon = await stripe.coupons.create({
+    percent_off: percent,
+    duration: 'once',
+  });
   const promo = await stripe.promotionCodes.create({
     coupon: coupon.id,
     code: randCode(),
@@ -81,7 +94,11 @@ export default async function handler(req, res) {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(
+      buf,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
     console.error('❌ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -91,10 +108,11 @@ export default async function handler(req, res) {
     const session = event.data.object;
     const meta = session.metadata || {};
 
-    /* 🔹 A) Plan satın alma */
+    /* 🔹 A) Abonelik satın alma */
     if (meta.bookingType === 'plan') {
       const { userId, planKey } = meta;
-      if (!userId || !planKey) return res.status(200).json({ received: true });
+      if (!userId || !planKey)
+        return res.status(200).json({ received: true });
 
       const uref = adminDb.collection('users').doc(userId);
       const usnap = await uref.get();
@@ -106,10 +124,10 @@ export default async function handler(req, res) {
       const lifetime = Number(u?.subscription?.lifetimePayments || 0) + 1;
 
       const PLAN = {
-        free:    { viewLimit: 10, messagesLeft: 3 },
+        free: { viewLimit: 10, messagesLeft: 3 },
         starter: { viewLimit: 30, messagesLeft: 8 },
-        pro:     { viewLimit: 60, messagesLeft: 20 },
-        vip:     { viewLimit: 9999, messagesLeft: 9999 },
+        pro: { viewLimit: 60, messagesLeft: 20 },
+        vip: { viewLimit: 9999, messagesLeft: 9999 },
       };
       const base = PLAN[planKey] || PLAN.free;
 
@@ -122,59 +140,107 @@ export default async function handler(req, res) {
         if (c) subscriptionCoupons.push({ ...c, createdAt: new Date() });
       }
 
-      await uref.set({
-        subscriptionPlan: planKey,
-        viewLimit: base.viewLimit,
-        messagesLeft: base.messagesLeft,
-        subscription: {
-          planKey,
-          activeUntil: new Date(newUntil),
-          activeUntilMillis: newUntil,
-          lastPaymentAt: new Date(),
-          lifetimePayments: lifetime,
+      await uref.set(
+        {
+          subscriptionPlan: planKey,
+          viewLimit: base.viewLimit,
+          messagesLeft: base.messagesLeft,
+          subscription: {
+            planKey,
+            activeUntil: new Date(newUntil),
+            activeUntilMillis: newUntil,
+            lastPaymentAt: new Date(),
+            lifetimePayments: lifetime,
+          },
+          lessonCoupons,
+          subscriptionCoupons,
         },
-        lessonCoupons,
-        subscriptionCoupons
-      }, { merge: true });
+        { merge: true }
+      );
 
       return res.status(200).json({ received: true });
     }
 
     /* 🔹 B) Ders ödemesi */
     if (meta.bookingType === 'lesson') {
-      const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
+      const {
+        teacherId,
+        studentId,
+        date,
+        startTime,
+        endTime,
+        duration,
+        location,
+        timezone,
+      } = meta;
+
       const durationMinutes = parseInt(duration, 10) || 60;
       const startAtUtc = toStartAtUtc({ date, startTime, timezone });
       const bookingRef = adminDb.collection('bookings').doc(session.id);
 
       let meetingLink = '';
       if (location === 'Online') {
-        try { meetingLink = await createDailyRoom({ teacherId, date, startTime, durationMinutes, timezone }); }
-        catch (e) { console.error('Daily create exception:', e); }
+        try {
+          meetingLink = await createDailyRoom({
+            teacherId,
+            date,
+            startTime,
+            durationMinutes,
+            timezone,
+          });
+        } catch (e) {
+          console.error('Daily create exception:', e);
+        }
       }
 
-      await bookingRef.set({
-        teacherId, studentId, date, startTime, endTime, duration: durationMinutes,
-        location, meetingLink,
-        amountPaid: session.amount_total ? session.amount_total / 100 : null,
-        status: 'pending-approval',
-        teacherApproved: false, studentConfirmed: false,
-        reminderSent: false, timezone, startAtUtc,
-        stripeSessionId: session.id,
-        createdAt: new Date(), updatedAt: new Date()
-      }, { merge: true });
+      await bookingRef.set(
+        {
+          teacherId,
+          studentId,
+          date,
+          startTime,
+          endTime,
+          duration: durationMinutes,
+          location,
+          meetingLink,
+          amountPaid: session.amount_total
+            ? session.amount_total / 100
+            : null,
+          status: 'pending-approval',
+          teacherApproved: false,
+          studentConfirmed: false,
+          reminderSent: false,
+          timezone,
+          startAtUtc,
+          stripeSessionId: session.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
 
-      // 🔹 Öğrencinin toplam ders sayısı +1
+      /* -------------------- Öğrenci ders sayısı güncelleme -------------------- */
       if (studentId) {
         const uref = adminDb.collection('users').doc(studentId);
         const usnap = await uref.get();
         const current = usnap.exists ? usnap.data()?.lessonsTaken || 0 : 0;
-        const plan = usnap.exists ? usnap.data()?.subscriptionPlan || 'free' : 'free';
+        const plan = usnap.exists
+          ? usnap.data()?.subscriptionPlan || 'free'
+          : 'free';
         const lessonsTaken = current + 1;
 
-        let lessonCoupons = usnap.exists ? usnap.data()?.lessonCoupons || [] : [];
+        let lessonCoupons = usnap.exists
+          ? usnap.data()?.lessonCoupons || []
+          : [];
 
-        // İlk 6 dersten sonra her 3 ayda bir sadakat kuponu
+        /* 1️⃣ 6. derse ulaştıysa: review kuponu aktif edilir */
+        if (lessonsTaken === 6) {
+          lessonCoupons = lessonCoupons.map((c) =>
+            c.type === 'review' && !c.active ? { ...c, active: true } : c
+          );
+        }
+
+        /* 2️⃣ 6. dersten sonra her 3 ayda bir sadakat kuponu */
         if (lessonsTaken > 6 && lessonsTaken % 90 === 0) {
           const c = await createCouponForPlan(plan, 'lesson');
           if (c) lessonCoupons.push({ ...c, createdAt: new Date() });
