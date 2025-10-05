@@ -109,13 +109,11 @@ export default function TeacherLessons() {
     setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
 
     if (updates.status === 'approved') {
-      setTimeout(async () => {
-        await fetch('/api/transfer-payout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bookingId: booking.id })
-        });
-      }, 60000);
+      await fetch('/api/transfer-payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: booking.id })
+      });
     }
   };
 
