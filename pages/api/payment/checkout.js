@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { teacherId, studentId, date, startTime, endTime, duration, location, price, studentEmail, timezone, couponCode } = req.body;
+    const { teacherId, studentId, date, startTime, endTime, duration, location, price, studentEmail, timezone } = req.body;
 
     if (!teacherId || !studentId || !date || !startTime || !duration || !location)
       return res.status(400).json({ error: 'Missing required fields' });
@@ -19,14 +19,14 @@ export default async function handler(req, res) {
 
     let discountedPrice = numericPrice;
     let discountLabel = 'No discount';
-    let validCoupon = null;
 
-    // 🔹 Öğrenci verisini Firestore'dan al
+    // 🔹 Firestore'dan kullanıcı bilgisi al
     const uSnap = await adminDb.collection('users').doc(studentId).get();
     if (uSnap.exists) {
       const u = uSnap.data();
       const plan = u?.subscriptionPlan || 'free';
       const totalLessons = u?.lessonsTaken || 0;
+      const coupons = (u.lessonCoupons || []).filter(c => c.active && !c.used);
 
       // 1️⃣ İlk 6 ders indirimi
       if (totalLessons < 6) {
@@ -35,17 +35,25 @@ export default async function handler(req, res) {
         if (plan === 'vip') discountedPrice *= 0.8, discountLabel = 'VIP 20% first 6 lessons';
       }
 
-      // 2️⃣ Kullanıcının yorum sonrası veya sadakat kuponu varsa
-      const lessonCoupons = (u.lessonCoupons || []).filter(c => !c.used && c.active);
-      const found = lessonCoupons.find(c => c.code === couponCode);
-      if (found) {
-        discountedPrice *= (1 - found.discount / 100);
-        validCoupon = found;
-        discountLabel = `Coupon ${found.discount}%`;
+      // 2️⃣ 6. dersten sonra aktif kupon otomatik uygula (örneğin review veya loyalty)
+      else if (coupons.length > 0) {
+        // En yüksek indirime sahip aktif kuponu uygula
+        const bestCoupon = coupons.reduce((a, b) => (a.discount > b.discount ? a : b));
+        discountedPrice *= (1 - bestCoupon.discount / 100);
+        discountLabel = `Auto-applied ${bestCoupon.discount}% coupon`;
+
+        // Firestore'da kullanıldı olarak işaretle
+        await adminDb.collection('users').doc(studentId).update({
+          lessonCoupons: adminDb.FieldValue.arrayRemove(bestCoupon),
+        });
+        bestCoupon.used = true;
+        await adminDb.collection('users').doc(studentId).update({
+          lessonCoupons: adminDb.FieldValue.arrayUnion(bestCoupon),
+        });
       }
     }
 
-    // 🔹 Stripe Checkout session
+    // 🔹 Stripe Checkout session oluştur
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [
@@ -74,17 +82,6 @@ export default async function handler(req, res) {
         discountLabel,
       },
     });
-
-    // 🔹 Kullanılmış kuponu Firestore’da işaretle
-    if (validCoupon) {
-      await adminDb.collection('users').doc(studentId).update({
-        lessonCoupons: adminDb.FieldValue.arrayRemove(validCoupon),
-      });
-      validCoupon.used = true;
-      await adminDb.collection('users').doc(studentId).update({
-        lessonCoupons: adminDb.FieldValue.arrayUnion(validCoupon),
-      });
-    }
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
