@@ -1,6 +1,7 @@
 // pages/api/payment/checkout.js
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
+import admin from 'firebase-admin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
@@ -8,7 +9,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { teacherId, studentId, date, startTime, endTime, duration, location, price, studentEmail, timezone } = req.body;
+    const {
+      teacherId, studentId, date, startTime, endTime,
+      duration, location, price, studentEmail, timezone
+    } = req.body;
 
     if (!teacherId || !studentId || !date || !startTime || !duration || !location)
       return res.status(400).json({ error: 'Missing required fields' });
@@ -19,41 +23,33 @@ export default async function handler(req, res) {
 
     let discountedPrice = numericPrice;
     let discountLabel = 'No discount';
+    let usedCoupon = null;
 
-    // 🔹 Firestore'dan kullanıcı bilgisi al
+    // 🔹 Firestore'dan öğrenci verisini çek
     const uSnap = await adminDb.collection('users').doc(studentId).get();
     if (uSnap.exists) {
-      const u = uSnap.data();
-      const plan = u?.subscriptionPlan || 'free';
-      const totalLessons = u?.lessonsTaken || 0;
-      const coupons = (u.lessonCoupons || []).filter(c => c.active && !c.used);
+      const user = uSnap.data();
+      const plan = user?.subscriptionPlan || 'free';
+      const totalLessons = user?.lessonsTaken || 0;
+      const lessonCoupons = user?.lessonCoupons || [];
 
-      // 1️⃣ İlk 6 ders indirimi
+      // 1️⃣ İlk 6 derste indirim
       if (totalLessons < 6) {
-        if (plan === 'starter') discountedPrice *= 0.9, discountLabel = 'Starter 10% first 6 lessons';
-        if (plan === 'pro') discountedPrice *= 0.85, discountLabel = 'Pro 15% first 6 lessons';
-        if (plan === 'vip') discountedPrice *= 0.8, discountLabel = 'VIP 20% first 6 lessons';
-      }
-
-      // 2️⃣ 6. dersten sonra aktif kupon otomatik uygula (örneğin review veya loyalty)
-      else if (coupons.length > 0) {
-        // En yüksek indirime sahip aktif kuponu uygula
-        const bestCoupon = coupons.reduce((a, b) => (a.discount > b.discount ? a : b));
-        discountedPrice *= (1 - bestCoupon.discount / 100);
-        discountLabel = `Auto-applied ${bestCoupon.discount}% coupon`;
-
-        // Firestore'da kullanıldı olarak işaretle
-        await adminDb.collection('users').doc(studentId).update({
-          lessonCoupons: adminDb.FieldValue.arrayRemove(bestCoupon),
-        });
-        bestCoupon.used = true;
-        await adminDb.collection('users').doc(studentId).update({
-          lessonCoupons: adminDb.FieldValue.arrayUnion(bestCoupon),
-        });
+        if (plan === 'starter') discountedPrice *= 0.9, discountLabel = 'Starter 10% (first 6 lessons)';
+        if (plan === 'pro') discountedPrice *= 0.85, discountLabel = 'Pro 15% (first 6 lessons)';
+        if (plan === 'vip') discountedPrice *= 0.8, discountLabel = 'VIP 20% (first 6 lessons)';
+      } else {
+        // 2️⃣ Yalnızca 6. dersten sonra aktif hale gelen kuponları uygula
+        const activeCoupon = lessonCoupons.find(c => c.active === true && !c.used);
+        if (activeCoupon) {
+          discountedPrice *= (1 - activeCoupon.percent / 100);
+          discountLabel = `Auto Coupon ${activeCoupon.percent}%`;
+          usedCoupon = activeCoupon;
+        }
       }
     }
 
-    // 🔹 Stripe Checkout session oluştur
+    // 🔹 Stripe ödeme oturumu
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [
@@ -82,6 +78,17 @@ export default async function handler(req, res) {
         discountLabel,
       },
     });
+
+    // 🔹 Kuponu kullanılmış olarak işaretle
+    if (usedCoupon) {
+      await adminDb.collection('users').doc(studentId).update({
+        lessonCoupons: admin.firestore.FieldValue.arrayRemove(usedCoupon),
+      });
+      usedCoupon.used = true;
+      await adminDb.collection('users').doc(studentId).update({
+        lessonCoupons: admin.firestore.FieldValue.arrayUnion(usedCoupon),
+      });
+    }
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
