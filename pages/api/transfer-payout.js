@@ -13,11 +13,15 @@ export default async function handler(req, res) {
     if (!snap.exists) throw new Error('Booking not found');
 
     const booking = { id: snap.id, ...snap.data() };
-    await completeLessonAndTransfer(booking);
 
-    res.status(200).json({ success: true });
+    if (booking.status !== 'approved') {
+      return res.status(400).json({ error: 'Lesson not approved yet' });
+    }
+
+    await completeLessonAndTransfer(booking);
+    return res.status(200).json({ success: true });
   } catch (err) {
     console.error('❌ Transfer payout failed:', err);
-    res.status(400).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }
