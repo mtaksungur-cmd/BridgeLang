@@ -74,13 +74,11 @@ export default function StudentLessons() {
     alert('You confirmed the lesson.');
 
     if (updates.status === 'approved') {
-      setTimeout(async () => {
-        await fetch('/api/transfer-payout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bookingId: booking.id })
-        });
-      }, 60000); // 1 dk gecikme
+      await fetch('/api/transfer-payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: booking.id })
+      });
     }
   };
 
