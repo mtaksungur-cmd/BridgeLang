@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { useRouter } from "next/router";
 import styles from "../../scss/SubscriptionPage.module.scss";
 
 const PLANS = [
@@ -10,26 +9,26 @@ const PLANS = [
     "3 messages/month",
     "No discounts or coupons"
   ]},
-  { key: "starter", name: "Starter", price: "£4.99/mo", features: [
+  { key: "starter", name: "Starter", price: "£4.99", features: [
     "30 teacher profiles/month",
     "8 messages/month",
     "10% discount on first 6 lessons",
-    "5% coupon for reviews"
+    "5% review coupon"
   ]},
-  { key: "pro", name: "Pro", price: "£9.99/mo", features: [
+  { key: "pro", name: "Pro", price: "£9.99", features: [
     "60 teacher profiles/month",
     "20 messages/month",
     "15% discount on first 6 lessons",
-    "10% coupon for reviews",
+    "10% review coupon",
     "Loyalty: 10% coupon every 3 months"
   ]},
-  { key: "vip", name: "VIP", price: "£14.99/mo", features: [
+  { key: "vip", name: "VIP", price: "£14.99", features: [
     "Unlimited teacher profiles",
     "Unlimited messages",
     "20% discount on first 6 lessons",
-    "15% coupon for reviews",
+    "15% review coupon",
     "Loyalty: 20% coupon every 3 months",
-    "Permanent 10% discount at 6/12/18 months"
+    "Permanent 10% discount at 6/12/18 months (manual coupon entry)"
   ]}
 ];
 
@@ -37,17 +36,16 @@ export default function SubscriptionPage() {
   const [activePlan, setActivePlan] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
-    const getUser = async () => {
+    const fetchUser = async () => {
       const user = auth.currentUser;
       if (!user) return setLoading(false);
       const snap = await getDoc(doc(db, "users", user.uid));
       if (snap.exists()) setActivePlan(snap.data().subscriptionPlan || "free");
       setLoading(false);
     };
-    getUser();
+    fetchUser();
   }, []);
 
   const handleSelect = async (planKey) => {
@@ -57,8 +55,9 @@ export default function SubscriptionPage() {
     if (!user) return alert("Please log in again.");
     try {
       const res = await fetch("/api/payment/plan-checkout", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid, userEmail: user.email, planKey })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.uid, userEmail: user.email, planKey }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
@@ -66,7 +65,9 @@ export default function SubscriptionPage() {
     } catch (err) {
       console.error("plan checkout error:", err);
       alert("Could not start payment.");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) return <p>Loading...</p>;
@@ -80,10 +81,12 @@ export default function SubscriptionPage() {
             <h3>{plan.name}</h3>
             <div className={styles.planPrice}>{plan.price}</div>
             <ul className={styles.planFeatures}>
-              {plan.features.map((f, i) => <li key={i}>{f}</li>)}
+              {plan.features.map((f, i) => (
+                <li key={i}>{f}</li>
+              ))}
             </ul>
-            <button onClick={() => handleSelect(plan.key)} disabled={saving || activePlan === plan.key}>
-              {activePlan === plan.key ? "Selected" : "Select"}
+            <button onClick={() => handleSelect(plan.key)} disabled={saving}>
+              {activePlan === plan.key ? "Selected" : "Buy Now"}
             </button>
           </div>
         ))}
