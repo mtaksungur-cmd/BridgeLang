@@ -4,9 +4,9 @@ import { adminDb } from '../../../lib/firebaseAdmin';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
 const PRICE_AMOUNTS = {
-  starter: 499,
-  pro: 999,
-  vip: 1499,
+  starter: 4.99,
+  pro: 9.99,
+  vip: 14.99,
 };
 
 export default async function handler(req, res) {
