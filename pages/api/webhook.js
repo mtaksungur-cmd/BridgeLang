@@ -91,6 +91,7 @@ export default async function handler(req, res) {
     const session = event.data.object;
     const meta = session.metadata || {};
 
+    // 🔹 Plan ödemesi
     if (meta.bookingType === 'plan') {
       const { userId, planKey } = meta;
       if (!userId || !planKey) return res.status(200).json({ received: true });
@@ -108,35 +109,31 @@ export default async function handler(req, res) {
       let lessonCoupons = u?.lessonCoupons || [];
       let subscriptionCoupons = u?.subscriptionCoupons || [];
 
-      // VIP için her 3. ayda bir kupon oluştur
       if (planKey === 'vip' && lifetime % 3 === 0) {
         const c = await createCouponForPlan('vip', 'subscription');
         if (c) subscriptionCoupons.push({ ...c, createdAt: new Date() });
       }
 
-      await uref.set(
-        {
-          subscriptionPlan: planKey,
-          viewLimit: base.viewLimit,
-          messagesLeft: base.messagesLeft,
-          subscription: {
-            planKey,
-            activeUntil: new Date(newUntil),
-            activeUntilMillis: newUntil,
-            lastPaymentAt: new Date(),
-            lifetimePayments: lifetime,
-          },
-          lessonCoupons,
-          subscriptionCoupons,
+      await uref.set({
+        subscriptionPlan: planKey,
+        viewLimit: base.viewLimit,
+        messagesLeft: base.messagesLeft,
+        subscription: {
+          planKey,
+          activeUntil: new Date(newUntil),
+          activeUntilMillis: newUntil,
+          lastPaymentAt: new Date(),
+          lifetimePayments: lifetime,
         },
-        { merge: true }
-      );
+        lessonCoupons,
+        subscriptionCoupons,
+      }, { merge: true });
 
       console.log(`✅ One-off plan activated for ${userId} (${planKey})`);
       return res.status(200).json({ received: true });
     }
 
-    // 🔹 Ders ödemeleri (mevcut sistem aynı kaldı)
+    // 🔹 Ders ödemesi
     if (meta.bookingType === 'lesson') {
       const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
@@ -162,6 +159,16 @@ export default async function handler(req, res) {
         stripeSessionId: session.id,
         createdAt: new Date(), updatedAt: new Date()
       }, { merge: true });
+
+      // ✅ Burada lessonsTaken artırımı ekleniyor
+      if (studentId) {
+        const uref = adminDb.collection('users').doc(studentId);
+        const usnap = await uref.get();
+        const current = usnap.exists ? usnap.data()?.lessonsTaken || 0 : 0;
+        const lessonsTaken = current + 1;
+        await uref.update({ lessonsTaken });
+        console.log(`📘 Lesson count updated for ${studentId}: ${lessonsTaken}`);
+      }
     }
   }
 
