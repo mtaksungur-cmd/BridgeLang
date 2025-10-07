@@ -32,6 +32,7 @@ export default async function handler(req, res) {
 
     if (hasReviewCoupon) {
       console.log(`⚠️ Skipped: Review coupon already exists for user ${userId}`);
+      // 🔹 Burada STRIPE veya Firestore’a hiç dokunma!
       return res.status(200).json({ ok: true, skipped: true });
     }
 
