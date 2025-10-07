@@ -1,7 +1,6 @@
-// pages/api/apply-review-bonus.js
 import Stripe from 'stripe';
 import { adminDb } from '../../lib/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore'; // ✅ EKLENDİ
+import { FieldValue } from 'firebase-admin/firestore';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
@@ -24,7 +23,14 @@ export default async function handler(req, res) {
 
     const user = userSnap.data();
     const plan = user?.subscriptionPlan || 'free';
-    const lessonsTaken = user?.lessonsTaken || 0;
+    const coupons = user?.lessonCoupons || [];
+
+    // 🚫 Eğer zaten bir yorum kuponu varsa tekrar verme
+    const alreadyHasReviewCoupon = coupons.some(c => c.type === 'lesson' && c.code?.startsWith('REV-'));
+    if (alreadyHasReviewCoupon) {
+      console.log(`⚠️ Review coupon already exists for ${userId}, skipping.`);
+      return res.status(200).json({ message: 'Coupon already exists' });
+    }
 
     // 🔹 Plan bazlı indirim yüzdesi
     let percent = 0;
@@ -44,10 +50,9 @@ export default async function handler(req, res) {
       coupon: coupon.id,
       code: randCode(),
       max_redemptions: 1,
-      active: false, // ⚠️ Başlangıçta pasif
+      active: false, // başlangıçta pasif
     });
 
-    // 🔹 Firestore’a ekle (aktif değil)
     const newCoupon = {
       code: promo.code,
       discount: percent,
@@ -58,11 +63,10 @@ export default async function handler(req, res) {
     };
 
     await userRef.update({
-      lessonCoupons: FieldValue.arrayUnion(newCoupon), // ✅ DOĞRU KULLANIM
+      lessonCoupons: FieldValue.arrayUnion(newCoupon),
     });
 
-    console.log(`✅ Review coupon created for ${userId}: ${promo.code} (${percent}% - inactive)`);
-
+    console.log(`✅ Review coupon created for ${userId}: ${promo.code} (${percent}%)`);
     return res.status(200).json({ success: true, coupon: newCoupon });
   } catch (err) {
     console.error('apply-review-bonus error:', err);
