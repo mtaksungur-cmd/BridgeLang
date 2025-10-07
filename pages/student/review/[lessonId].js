@@ -62,7 +62,7 @@ export default function ReviewLesson() {
     });
 
     if (res.ok) {
-      fetch('/api/apply-review-bonus', {
+      await fetch('/api/apply-review-bonus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: lesson.studentId }),
