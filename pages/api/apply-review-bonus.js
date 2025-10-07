@@ -1,6 +1,7 @@
 // pages/api/apply-review-bonus.js
 import Stripe from 'stripe';
 import { adminDb } from '../../lib/firebaseAdmin';
+import { FieldValue } from 'firebase-admin/firestore'; // ✅ EKLENDİ
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
@@ -57,7 +58,7 @@ export default async function handler(req, res) {
     };
 
     await userRef.update({
-      lessonCoupons: adminDb.FieldValue.arrayUnion(newCoupon),
+      lessonCoupons: FieldValue.arrayUnion(newCoupon), // ✅ DOĞRU KULLANIM
     });
 
     console.log(`✅ Review coupon created for ${userId}: ${promo.code} (${percent}% - inactive)`);
