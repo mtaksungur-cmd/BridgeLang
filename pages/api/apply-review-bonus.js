@@ -23,22 +23,29 @@ export default async function handler(req, res) {
 
     const u = snap.data() || {};
     const plan = u.subscriptionPlan || 'free';
-    const coupons = u.lessonCoupons || [];
+    const coupons = Array.isArray(u.lessonCoupons) ? u.lessonCoupons : [];
 
-    // zaten bir review kuponu varsa tekrar verme
-    const already = coupons.some(c => c?.code?.startsWith('REV-') && c.type === 'lesson' && !c.used);
-    if (already) {
-      console.log(`⚠️ Review coupon already exists for ${userId}`);
-      return res.status(200).json({ ok: true, duplicated: true });
+    // 🚫 Kullanıcının geçmişte oluşturulmuş herhangi bir review kuponu varsa (aktif, pasif, used fark etmez)
+    const hasReviewCoupon = coupons.some(
+      (c) => c?.code?.startsWith('REV-') && c.type === 'lesson'
+    );
+
+    if (hasReviewCoupon) {
+      console.log(`⚠️ Skipped: Review coupon already exists for user ${userId}`);
+      return res.status(200).json({ ok: true, skipped: true });
     }
 
+    // 🔹 Plan bazlı indirim yüzdesi
     let percent = 0;
     if (plan === 'starter') percent = 5;
     if (plan === 'pro') percent = 10;
     if (plan === 'vip') percent = 15;
-    if (!percent) return res.status(200).json({ ok: true, message: 'Free plan: no coupon' });
+    if (!percent) {
+      console.log(`ℹ️ Free user ${userId} — no review bonus generated`);
+      return res.status(200).json({ ok: true, message: 'Free plan: no coupon' });
+    }
 
-    // Stripe: önce coupon, sonra promo code (pasif)
+    // 🔹 Stripe kupon + promo code (başlangıçta pasif)
     const coupon = await stripe.coupons.create({
       percent_off: percent,
       duration: 'once',
@@ -54,8 +61,8 @@ export default async function handler(req, res) {
 
     const newCoupon = {
       code: promo.code,
-      promoId: promo.id,        // 🔹 Stripe iç ID
-      discount: percent,        // 🔹 checkout geriye dönük için percent da desteklenecek
+      promoId: promo.id,
+      discount: percent,
       percent: percent,
       active: false,
       used: false,
@@ -63,7 +70,9 @@ export default async function handler(req, res) {
       createdAt: new Date(),
     };
 
-    await userRef.update({ lessonCoupons: FieldValue.arrayUnion(newCoupon) });
+    await userRef.update({
+      lessonCoupons: FieldValue.arrayUnion(newCoupon),
+    });
 
     console.log(`✅ Review coupon created for ${userId}: ${promo.code} (${percent}%)`);
     return res.status(200).json({ ok: true, coupon: newCoupon });
