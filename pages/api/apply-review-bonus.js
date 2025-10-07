@@ -23,22 +23,22 @@ export default async function handler(req, res) {
 
     const user = userSnap.data();
     const plan = user?.subscriptionPlan || 'free';
-    const coupons = user?.lessonCoupons || [];
+    const lessonCoupons = user?.lessonCoupons || [];
 
-    // Eğer zaten bir REV kuponu varsa tekrar verme
-    const alreadyHasReviewCoupon = coupons.some(c => c.code?.startsWith('REV-'));
-    if (alreadyHasReviewCoupon) {
+    // ➜ Sadece bir kere review kuponu ver (REV- ile başlayan herhangi bir kupon varsa verme)
+    if (lessonCoupons.some(c => typeof c?.code === 'string' && c.code.startsWith('REV-'))) {
       console.log(`⚠️ Review coupon already exists for ${userId}`);
       return res.status(200).json({ message: 'Coupon already exists' });
     }
 
+    // Plan bazlı yüzde
     let percent = 0;
     if (plan === 'starter') percent = 5;
-    if (plan === 'pro') percent = 10;
-    if (plan === 'vip') percent = 15;
+    if (plan === 'pro')     percent = 10;
+    if (plan === 'vip')     percent = 15;
     if (percent === 0) return res.status(200).json({ message: 'Free users get no coupon' });
 
-    // Stripe kupon ve promo code oluştur
+    // Stripe kupon + promo code (başta pasif)
     const coupon = await stripe.coupons.create({
       percent_off: percent,
       duration: 'once',
@@ -49,13 +49,14 @@ export default async function handler(req, res) {
       coupon: coupon.id,
       code: randCode(),
       max_redemptions: 1,
-      active: false,
+      active: false, // 6. dersten sonra aktif edilecek
     });
 
     const newCoupon = {
-      code: promo.code,      // Kullanıcıya gösterilen
-      promoId: promo.id,     // 🔹 Stripe iç ID
-      discount: percent,
+      code: promo.code,          // kullanıcıya görünen kod
+      promoId: promo.id,         // 🔐 Stripe iç ID (aktivasyon için zorunlu)
+      percent,                   // 👈 standarize alan
+      discount: percent,         // (geriye dönük uyumluluk)
       active: false,
       used: false,
       type: 'lesson',
