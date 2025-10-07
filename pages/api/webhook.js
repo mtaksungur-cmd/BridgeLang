@@ -200,7 +200,7 @@ export default async function handler(req, res) {
 
             if (!hasActive && !hasUsed && c.type === 'lesson' && c.code?.startsWith('REV-')) {
               try {
-                await stripe.promotionCodes.update(c.code, { active: true });
+                await stripe.promotionCodes.update(c.promoId || c.code, { active: true });
                 c.active = true;
                 console.log(`✅ Coupon activated for user ${studentId}: ${c.code}`);
               } catch (err) {
