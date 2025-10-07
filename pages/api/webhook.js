@@ -4,10 +4,8 @@ import { adminDb } from '../../lib/firebaseAdmin';
 import { DateTime } from 'luxon';
 
 export const config = { api: { bodyParser: false } };
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
-/* -------------------- Helpers -------------------- */
 function toStartAtUtc({ date, startTime, timezone }) {
   try {
     const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', { zone: timezone || 'UTC' });
@@ -23,16 +21,12 @@ async function createDailyRoom({ teacherId, date, startTime, durationMinutes, ti
 
   const resp = await fetch('https://api.daily.co/v1/rooms', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.DAILY_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { Authorization: `Bearer ${process.env.DAILY_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: `lesson-${teacherId || 't'}-${Date.now()}`,
       properties: { nbf: Math.floor(startSec), exp: Math.floor(expSec), enable_screenshare: true, enable_chat: true },
     }),
   });
-
   const data = await resp.json();
   if (!resp.ok || !data?.url) throw new Error(`Daily API error: ${data?.error || 'unknown'}`);
   return data.url;
@@ -49,14 +43,14 @@ async function createCouponForPlan(plan, type = 'lesson') {
   let percent = 0;
   if (type === 'lesson') {
     if (plan === 'starter') percent = 5;
-    if (plan === 'pro')     percent = 10;
-    if (plan === 'vip')     percent = 20;
+    if (plan === 'pro') percent = 10;
+    if (plan === 'vip') percent = 20;
   }
   if (type === 'subscription' && plan === 'vip') percent = 10;
   if (!percent) return null;
 
   const coupon = await stripe.coupons.create({ percent_off: percent, duration: 'once' });
-  const promo  = await stripe.promotionCodes.create({
+  const promo = await stripe.promotionCodes.create({
     coupon: coupon.id,
     code: randCode(),
     max_redemptions: 1,
@@ -65,9 +59,9 @@ async function createCouponForPlan(plan, type = 'lesson') {
   return { code: promo.code, discount: percent, type };
 }
 
-/* -------------------- Handler -------------------- */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+
   const sig = req.headers['stripe-signature'];
   const buf = await buffer(req);
 
@@ -80,17 +74,17 @@ export default async function handler(req, res) {
   }
 
   const PLAN_LIMITS = {
-    free:    { viewLimit: 10, messagesLeft: 3 },
+    free: { viewLimit: 10, messagesLeft: 3 },
     starter: { viewLimit: 30, messagesLeft: 8 },
-    pro:     { viewLimit: 60, messagesLeft: 20 },
-    vip:     { viewLimit: 9999, messagesLeft: 9999 },
+    pro: { viewLimit: 60, messagesLeft: 20 },
+    vip: { viewLimit: 9999, messagesLeft: 9999 },
   };
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const meta = session.metadata || {};
 
-    /* ─ A) Plan ödemesi (one-off) ─ */
+    // 🔹 Plan (one-off)
     if (meta.bookingType === 'plan') {
       const { userId, planKey } = meta;
       if (!userId || !planKey) return res.status(200).json({ received: true });
@@ -100,7 +94,7 @@ export default async function handler(req, res) {
       const u = usnap.exists ? usnap.data() : {};
 
       const existed = u?.subscription?.activeUntilMillis || 0;
-      const baseMs  = Math.max(existed, Date.now());
+      const baseMs = Math.max(existed, Date.now());
       const newUntil = baseMs + 30 * 86400000;
       const lifetime = Number(u?.subscription?.lifetimePayments || 0) + 1;
       const base = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
@@ -132,7 +126,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true });
     }
 
-    /* ─ B) Ders ödemesi ─ */
+    // 🔹 Ders
     if (meta.bookingType === 'lesson') {
       const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
@@ -156,42 +150,53 @@ export default async function handler(req, res) {
         createdAt: new Date(), updatedAt: new Date()
       }, { merge: true });
 
-      // ➜ Ders sayısını artır + 6. dersten sonra review kuponlarını aktif et
+      // ✅ Ders sayısını artır + 6. dersten sonra review kuponlarını AKTİF ET
       if (studentId) {
         const uref = adminDb.collection('users').doc(studentId);
         const usnap = await uref.get();
-        const userData = usnap.exists ? usnap.data() : {};
-        const lessonsTaken = (userData.lessonsTaken || 0) + 1;
-
-        let lessonCoupons = Array.isArray(userData.lessonCoupons) ? [...userData.lessonCoupons] : [];
+        const u = usnap.exists ? usnap.data() : {};
+        const lessonsTaken = (u.lessonsTaken || 0) + 1;
+        let lessonCoupons = Array.isArray(u.lessonCoupons) ? [...u.lessonCoupons] : [];
 
         if (lessonsTaken >= 6 && lessonCoupons.length) {
-          lessonCoupons = await Promise.all(lessonCoupons.map(async (c) => {
-            // normalize fields (geri uyumluluk)
-            c.percent = typeof c.percent === 'number' ? c.percent : (typeof c.discount === 'number' ? c.discount : 0);
-            if (typeof c.active !== 'boolean') c.active = false;
-            if (typeof c.used   !== 'boolean') c.used   = false;
+          let changed = false;
+          for (const c of lessonCoupons) {
+            // eksik alanları tamamla (eski kayıtlar)
+            if (typeof c.used !== 'boolean') { c.used = false; changed = true; }
+            if (typeof c.active !== 'boolean') { c.active = false; changed = true; }
+            if (!c.discount && c.percent) { c.discount = c.percent; changed = true; }
 
-            // sadece REV- tipi, pasif ve kullanılmamış olanları aktifleştir
-            if (!c.active && !c.used && c.type === 'lesson' && c.code?.startsWith('REV-')) {
+            // sadece review kuponları
+            if (c.type === 'lesson' && !c.used && !c.active && c.code?.startsWith('REV-')) {
               try {
-                const promoId = c.promoId; // yeni sistemde var
-                if (promoId) {
-                  await stripe.promotionCodes.update(promoId, { active: true });
-                  c.active = true;
-                  console.log(`✅ Activated review coupon for ${studentId}: ${c.code}`);
-                } else {
-                  console.warn(`⚠️ Missing promoId for coupon ${c.code} – cannot activate on Stripe`);
+                // promoId yoksa Stripe'ta arayıp kaydet
+                let promoId = c.promoId;
+                if (!promoId) {
+                  const list = await stripe.promotionCodes.list({ code: c.code, limit: 1 });
+                  if (list.data?.[0]) {
+                    promoId = list.data[0].id;
+                    c.promoId = promoId;
+                    changed = true;
+                  } else {
+                    console.warn(`⚠️ Missing promoId for coupon ${c.code} - cannot activate on Stripe`);
+                    continue;
+                  }
                 }
+                await stripe.promotionCodes.update(promoId, { active: true });
+                c.active = true;
+                changed = true;
+                console.log(`✅ Coupon activated for user ${studentId}: ${c.code}`);
               } catch (err) {
-                console.error(`❌ Failed to activate coupon ${c.code}:`, err?.message || err);
+                console.error(`❌ Failed to activate coupon ${c.code}:`, err.message);
               }
             }
-            return c;
-          }));
+          }
+          if (changed) {
+            await uref.update({ lessonCoupons });
+          }
         }
 
-        await uref.update({ lessonsTaken, lessonCoupons });
+        await uref.update({ lessonsTaken });
         console.log(`📘 Lesson count updated for ${studentId}: ${lessonsTaken}`);
       }
     }
