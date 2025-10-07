@@ -18,60 +18,62 @@ export default async function handler(req, res) {
 
   try {
     const userRef = adminDb.collection('users').doc(userId);
-    const snap = await userRef.get();
-    if (!snap.exists) return res.status(404).json({ error: 'User not found' });
 
-    const u = snap.data() || {};
-    const plan = u.subscriptionPlan || 'free';
-    const coupons = Array.isArray(u.lessonCoupons) ? u.lessonCoupons : [];
+    await adminDb.runTransaction(async (t) => {
+      const snap = await t.get(userRef);
+      if (!snap.exists) throw new Error('User not found');
 
-    // 🚫 Eğer lessonCoupons boş değilse (yani kullanıcıda zaten herhangi bir kupon varsa) — yeni kupon oluşturma
-    if (coupons.length > 0) {
-      console.log(`⚠️ Skipped: User ${userId} already has a lessonCoupons array`);
-      return res.status(200).json({ ok: true, skipped: true });
-    }
+      const u = snap.data() || {};
+      const plan = u.subscriptionPlan || 'free';
+      const coupons = Array.isArray(u.lessonCoupons) ? u.lessonCoupons : [];
 
-    // 🔹 Plan bazlı indirim yüzdesi
-    let percent = 0;
-    if (plan === 'starter') percent = 5;
-    if (plan === 'pro') percent = 10;
-    if (plan === 'vip') percent = 15;
-    if (!percent) {
-      console.log(`ℹ️ Free user ${userId} — no review bonus generated`);
-      return res.status(200).json({ ok: true, message: 'Free plan: no coupon' });
-    }
+      // 🚫 Eğer zaten kupon varsa asla ekleme yapma
+      if (coupons.length > 0) {
+        console.log(`⚠️ Skipped: User ${userId} already has lessonCoupons`);
+        return;
+      }
 
-    // 🔹 Stripe kupon + promo code (başlangıçta pasif)
-    const coupon = await stripe.coupons.create({
-      percent_off: percent,
-      duration: 'once',
-      name: `${plan} Review Bonus`,
+      let percent = 0;
+      if (plan === 'starter') percent = 5;
+      if (plan === 'pro') percent = 10;
+      if (plan === 'vip') percent = 15;
+      if (!percent) {
+        console.log(`ℹ️ Free user ${userId} — no review bonus generated`);
+        return;
+      }
+
+      const coupon = await stripe.coupons.create({
+        percent_off: percent,
+        duration: 'once',
+        name: `${plan} Review Bonus`,
+      });
+
+      const promo = await stripe.promotionCodes.create({
+        coupon: coupon.id,
+        code: randCode(),
+        max_redemptions: 1,
+        active: false,
+      });
+
+      const newCoupon = {
+        code: promo.code,
+        promoId: promo.id,
+        discount: percent,
+        percent: percent,
+        active: false,
+        used: false,
+        type: 'lesson',
+        createdAt: new Date(),
+      };
+
+      t.update(userRef, {
+        lessonCoupons: FieldValue.arrayUnion(newCoupon),
+      });
+
+      console.log(`✅ Review coupon created for ${userId}: ${promo.code}`);
     });
 
-    const promo = await stripe.promotionCodes.create({
-      coupon: coupon.id,
-      code: randCode(),
-      max_redemptions: 1,
-      active: false,
-    });
-
-    const newCoupon = {
-      code: promo.code,
-      promoId: promo.id,
-      discount: percent,
-      percent: percent,
-      active: false,
-      used: false,
-      type: 'lesson',
-      createdAt: new Date(),
-    };
-
-    await userRef.update({
-      lessonCoupons: FieldValue.arrayUnion(newCoupon),
-    });
-
-    console.log(`✅ Review coupon created for ${userId}: ${promo.code} (${percent}%)`);
-    return res.status(200).json({ ok: true, coupon: newCoupon });
+    return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('apply-review-bonus error:', err);
     return res.status(500).json({ error: 'Failed to create review bonus' });
