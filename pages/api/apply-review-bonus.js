@@ -25,14 +25,9 @@ export default async function handler(req, res) {
     const plan = u.subscriptionPlan || 'free';
     const coupons = Array.isArray(u.lessonCoupons) ? u.lessonCoupons : [];
 
-    // 🚫 Kullanıcının geçmişte oluşturulmuş herhangi bir review kuponu varsa (aktif, pasif, used fark etmez)
-    const hasReviewCoupon = coupons.some(
-      (c) => c?.code?.startsWith('REV-') && c.type === 'lesson'
-    );
-
-    if (hasReviewCoupon) {
-      console.log(`⚠️ Skipped: Review coupon already exists for user ${userId}`);
-      // 🔹 Burada STRIPE veya Firestore’a hiç dokunma!
+    // 🚫 Eğer lessonCoupons boş değilse (yani kullanıcıda zaten herhangi bir kupon varsa) — yeni kupon oluşturma
+    if (coupons.length > 0) {
+      console.log(`⚠️ Skipped: User ${userId} already has a lessonCoupons array`);
       return res.status(200).json({ ok: true, skipped: true });
     }
 
