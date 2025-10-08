@@ -8,7 +8,6 @@ export const config = { api: { bodyParser: false } };
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
 /* -------------------- Helpers -------------------- */
-
 function toStartAtUtc({ date, startTime, timezone }) {
   try {
     const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', { zone: timezone || 'UTC' });
@@ -49,8 +48,6 @@ function randCode(n = 8) {
 }
 
 /* ---------- Coupon Builders ---------- */
-
-// 3. ödeme sadakat kuponu → DERS (%10 pro, %20 vip)
 async function createLoyaltyLessonCoupon(plan) {
   let percent = 0;
   if (plan === 'pro') percent = 10;
@@ -78,7 +75,6 @@ async function createLoyaltyLessonCoupon(plan) {
   };
 }
 
-// VIP 6. ödeme kuponu → ABONELİK (%10)
 async function createVipSubscriptionMilestoneCoupon() {
   const percent = 10;
   const coupon = await stripe.coupons.create({ percent_off: percent, duration: 'once' });
@@ -108,7 +104,6 @@ function pushUnique(arr, item) {
 }
 
 /* -------------------- Handler -------------------- */
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   const sig = req.headers['stripe-signature'];
@@ -151,7 +146,7 @@ export default async function handler(req, res) {
       let lessonCoupons = u?.lessonCoupons || [];
       let subscriptionCoupons = u?.subscriptionCoupons || [];
 
-      // 🎯 Sadakat: her 3. ödeme → DERS kuponu
+      // 🎯 3. ödeme → DERS kuponu
       if (lifetime % 3 === 0 && (planKey === 'pro' || planKey === 'vip')) {
         try {
           const loyaltyCoupon = await createLoyaltyLessonCoupon(planKey);
@@ -165,7 +160,7 @@ export default async function handler(req, res) {
         }
       }
 
-      // 🏆 VIP 6. ödeme → ABONELİK kuponu
+      // 🏆 6. ödeme → VIP abonelik kuponu
       if (planKey === 'vip' && lifetime % 6 === 0) {
         try {
           const vip6 = await createVipSubscriptionMilestoneCoupon();
@@ -179,7 +174,6 @@ export default async function handler(req, res) {
         }
       }
 
-      // 🔄 Kullanıcı güncelle
       await uref.set(
         {
           subscriptionPlan: planKey,
@@ -198,7 +192,7 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
-      // ✅ Kullanıcı checkout sırasında manuel kupon girdiyse used:true yap
+      // 🔹 Manuel kupon kullanıldıysa used:true yap
       try {
         const discounts =
           session.total_details?.discounts?.length
@@ -241,6 +235,16 @@ export default async function handler(req, res) {
       const startAtUtc = toStartAtUtc({ date, startTime, timezone });
       const bookingRef = adminDb.collection('bookings').doc(session.id);
 
+      // 🔹 checkout metadata’dan indirimsiz/indirimli tutarları al
+      const originalCents = Number(meta.original_unit_amount || 0);
+      const discountedCents = Number(meta.discounted_unit_amount || session.amount_total || 0);
+      const discountPercent = Number(meta.discountPercent || 0);
+
+      const originalPrice = originalCents / 100;
+      const paidAmount = discountedCents / 100;
+      const teacherShare = (originalCents * 0.8) / 100; // öğretmen payı: her zaman indirimsiz fiyatın %80’i
+      const platformSubsidy = Math.max(0, originalPrice - paidAmount); // platform farkı
+
       let meetingLink = '';
       if (location === 'Online') {
         try {
@@ -260,7 +264,12 @@ export default async function handler(req, res) {
           duration: durationMinutes,
           location,
           meetingLink,
-          amountPaid: session.amount_total ? session.amount_total / 100 : null,
+          amountPaid: paidAmount,
+          originalPrice,
+          discountPercent,
+          teacherShare,
+          platformSubsidy,
+          discountLabel: meta.discountLabel || '',
           status: 'pending-approval',
           teacherApproved: false,
           studentConfirmed: false,
