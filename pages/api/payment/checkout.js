@@ -20,8 +20,11 @@ export default async function handler(req, res) {
     if (isNaN(numericPrice) || numericPrice <= 0)
       return res.status(400).json({ error: 'Invalid or missing price.' });
 
-    let discountedPrice = numericPrice;
+    // ---- pricing & discounts ----
+    const originalPrice = numericPrice;
+    let discountedPrice = originalPrice;
     let discountLabel = 'No discount';
+    let discountPercent = 0;
     let usedCoupon = null;
 
     // 🔹 Öğrenci verisi
@@ -34,22 +37,27 @@ export default async function handler(req, res) {
 
       // 1) İlk 6 ders indirimi
       if (totalLessons < 6) {
-        if (plan === 'starter') discountedPrice *= 0.9, discountLabel = 'Starter 10% (first 6 lessons)';
-        if (plan === 'pro')     discountedPrice *= 0.85, discountLabel = 'Pro 15% (first 6 lessons)';
-        if (plan === 'vip')     discountedPrice *= 0.8,  discountLabel = 'VIP 20% (first 6 lessons)';
+        if (plan === 'starter') { discountedPrice *= 0.9;  discountLabel = 'Starter 10% (first 6 lessons)'; discountPercent = 10; }
+        if (plan === 'pro')     { discountedPrice *= 0.85; discountLabel = 'Pro 15% (first 6 lessons)';     discountPercent = 15; }
+        if (plan === 'vip')     { discountedPrice *= 0.8;  discountLabel = 'VIP 20% (first 6 lessons)';     discountPercent = 20; }
       } else {
         // 2) Aktif DERS kuponu (review + 3x loyalty) otomatik uygula
         const activeCoupon = lessonCoupons.find(c => c.type === 'lesson' && c.active === true && !c.used);
         if (activeCoupon) {
-          const pct = activeCoupon.percent ?? activeCoupon.discount ?? 0;
+          const pct = Number(activeCoupon.percent ?? activeCoupon.discount ?? 0);
           if (pct > 0) {
-            discountedPrice *= (1 - pct / 100);
+            discountedPrice = originalPrice * (1 - pct / 100);
             discountLabel = `Auto Lesson Coupon ${pct}%`;
+            discountPercent = pct;
             usedCoupon = activeCoupon;
           }
         }
       }
     }
+
+    // kuruş/cents çalış
+    const originalUnitAmount = Math.round(originalPrice * 100);
+    const discountedUnitAmount = Math.max(0, Math.round(discountedPrice * 100));
 
     // 🔹 Stripe payment session
     const session = await stripe.checkout.sessions.create({
@@ -58,13 +66,14 @@ export default async function handler(req, res) {
         price_data: {
           currency: 'gbp',
           product_data: { name: 'Private Lesson' },
-          unit_amount: Math.round(discountedPrice * 100),
+          unit_amount: discountedUnitAmount,
         },
         quantity: 1,
       }],
       customer_email: studentEmail || undefined,
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      // 👇 booking’e yazmak için gerekli tüm datayı metadata’ya koyuyoruz
       metadata: {
         bookingType: 'lesson',
         teacherId,
@@ -76,6 +85,12 @@ export default async function handler(req, res) {
         location,
         timezone: timezone || '',
         discountLabel,
+        discountPercent: String(discountPercent || 0),
+        original_unit_amount: String(originalUnitAmount),   // cents
+        discounted_unit_amount: String(discountedUnitAmount), // cents
+        // takip için (varsa)
+        coupon_code: usedCoupon?.code || '',
+        coupon_type: usedCoupon?.type || '',
       },
     });
 
