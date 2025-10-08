@@ -28,7 +28,7 @@ const PLANS = [
     "20% discount on first 6 lessons",
     "15% review coupon",
     "Loyalty: 20% coupon every 3 months",
-    "Permanent 10% discount at 6/12/18 months (manual coupon entry)"
+    "Permanent 10% discount at 6/12/18 months"
   ]}
 ];
 
@@ -57,11 +57,16 @@ export default function SubscriptionPage() {
       const res = await fetch("/api/payment/plan-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid, userEmail: user.email, planKey }),
+        body: JSON.stringify({
+          userId: user.uid,
+          userEmail: user.email,
+          planKey,
+          currentPlan: activePlan
+        }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-      else alert(data.error || "Error occurred.");
+      else alert(data.message || data.error || "Error occurred.");
     } catch (err) {
       console.error("plan checkout error:", err);
       alert("Could not start payment.");
@@ -86,10 +91,18 @@ export default function SubscriptionPage() {
               ))}
             </ul>
             <button onClick={() => handleSelect(plan.key)} disabled={saving}>
-              {activePlan === plan.key ? "Selected" : "Buy Now"}
+              {activePlan === plan.key ? "Selected" : "Change Plan"}
             </button>
           </div>
         ))}
+      </div>
+
+      <div className={styles.policyBox}>
+        <h3>Subscription Change Policy</h3>
+        <ul>
+          <li><b>Upgrade:</b> Takes effect immediately. The remaining days are prorated and charged.</li>
+          <li><b>Downgrade:</b> Takes effect at the end of the current billing cycle. No refunds are issued.</li>
+        </ul>
       </div>
     </div>
   );
