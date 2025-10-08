@@ -1,3 +1,4 @@
+// pages/api/webhook.js
 import { buffer } from 'micro';
 import Stripe from 'stripe';
 import { adminDb } from '../../lib/firebaseAdmin';
@@ -103,8 +104,8 @@ async function createVipSubscriptionMilestoneCoupon() {
   };
 }
 
+// geriye dönük yardımcı
 async function createCouponForPlan(plan, type = 'lesson') {
-  // (review/sadakat dışındaki eski çağrılar için geriye dönük)
   let percent = 0;
   if (type === 'lesson') {
     if (plan === 'starter') percent = 5;
@@ -203,6 +204,7 @@ export default async function handler(req, res) {
         }
       }
 
+      // 🔄 Kullanıcıyı güncelle
       await uref.set({
         subscriptionPlan: planKey,
         viewLimit: base.viewLimit,
@@ -217,6 +219,33 @@ export default async function handler(req, res) {
         lessonCoupons,
         subscriptionCoupons,
       }, { merge: true });
+
+      // ✅ Kullanıcı checkout sırasında **manuel kupon girdiyse** onu used:true yap
+      try {
+        const discounts = session.total_details?.discounts || [];
+        if (discounts.length > 0) {
+          // Stripe, kullanılan promotion_code id'lerini burada döner
+          const promoId = discounts[0]?.promotion_code;
+          if (promoId) {
+            const promo = await stripe.promotionCodes.retrieve(promoId);
+            const usedCode = promo?.code;
+            if (usedCode) {
+              const snap2 = await uref.get();
+              if (snap2.exists) {
+                const u2 = snap2.data() || {};
+                const subCoupons = Array.isArray(u2.subscriptionCoupons) ? u2.subscriptionCoupons : [];
+                const updated = subCoupons.map(c =>
+                  c.code === usedCode ? { ...c, used: true } : c
+                );
+                await uref.update({ subscriptionCoupons: updated });
+                console.log(`✅ Subscription coupon ${usedCode} marked as used for ${userId}`);
+              }
+            }
+          }
+        }
+      } catch (markErr) {
+        console.warn('⚠️ Could not mark subscription promo as used:', markErr?.message || markErr);
+      }
 
       console.log(`✅ One-off plan activated for ${userId} (${planKey}) — lifetime #${lifetime}`);
       return res.status(200).json({ received: true });
