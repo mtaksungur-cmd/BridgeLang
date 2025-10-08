@@ -215,7 +215,7 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* KUPONLAR */}
+      /* {/* KUPONLAR */}
       <div className={styles.couponSection}>
         <h3>🎟️ Your Coupons</h3>
         {(!data.lessonCoupons?.length && !data.subscriptionCoupons?.length) ? (
@@ -249,6 +249,7 @@ export default function StudentDashboard() {
           </>
         )}
       </div>
+      */
 
       {/* REZERVASYONLAR */}
       <div className={styles['dashboard-reservations']}>
