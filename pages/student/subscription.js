@@ -80,6 +80,13 @@ export default function SubscriptionPage() {
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>Choose Your Subscription Plan</h2>
+      <div className={styles.policyBox}>
+        <h3>Subscription Change Policy</h3>
+        <ul>
+          <li><b>Upgrade:</b> Takes effect immediately. The remaining days are prorated and charged.</li>
+          <li><b>Downgrade:</b> Takes effect at the end of the current billing cycle. No refunds are issued.</li>
+        </ul>
+      </div>
       <div className={styles.planList}>
         {PLANS.map((plan) => (
           <div key={plan.key} className={`${styles.planCard} ${activePlan === plan.key ? styles.active : ""}`}>
@@ -95,14 +102,6 @@ export default function SubscriptionPage() {
             </button>
           </div>
         ))}
-      </div>
-
-      <div className={styles.policyBox}>
-        <h3>Subscription Change Policy</h3>
-        <ul>
-          <li><b>Upgrade:</b> Takes effect immediately. The remaining days are prorated and charged.</li>
-          <li><b>Downgrade:</b> Takes effect at the end of the current billing cycle. No refunds are issued.</li>
-        </ul>
       </div>
     </div>
   );
