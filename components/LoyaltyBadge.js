@@ -1,10 +1,7 @@
 export default function LoyaltyBadge({
   plan,
-  loyaltyMonths,
-  loyaltyBonusCount,
   lessonsTaken = 0,
-  permanentDiscount = 0,
-  lessonCoupons = [],
+  subscriptionCoupons = [],
 }) {
   let badge = "🎟️";
   let planText = "";
@@ -13,17 +10,21 @@ export default function LoyaltyBadge({
 
   if (plan === "starter") {
     badge = "🎟️";
-    planText = "Starter Plan – 10% off first 6 lessons.";
-    lessonDiscount = "5% review coupon per review.";
+    planText = "Starter Plan – 10% off the first 6 lessons.";
+    lessonDiscount =
+      "5% review coupon available per review. Lesson discounts are automatically applied.";
   } else if (plan === "pro") {
     badge = "🥈";
-    planText = "Pro Plan – 15% off first 6 lessons.";
-    lessonDiscount = "10% review coupon + 10% loyalty every 3 months.";
+    planText = "Pro Plan – 15% off the first 6 lessons.";
+    lessonDiscount =
+      "10% review coupon + 10% loyalty discount every 3rd payment. Lesson discounts are applied automatically.";
   } else if (plan === "vip") {
     badge = "🥇";
-    planText = "VIP Plan – 20% off first 6 lessons.";
-    lessonDiscount = "15% review coupon + 20% loyalty every 3 months.";
-    loyaltyText = `Permanent 10% discount at 6/12/18 months.`;
+    planText = "VIP Plan – 20% off the first 6 lessons.";
+    lessonDiscount =
+      "15% review coupon + 20% loyalty discount every 3rd payment (auto).";
+    loyaltyText =
+      "Every 6th renewal: 10% off subscription (manual code entry required).";
   } else {
     planText = "Free Plan – No discounts available.";
   }
@@ -64,7 +65,7 @@ export default function LoyaltyBadge({
         🎯 <strong>Lesson Discounts:</strong> {lessonDiscount}
       </div>
 
-      {plan === "vip" && permanentDiscount > 0 && (
+      {plan === "vip" && (
         <div
           style={{
             marginTop: 12,
@@ -74,40 +75,39 @@ export default function LoyaltyBadge({
             borderRadius: 8,
           }}
         >
-          🏆 <strong>Permanent Discount:</strong> {permanentDiscount}% off
+          🏆 <strong>Subscription Loyalty:</strong> {loyaltyText}
         </div>
       )}
 
-      {loyaltyBonusCount > 0 && (
+      {subscriptionCoupons?.length > 0 && (
         <div
           style={{
-            marginTop: 12,
-            padding: "10px 12px",
-            background: "#e6f7ff",
-            border: "1px solid #91d5ff",
-            borderRadius: 8,
-          }}
-        >
-          💎 <strong>Loyalty Bonus:</strong> {loyaltyBonusCount * 3} months active!
-        </div>
-      )}
-
-      {lessonCoupons?.length > 0 && (
-        <div
-          style={{
-            marginTop: 16,
+            marginTop: 20,
             borderTop: "1px solid #ddd",
             paddingTop: 10,
             textAlign: "left",
           }}
         >
-          <h4 style={{ margin: "6px 0", fontSize: 15 }}>🎟️ Review Coupons</h4>
-          {lessonCoupons.map((c, i) => (
+          <h4 style={{ margin: "6px 0", fontSize: 15 }}>
+            🎟️ Subscription Coupons
+          </h4>
+          <p
+            style={{
+              fontSize: 13,
+              color: "#555",
+              marginBottom: 8,
+            }}
+          >
+            These coupons can be used <strong>manually</strong> during your next
+            subscription payment. Copy the code and enter it at checkout.
+          </p>
+
+          {subscriptionCoupons.map((c, i) => (
             <div
               key={i}
               style={{
-                background: c.used ? "#f5f5f5" : "#e6fffb",
-                border: "1px dashed #91d5ff",
+                background: c.used ? "#f5f5f5" : "#fffaf0",
+                border: "1px dashed #ffc069",
                 padding: "8px 10px",
                 borderRadius: 6,
                 marginBottom: 6,
@@ -117,14 +117,14 @@ export default function LoyaltyBadge({
               }}
             >
               <div>
-                <strong>{c.code}</strong> – {c.discount}% off{" "}
+                <strong>{c.code}</strong> – {c.discount || c.percent}% off{" "}
                 {c.used ? "(Used)" : "(Available)"}
               </div>
               {!c.used && (
                 <button
                   onClick={() => copy(c.code)}
                   style={{
-                    border: "1px solid #91d5ff",
+                    border: "1px solid #ffa940",
                     background: "#fff",
                     borderRadius: 6,
                     padding: "3px 6px",
