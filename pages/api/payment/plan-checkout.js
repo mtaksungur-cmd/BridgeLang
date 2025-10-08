@@ -6,9 +6,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 
 // Plan → Stripe Price ID eşlemesi (Vercel env'de tanımla)
 const PRICE_MAP = {
-  starter: process.env.STRIPE_PRICE_STARTER, // ör: price_123
-  pro: process.env.STRIPE_PRICE_PRO,
-  vip: process.env.STRIPE_PRICE_VIP,
+  starter: process.env.STRIPE_PRICE_ID_STARTER, // ör: price_123
+  pro: process.env.STRIPE_PRICE_ID_PRO,
+  vip: process.env.STRIPE_PRICE_ID_VIP,
 };
 
 const PLAN_ORDER = ['free', 'starter', 'pro', 'vip'];
