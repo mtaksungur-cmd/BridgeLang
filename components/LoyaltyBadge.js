@@ -12,12 +12,12 @@ export default function LoyaltyBadge({
     badge = "🎟️";
     planText = "Starter Plan – 10% off the first 6 lessons.";
     lessonDiscount =
-      "5% review coupon available per review. Lesson discounts are automatically applied.";
+      "5% review coupon per review. Lesson discounts are automatically applied.";
   } else if (plan === "pro") {
     badge = "🥈";
     planText = "Pro Plan – 15% off the first 6 lessons.";
     lessonDiscount =
-      "10% review coupon + 10% loyalty discount every 3rd payment. Lesson discounts are applied automatically.";
+      "10% review coupon + 10% loyalty discount every 3rd payment (auto).";
   } else if (plan === "vip") {
     badge = "🥇";
     planText = "VIP Plan – 20% off the first 6 lessons.";
@@ -89,7 +89,7 @@ export default function LoyaltyBadge({
           }}
         >
           <h4 style={{ margin: "6px 0", fontSize: 15 }}>
-            🎟️ Subscription Coupons
+            🎟️ Subscription Coupon
           </h4>
           <p
             style={{
@@ -98,11 +98,10 @@ export default function LoyaltyBadge({
               marginBottom: 8,
             }}
           >
-            These coupons can be used <strong>manually</strong> during your next
-            subscription payment. Copy the code and enter it at checkout.
+            Only your latest coupon is shown below. Use it <strong>manually</strong> during your next subscription payment.
           </p>
 
-          {subscriptionCoupons.map((c, i) => (
+          {[...subscriptionCoupons].slice(-1).map((c, i) => (
             <div
               key={i}
               style={{
