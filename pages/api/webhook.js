@@ -32,12 +32,7 @@ async function createDailyRoom({ teacherId, date, startTime, durationMinutes, ti
     },
     body: JSON.stringify({
       name: `lesson-${teacherId || 't'}-${Date.now()}`,
-      properties: {
-        nbf: Math.floor(startSec),
-        exp: Math.floor(expSec),
-        enable_screenshare: true,
-        enable_chat: true,
-      },
+      properties: { nbf: Math.floor(startSec), exp: Math.floor(expSec), enable_screenshare: true, enable_chat: true },
     }),
   });
 
@@ -84,30 +79,27 @@ async function createLoyaltyLessonCoupon(plan) {
 async function createVipSubscriptionMilestoneCoupon() {
   const percent = 10;
   const coupon = await stripe.coupons.create({ percent_off: percent, duration: 'once' });
-  const promo = await stripe.promotionCodes.create({
-    coupon: coupon.id,
-    code: randCode(),
-    max_redemptions: 1,
-    active: true,
-  });
-
-  return {
-    code: promo.code,
-    promoId: promo.id,
-    discount: percent,
-    percent,
-    type: 'subscription',
-    source: 'vip-6x',
-    active: true,
-    used: false,
-    createdAt: new Date(),
-  };
+  return { couponId: coupon.id, percent };
 }
 
 function pushUnique(arr, item) {
   const exists = (arr || []).some((x) => x.code === item.code);
   return exists ? arr : [...(arr || []), item];
 }
+
+/* ---- Price → planKey map (recurring içindir) ---- */
+const PRICE_TO_PLAN = {
+  [process.env.STRIPE_PRICE_STARTER || '']: 'starter',
+  [process.env.STRIPE_PRICE_PRO || '']: 'pro',
+  [process.env.STRIPE_PRICE_VIP || '']: 'vip',
+};
+
+const PLAN_LIMITS = {
+  free: { viewLimit: 10, messagesLeft: 3 },
+  starter: { viewLimit: 30, messagesLeft: 8 },
+  pro: { viewLimit: 60, messagesLeft: 20 },
+  vip: { viewLimit: 9999, messagesLeft: 9999 },
+};
 
 /* -------------------- Handler -------------------- */
 export default async function handler(req, res) {
@@ -123,110 +115,228 @@ export default async function handler(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  const PLAN_LIMITS = {
-    free: { viewLimit: 10, messagesLeft: 3 },
-    starter: { viewLimit: 30, messagesLeft: 8 },
-    pro: { viewLimit: 60, messagesLeft: 20 },
-    vip: { viewLimit: 9999, messagesLeft: 9999 },
-  };
+  /* -------------------------------------------------
+   * A) RECURRING SUBSCRIPTION EVENTLERİ
+   * ------------------------------------------------- */
+
+  // 1) Abonelik oluşturuldu (Checkout sonrası)
+  if (event.type === 'customer.subscription.created') {
+    const sub = event.data.object;
+    const userId = sub.metadata?.userId; // Checkout'ta set ettik
+    if (!userId) return res.status(200).json({ received: true });
+
+    const item = sub.items?.data?.[0];
+    const priceId = item?.price?.id || '';
+    const planKey = PRICE_TO_PLAN[priceId] || 'starter'; // güvenli varsayım
+    const currentEnd = (sub.current_period_end || 0) * 1000;
+
+    const uref = adminDb.collection('users').doc(userId);
+    await uref.set({
+      subscriptionPlan: planKey,
+      viewLimit: PLAN_LIMITS[planKey].viewLimit,
+      messagesLeft: PLAN_LIMITS[planKey].messagesLeft,
+      subscription: {
+        planKey,
+        activeUntil: new Date(currentEnd),
+        activeUntilMillis: currentEnd,
+        lastPaymentAt: new Date(),
+        lifetimePayments: 1,
+        pending_downgrade_to: null,
+      },
+      stripe: {
+        customerId: sub.customer,
+        subscriptionId: sub.id,
+        subscriptionItemId: item?.id,
+      },
+    }, { merge: true });
+
+    try {
+      const profile = (await uref.get()).data();
+      if (profile?.email) {
+        await sendMail({
+          to: profile.email,
+          subject: '✅ Subscription activated',
+          html: `<p>Your ${planKey.toUpperCase()} plan is active. Renewal date: ${new Date(currentEnd).toDateString()}.</p>`,
+        });
+      }
+    } catch (e) {
+      console.warn('[webhook] create email failed:', e?.message || e);
+    }
+
+    return res.status(200).json({ received: true });
+  }
+
+  // 2) Abonelik güncellendi (upgrade/downgrade switch)
+  if (event.type === 'customer.subscription.updated') {
+    const sub = event.data.object;
+    const item = sub.items?.data?.[0];
+    const priceId = item?.price?.id || '';
+    const planKey = PRICE_TO_PLAN[priceId] || null;
+    const currentEnd = (sub.current_period_end || 0) * 1000;
+
+    // Müşteri → userId bul
+    const customerId = sub.customer;
+    const list = await stripe.customers.list({ limit: 1, email: undefined, expand: [] }); // placeholder
+    // userId'yi metadata'dan alamayabiliriz, bu yüzden Firestore üzerinden customerId eşleşmesi yapıyoruz
+    const q = await adminDb.collection('users').where('stripe.customerId', '==', customerId).get();
+
+    for (const doc of q.docs) {
+      const uref = doc.ref;
+      const udata = doc.data();
+
+      // lifetimePayments +1 yalnızca invoice payment'ta artacak; burada sadece plan/süre güncelleyelim
+      const update = {
+        stripe: {
+          ...(udata.stripe || {}),
+          subscriptionId: sub.id,
+          subscriptionItemId: item?.id || udata?.stripe?.subscriptionItemId,
+        },
+        subscription: {
+          ...(udata.subscription || {}),
+          activeUntil: new Date(currentEnd),
+          activeUntilMillis: currentEnd,
+        },
+      };
+
+      if (planKey) {
+        update.subscriptionPlan = planKey;
+        update.subscription.planKey = planKey;
+        update.viewLimit = PLAN_LIMITS[planKey].viewLimit;
+        update.messagesLeft = PLAN_LIMITS[planKey].messagesLeft;
+        update.subscription.pending_downgrade_to = null; // upgrade olduysa temizle
+      }
+
+      await uref.set(update, { merge: true });
+    }
+
+    return res.status(200).json({ received: true });
+  }
+
+  // 3) Her başarılı fatura → süre uzar, milestone & kuponlar çalışır
+  if (event.type === 'invoice.payment_succeeded') {
+    const invoice = event.data.object;
+    const subscriptionId = invoice.subscription;
+    if (!subscriptionId) return res.status(200).json({ received: true });
+
+    // Abonelik ve item bilgisi
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    const item = sub.items?.data?.[0];
+    const priceId = item?.price?.id || '';
+    const planKey = PRICE_TO_PLAN[priceId] || 'starter';
+    const currentEnd = (sub.current_period_end || 0) * 1000;
+    const customerId = sub.customer;
+
+    // user doc bul
+    const q = await adminDb.collection('users').where('stripe.subscriptionId', '==', subscriptionId).get();
+    for (const doc of q.docs) {
+      const udata = doc.data();
+      const lifetime = Number(udata?.subscription?.lifetimePayments || 0) + 1;
+
+      // 🔹 Pending downgrade var ise → şimdi uygula
+      const pending = udata?.subscription?.pending_downgrade_to || null;
+      let finalPlan = planKey;
+
+      if (pending) {
+        finalPlan = pending;
+        const targetPriceId =
+          pending === 'starter' ? process.env.STRIPE_PRICE_STARTER :
+          pending === 'pro' ? process.env.STRIPE_PRICE_PRO :
+          pending === 'vip' ? process.env.STRIPE_PRICE_VIP : null;
+
+        if (targetPriceId) {
+          try {
+            await stripe.subscriptions.update(subscriptionId, {
+              cancel_at_period_end: false,
+              proration_behavior: 'none', // dönem başında değiştirdiğimiz için fark alma
+              items: [{ id: item.id, price: targetPriceId }],
+            });
+          } catch (e) {
+            console.warn('[webhook] pending downgrade switch failed:', e?.message || e);
+          }
+        }
+      }
+
+      // 🔹 Loyalty / VIP milestone kuponları
+      let lessonCoupons = udata?.lessonCoupons || [];
+      let subscriptionCoupons = udata?.subscriptionCoupons || [];
+
+      // 3x payments → lesson coupon (pro/vip)
+      if (lifetime % 3 === 0 && (finalPlan === 'pro' || finalPlan === 'vip')) {
+        try {
+          const loyalty = await createLoyaltyLessonCoupon(finalPlan);
+          if (loyalty) {
+            loyalty.milestonePaymentNo = lifetime;
+            lessonCoupons = pushUnique(lessonCoupons, loyalty);
+          }
+        } catch (e) {
+          console.warn('[webhook] loyalty coupon create failed:', e?.message || e);
+        }
+      }
+
+      // VIP 6x → aboneliğe 1 defalık %10 kuponu uygula
+      if (finalPlan === 'vip' && lifetime % 6 === 0) {
+        try {
+          const vip = await createVipSubscriptionMilestoneCoupon();
+          if (vip?.couponId) {
+            await stripe.subscriptions.update(subscriptionId, { coupon: vip.couponId });
+            subscriptionCoupons = [
+              ...(Array.isArray(subscriptionCoupons) ? subscriptionCoupons : []),
+              {
+                code: vip.couponId,
+                percent: 10,
+                type: 'subscription',
+                source: 'vip-6x',
+                used: false,
+                active: true,
+                createdAt: new Date(),
+                milestonePaymentNo: lifetime,
+              },
+            ];
+          }
+        } catch (e) {
+          console.warn('[webhook] VIP6 coupon apply failed:', e?.message || e);
+        }
+      }
+
+      // 🔹 Firestore update
+      const base = PLAN_LIMITS[finalPlan] || PLAN_LIMITS.free;
+
+      await doc.ref.set({
+        subscriptionPlan: finalPlan,
+        viewLimit: base.viewLimit,
+        messagesLeft: base.messagesLeft,
+        subscription: {
+          ...(udata.subscription || {}),
+          planKey: finalPlan,
+          activeUntil: new Date(currentEnd),
+          activeUntilMillis: currentEnd,
+          lastPaymentAt: new Date(),
+          lifetimePayments: lifetime,
+          pending_downgrade_to: null, // uygulandıysa temizle
+        },
+        lessonCoupons,
+        subscriptionCoupons,
+        stripe: {
+          ...(udata.stripe || {}),
+          customerId,
+          subscriptionId: sub.id,
+          subscriptionItemId: item?.id,
+        },
+      }, { merge: true });
+    }
+
+    return res.status(200).json({ received: true });
+  }
 
   /* -------------------------------------------------
-     ✅ 1. PLAN ÖDEMELERİ (Abonelik / Upgrade)
-  -------------------------------------------------- */
+   * B) MEVCUT: DERS ÖDEMESİ (tek seferlik)
+   *  - bookingType === 'lesson' için checkout.session.completed
+   *  - Bu bölüm SENDEKİYLE AYNI, HİÇ BOZMADIM
+   * ------------------------------------------------- */
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const meta = session.metadata || {};
 
-    if (meta.bookingType === 'plan') {
-      const { userId, planKey } = meta;
-      if (!userId || !planKey) return res.status(200).json({ received: true });
-
-      const uref = adminDb.collection('users').doc(userId);
-      const usnap = await uref.get();
-      const u = usnap.exists ? usnap.data() : {};
-
-      const existed = u?.subscription?.activeUntilMillis || 0;
-      const baseMs = Math.max(existed, Date.now());
-      const newUntil = baseMs + 30 * 86400000;
-      const lifetime = Number(u?.subscription?.lifetimePayments || 0) + 1;
-      const base = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
-
-      let lessonCoupons = u?.lessonCoupons || [];
-      let subscriptionCoupons = u?.subscriptionCoupons || [];
-
-      // 🎯 3. ödeme → DERS kuponu
-      if (lifetime % 3 === 0 && (planKey === 'pro' || planKey === 'vip')) {
-        try {
-          const loyaltyCoupon = await createLoyaltyLessonCoupon(planKey);
-          if (loyaltyCoupon) {
-            loyaltyCoupon.milestonePaymentNo = lifetime;
-            lessonCoupons = pushUnique(lessonCoupons, loyaltyCoupon);
-            console.log(`🎁 Loyalty lesson coupon added for ${userId} at payment #${lifetime}`);
-          }
-        } catch (e) {
-          console.error('⚠️ Loyalty lesson coupon create failed:', e?.message || e);
-        }
-      }
-
-      // 🏆 6. ödeme → VIP abonelik kuponu
-      if (planKey === 'vip' && lifetime % 6 === 0) {
-        try {
-          const vip6 = await createVipSubscriptionMilestoneCoupon();
-          if (vip6) {
-            vip6.milestonePaymentNo = lifetime;
-            subscriptionCoupons = pushUnique(subscriptionCoupons, vip6);
-            console.log(`🏆 VIP 6x subscription coupon added for ${userId} at payment #${lifetime}`);
-          }
-        } catch (e) {
-          console.error('⚠️ VIP 6x subscription coupon create failed:', e?.message || e);
-        }
-      }
-
-      // 🔹 Abonelik güncelle
-      await uref.set(
-        {
-          subscriptionPlan: planKey,
-          viewLimit: base.viewLimit,
-          messagesLeft: base.messagesLeft,
-          subscription: {
-            planKey,
-            activeUntil: new Date(newUntil),
-            activeUntilMillis: newUntil,
-            lastPaymentAt: new Date(),
-            lifetimePayments: lifetime,
-            pending_downgrade_to: null,
-          },
-          lessonCoupons,
-          subscriptionCoupons,
-        },
-        { merge: true }
-      );
-
-      // 🔸 Upgrade bildirimi
-      try {
-        if (u?.email) {
-          await sendMail({
-            to: u.email,
-            subject: '✅ Subscription upgraded',
-            html: `
-              <p>Hi ${u.name || ''},</p>
-              <p>Your plan has been upgraded to <b>${planKey.toUpperCase()}</b>.</p>
-              <p>The change is effective immediately. Enjoy your new benefits!</p>
-              <p>— BridgeLang Team</p>
-            `,
-          });
-        }
-      } catch (err) {
-        console.warn('⚠️ Could not send upgrade email:', err.message);
-      }
-
-      console.log(`✅ Plan activated for ${userId} (${planKey}) — lifetime #${lifetime}`);
-      return res.status(200).json({ received: true });
-    }
-
-    /* -------------------------------------------------
-       🔹 DERS ÖDEMESİ (lesson)
-    -------------------------------------------------- */
     if (meta.bookingType === 'lesson') {
       const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
@@ -280,7 +390,7 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
-      // 🔄 Ders sayısı + review kupon aktivasyonu
+      // Review kupon aktivasyonu (senin aynısı)
       if (studentId) {
         const uref = adminDb.collection('users').doc(studentId);
         const usnap = await uref.get();
@@ -308,33 +418,8 @@ export default async function handler(req, res) {
         await uref.update({ lessonsTaken, lessonCoupons });
         console.log(`📘 Lesson count updated for ${studentId}: ${lessonsTaken}`);
       }
-    }
-  }
 
-  /* -------------------------------------------------
-     🔹 2. Faturalama Sonrası Dönem Sonu Downgrade
-  -------------------------------------------------- */
-  if (event.type === 'invoice.payment_succeeded') {
-    const data = event.data.object;
-    const customerEmail = data.customer_email;
-
-    if (customerEmail) {
-      const query = await adminDb.collection('users').where('email', '==', customerEmail).get();
-      for (const doc of query.docs) {
-        const u = doc.data();
-        const pending = u?.subscription?.pending_downgrade_to;
-        if (pending) {
-          const base = PLAN_LIMITS[pending] || PLAN_LIMITS.free;
-          await doc.ref.update({
-            subscriptionPlan: pending,
-            viewLimit: base.viewLimit,
-            messagesLeft: base.messagesLeft,
-            'subscription.planKey': pending,
-            'subscription.pending_downgrade_to': null,
-          });
-          console.log(`🔽 Downgrade applied for ${doc.id} → ${pending}`);
-        }
-      }
+      return res.status(200).json({ received: true });
     }
   }
 
