@@ -2,6 +2,7 @@ import { buffer } from 'micro';
 import Stripe from 'stripe';
 import { adminDb } from '../../lib/firebaseAdmin';
 import { DateTime } from 'luxon';
+import { sendMail } from '../../lib/mailer';
 
 export const config = { api: { bodyParser: false } };
 
@@ -31,7 +32,12 @@ async function createDailyRoom({ teacherId, date, startTime, durationMinutes, ti
     },
     body: JSON.stringify({
       name: `lesson-${teacherId || 't'}-${Date.now()}`,
-      properties: { nbf: Math.floor(startSec), exp: Math.floor(expSec), enable_screenshare: true, enable_chat: true },
+      properties: {
+        nbf: Math.floor(startSec),
+        exp: Math.floor(expSec),
+        enable_screenshare: true,
+        enable_chat: true,
+      },
     }),
   });
 
@@ -124,11 +130,13 @@ export default async function handler(req, res) {
     vip: { viewLimit: 9999, messagesLeft: 9999 },
   };
 
+  /* -------------------------------------------------
+     ✅ 1. PLAN ÖDEMELERİ (Abonelik / Upgrade)
+  -------------------------------------------------- */
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const meta = session.metadata || {};
 
-    /* 🔹 PLAN ÖDEMESİ */
     if (meta.bookingType === 'plan') {
       const { userId, planKey } = meta;
       if (!userId || !planKey) return res.status(200).json({ received: true });
@@ -174,6 +182,7 @@ export default async function handler(req, res) {
         }
       }
 
+      // 🔹 Abonelik güncelle
       await uref.set(
         {
           subscriptionPlan: planKey,
@@ -185,6 +194,7 @@ export default async function handler(req, res) {
             activeUntilMillis: newUntil,
             lastPaymentAt: new Date(),
             lifetimePayments: lifetime,
+            pending_downgrade_to: null,
           },
           lessonCoupons,
           subscriptionCoupons,
@@ -192,58 +202,45 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
-      // 🔹 Manuel kupon kullanıldıysa used:true yap
+      // 🔸 Upgrade bildirimi
       try {
-        const discounts =
-          session.total_details?.discounts?.length
-            ? session.total_details.discounts
-            : session.discounts || [];
-
-        if (discounts.length > 0) {
-          const promoId = discounts[0]?.promotion_code;
-          if (promoId) {
-            const promo = await stripe.promotionCodes.retrieve(promoId);
-            const usedCode = promo?.code;
-            if (usedCode) {
-              const snap2 = await uref.get();
-              if (snap2.exists) {
-                const u2 = snap2.data() || {};
-                const subCoupons = Array.isArray(u2.subscriptionCoupons)
-                  ? u2.subscriptionCoupons
-                  : [];
-                const updated = subCoupons.map((c) =>
-                  c.code === usedCode ? { ...c, used: true } : c
-                );
-                await uref.update({ subscriptionCoupons: updated });
-                console.log(`✅ Subscription coupon ${usedCode} marked as used for ${userId}`);
-              }
-            }
-          }
+        if (u?.email) {
+          await sendMail({
+            to: u.email,
+            subject: '✅ Subscription upgraded',
+            html: `
+              <p>Hi ${u.name || ''},</p>
+              <p>Your plan has been upgraded to <b>${planKey.toUpperCase()}</b>.</p>
+              <p>The change is effective immediately. Enjoy your new benefits!</p>
+              <p>— BridgeLang Team</p>
+            `,
+          });
         }
-      } catch (markErr) {
-        console.warn('⚠️ Could not mark subscription promo as used:', markErr?.message || markErr);
+      } catch (err) {
+        console.warn('⚠️ Could not send upgrade email:', err.message);
       }
 
-      console.log(`✅ One-off plan activated for ${userId} (${planKey}) — lifetime #${lifetime}`);
+      console.log(`✅ Plan activated for ${userId} (${planKey}) — lifetime #${lifetime}`);
       return res.status(200).json({ received: true });
     }
 
-    /* 🔹 DERS ÖDEMESİ */
+    /* -------------------------------------------------
+       🔹 DERS ÖDEMESİ (lesson)
+    -------------------------------------------------- */
     if (meta.bookingType === 'lesson') {
       const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
       const startAtUtc = toStartAtUtc({ date, startTime, timezone });
       const bookingRef = adminDb.collection('bookings').doc(session.id);
 
-      // 🔹 checkout metadata’dan indirimsiz/indirimli tutarları al
       const originalCents = Number(meta.original_unit_amount || 0);
       const discountedCents = Number(meta.discounted_unit_amount || session.amount_total || 0);
       const discountPercent = Number(meta.discountPercent || 0);
 
       const originalPrice = originalCents / 100;
       const paidAmount = discountedCents / 100;
-      const teacherShare = (originalCents * 0.8) / 100; // öğretmen payı: her zaman indirimsiz fiyatın %80’i
-      const platformSubsidy = Math.max(0, originalPrice - paidAmount); // platform farkı
+      const teacherShare = (originalCents * 0.8) / 100;
+      const platformSubsidy = Math.max(0, originalPrice - paidAmount);
 
       let meetingLink = '';
       if (location === 'Online') {
@@ -310,6 +307,33 @@ export default async function handler(req, res) {
 
         await uref.update({ lessonsTaken, lessonCoupons });
         console.log(`📘 Lesson count updated for ${studentId}: ${lessonsTaken}`);
+      }
+    }
+  }
+
+  /* -------------------------------------------------
+     🔹 2. Faturalama Sonrası Dönem Sonu Downgrade
+  -------------------------------------------------- */
+  if (event.type === 'invoice.payment_succeeded') {
+    const data = event.data.object;
+    const customerEmail = data.customer_email;
+
+    if (customerEmail) {
+      const query = await adminDb.collection('users').where('email', '==', customerEmail).get();
+      for (const doc of query.docs) {
+        const u = doc.data();
+        const pending = u?.subscription?.pending_downgrade_to;
+        if (pending) {
+          const base = PLAN_LIMITS[pending] || PLAN_LIMITS.free;
+          await doc.ref.update({
+            subscriptionPlan: pending,
+            viewLimit: base.viewLimit,
+            messagesLeft: base.messagesLeft,
+            'subscription.planKey': pending,
+            'subscription.pending_downgrade_to': null,
+          });
+          console.log(`🔽 Downgrade applied for ${doc.id} → ${pending}`);
+        }
       }
     }
   }
