@@ -17,39 +17,41 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
 
     const numericPrice = Number(price);
-    if (!Number.isFinite(numericPrice) || numericPrice <= 0)
+    if (isNaN(numericPrice) || numericPrice <= 0)
       return res.status(400).json({ error: 'Invalid or missing price.' });
 
     let discountedPrice = numericPrice;
     let discountLabel = 'No discount';
     let usedCoupon = null;
 
+    // 🔹 Öğrenci verisi
     const uSnap = await adminDb.collection('users').doc(studentId).get();
     if (uSnap.exists) {
       const user = uSnap.data();
       const plan = user?.subscriptionPlan || 'free';
       const totalLessons = user?.lessonsTaken || 0;
-      const lessonCoupons = user?.lessonCoupons || [];
+      const lessonCoupons = Array.isArray(user?.lessonCoupons) ? user.lessonCoupons : [];
 
-      // 1) ilk 6 derste plan indirimi
+      // 1) İlk 6 ders indirimi
       if (totalLessons < 6) {
-        if (plan === 'starter') { discountedPrice *= 0.90; discountLabel = 'Starter 10% (first 6 lessons)'; }
-        if (plan === 'pro')     { discountedPrice *= 0.85; discountLabel = 'Pro 15% (first 6 lessons)'; }
-        if (plan === 'vip')     { discountedPrice *= 0.80; discountLabel = 'VIP 20% (first 6 lessons)'; }
+        if (plan === 'starter') discountedPrice *= 0.9, discountLabel = 'Starter 10% (first 6 lessons)';
+        if (plan === 'pro')     discountedPrice *= 0.85, discountLabel = 'Pro 15% (first 6 lessons)';
+        if (plan === 'vip')     discountedPrice *= 0.8,  discountLabel = 'VIP 20% (first 6 lessons)';
       } else {
-        // 2) 6. dersten sonra aktif review kuponu varsa uygula
-        const activeCoupon = lessonCoupons.find(c => c.active === true && !c.used);
+        // 2) Aktif DERS kuponu (review + 3x loyalty) otomatik uygula
+        const activeCoupon = lessonCoupons.find(c => c.type === 'lesson' && c.active === true && !c.used);
         if (activeCoupon) {
-          const pct = (activeCoupon.discount ?? activeCoupon.percent ?? 0);
+          const pct = activeCoupon.percent ?? activeCoupon.discount ?? 0;
           if (pct > 0) {
             discountedPrice *= (1 - pct / 100);
-            discountLabel = `Auto Coupon ${pct}%`;
+            discountLabel = `Auto Lesson Coupon ${pct}%`;
             usedCoupon = activeCoupon;
           }
         }
       }
     }
 
+    // 🔹 Stripe payment session
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [{
@@ -65,13 +67,19 @@ export default async function handler(req, res) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       metadata: {
         bookingType: 'lesson',
-        teacherId, studentId, date, startTime, endTime: endTime || '',
-        duration: String(duration), location, timezone: timezone || '',
+        teacherId,
+        studentId,
+        date,
+        startTime,
+        endTime: endTime || '',
+        duration: String(duration),
+        location,
+        timezone: timezone || '',
         discountLabel,
       },
     });
 
-    // kuponu "used" olarak işaretle (array remove + add)
+    // 🔹 Kuponu "used" işaretle (yalnız ders-kuponları)
     if (usedCoupon) {
       await adminDb.collection('users').doc(studentId).update({
         lessonCoupons: admin.firestore.FieldValue.arrayRemove(usedCoupon),
