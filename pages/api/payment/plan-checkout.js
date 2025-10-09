@@ -52,6 +52,7 @@ export default async function handler(req, res) {
     const snap = await ref.get();
     const userData = snap.exists ? snap.data() : {};
     const current = currentPlan || userData.subscriptionPlan || 'free';
+    const sub = userData.subscription || {};
     const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(current);
 
     /* 🔹 Plan düşürme */
@@ -76,6 +77,40 @@ export default async function handler(req, res) {
     }
 
     const customerId = await getOrCreateCustomer({ userId, userEmail });
+
+    /* 🔹 Eğer aynı planı tekrar seçtiyse */
+    if (current === planKey) {
+      const expired = !sub.activeUntilMillis || sub.activeUntilMillis < Date.now();
+
+      if (expired) {
+        const price = PLAN_PRICES[planKey];
+        const session = await stripe.checkout.sessions.create({
+          mode: 'payment',
+          customer: customerId,
+          payment_method_types: ['card'],
+          line_items: [{
+            price_data: {
+              currency: 'gbp',
+              product_data: { name: `${planKey.toUpperCase()} Plan (Renewal)` },
+              unit_amount: Math.round(price * 100)
+            },
+            quantity: 1
+          }],
+          metadata: {
+            bookingType: 'subscription_upgrade',
+            userId,
+            upgradeFrom: planKey,
+            upgradeTo: planKey,
+            diff: price,
+          },
+          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+        });
+        return res.status(200).json({ url: session.url });
+      } else {
+        return res.status(400).json({ error: 'You already have this active plan.' });
+      }
+    }
 
     /* 🔹 İlk abonelik (free → X) */
     if (current === 'free') {
@@ -105,9 +140,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url });
     }
 
-    /* 🔹 Upgrade (ör: starter → pro) */
+    /* 🔹 Upgrade (ör: starter → pro veya pro → vip) */
     if (isUpgrade) {
-      const ratio = remainingRatio(userData);
+      const ratio = remainingRatio(userData); // kalan gün oranı
       const currentPrice = PLAN_PRICES[current] || 0;
       const newPrice = PLAN_PRICES[planKey];
       const credit = currentPrice * ratio;
@@ -139,8 +174,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url });
     }
 
-    /* 🔹 Aynı planı tekrar seçtiyse */
-    return res.status(400).json({ error: 'You already have this plan.' });
+    /* 🔹 Diğer durumlar (güvenlik fallback) */
+    return res.status(400).json({ error: 'Invalid plan change request.' });
   } catch (err) {
     console.error('plan-checkout error:', err);
     return res.status(500).json({ error: 'Checkout failed' });
