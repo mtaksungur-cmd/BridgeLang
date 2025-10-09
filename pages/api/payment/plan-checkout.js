@@ -57,10 +57,9 @@ export default async function handler(req, res) {
       if (subscriptionId && itemId) {
         // Yalnızca farkı (proration) tahsil et
         const updated = await stripe.subscriptions.update(subscriptionId, {
-          cancel_at_period_end: false,
           proration_behavior: 'create_prorations',
           billing_cycle_anchor: 'unchanged',
-          payment_behavior: 'pending_if_incomplete',
+          payment_behavior: 'default_incomplete', // ← güvenli ve proration destekli
           items: [{ id: itemId, price: priceId }],
         });
 
