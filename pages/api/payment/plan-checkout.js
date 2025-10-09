@@ -1,3 +1,4 @@
+// pages/api/payment/plan-checkout.js
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { sendMail } from '../../../lib/mailer';
@@ -44,18 +45,19 @@ function calcRemainingRatio(subscription) {
   return Math.min(1, remaining / 30);
 }
 
-/* ------- VIP sadakat kuponu (tek kullanımlık %10) -------- */
+/* ------- VIP sadakat kuponu (tek kullanımlık %10) --------
+ * Amaç: 6/12/18… ÖDEMEDE uygulanacak indirim.
+ * Bu yüzden “bir SONRAKİ” ödeme #’sını kontrol ediyoruz ve 6’nın katı ise
+ * kuponu ŞİMDİ oluşturup bu oluşturulan checkout’ta “discounts” ile uyguluyoruz.
+ */
 async function createVipLoyaltyCouponForNextPayment({ userId, nextPaymentNo }) {
-  // 6/12/18… ödemelerde indirim
-  if (nextPaymentNo % 6 !== 0) return null;
-
+  if (nextPaymentNo % 6 !== 0) return null; // sadece 6/12/18… ödemelerde
   const coupon = await stripe.coupons.create({
     percent_off: 10,
     duration: 'once',
     name: `VIP Loyalty — Payment #${nextPaymentNo}`,
   });
-  // checkout.session.create'te discounts ile kuponu doğrudan uygulayacağız
-  return coupon.id;
+  return coupon.id; // session.discounts için coupon id
 }
 
 /* --------------- Handler ---------------- */
@@ -69,8 +71,8 @@ export default async function handler(req, res) {
     const ref   = adminDb.collection('users').doc(userId);
     const snap  = await ref.get();
     const udata = snap.exists ? snap.data() : {};
-    const current = currentPlan || udata.subscriptionPlan || 'free';
-    const sub     = udata.subscription || {};
+    const current   = currentPlan || udata.subscriptionPlan || 'free';
+    const sub       = udata.subscription || {};
     const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(current);
 
     const customerId = await getOrCreateCustomer({ userId, userEmail });
@@ -98,7 +100,8 @@ export default async function handler(req, res) {
       }
 
       const price = PLAN_PRICES[planKey];
-      // VIP 6/12/18… ödemede otomatik kupon
+
+      // VIP 6/12/18… ödemede otomatik kupon (bu yenileme o “ödemelerden” biri mi?)
       const nextPaymentNo = (sub.lifetimePayments || 0) + 1;
       const discounts = [];
       let appliedVipCouponId = null;
@@ -109,7 +112,7 @@ export default async function handler(req, res) {
           nextPaymentNo,
         });
         if (vipCouponId) {
-          discounts.push({ coupon: vipCouponId });
+          discounts.push({ coupon: vipCouponId }); // ⚠️ allow_promotion_codes ile birlikte kullanılamaz
           appliedVipCouponId = vipCouponId;
         }
       }
@@ -118,10 +121,8 @@ export default async function handler(req, res) {
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
-        ...(discounts?.length
-          ? { discounts }                // sistem kuponu varsa bunu uygula
-          : { allow_promotion_codes: true } // yoksa kullanıcı kod girebilir
-        ),
+        // “allow_promotion_codes” ve “discounts” AYNI ANDA kullanılamaz.
+        ...(discounts.length ? { discounts } : { allow_promotion_codes: true }),
         line_items: [{
           price_data: {
             currency: 'gbp',
@@ -190,7 +191,7 @@ export default async function handler(req, res) {
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
-        allow_promotion_codes: true,
+        allow_promotion_codes: true, // upgrade’de VIP otomatiği yok; kullanıcı isterse kupon girebilir
         line_items: [{
           price_data: {
             currency: 'gbp',
@@ -205,7 +206,6 @@ export default async function handler(req, res) {
           upgradeFrom: current,
           upgradeTo: planKey,
           payable,
-          // VIP sadakat indirimi UPGRADE’de uygulanmaz (aylık ödeme mantığı)
           renewal: '0',
         },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
