@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         const updated = await stripe.subscriptions.update(subscriptionId, {
           billing_cycle_anchor: 'unchanged',
           proration_behavior: 'create_prorations',
-          payment_behavior: 'default_incomplete',
+          payment_behavior: 'always_invoice',
           items: [{ id: itemId, price: priceId }],
         });
 
