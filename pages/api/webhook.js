@@ -101,6 +101,79 @@ const PLAN_LIMITS = {
   vip: { viewLimit: 9999, messagesLeft: 9999 },
 };
 
+/* ---------- Lifetime & Kupon: ortak yardımcı ---------- */
+/**
+ * En son fatura ödemesine göre lifetimePayments artırır ve milestone kuponlarını üretir.
+ * Duplikeyi engellemek için subscription.lastInvoiceId kontrolü yapılır.
+ */
+async function applyLifetimeAndCouponsForDocs({ docs, planKey, invoice, subscriptionId, itemId }) {
+  if (!invoice) return;
+  const paid = !!invoice.paid;
+  const invoiceId = invoice.id;
+  if (!paid || !invoiceId) return;
+
+  for (const doc of docs) {
+    const udata = doc.data();
+    const sub = udata.subscription || {};
+    const lastInvoiceId = sub.lastInvoiceId || null;
+
+    // Aynı faturayı iki kere sayma
+    if (lastInvoiceId === invoiceId) continue;
+
+    const lifetime = Number(sub.lifetimePayments || 0) + 1;
+    let lessonCoupons = Array.isArray(udata.lessonCoupons) ? udata.lessonCoupons : [];
+    let subscriptionCoupons = Array.isArray(udata.subscriptionCoupons) ? udata.subscriptionCoupons : [];
+
+    // 3x payments → lesson coupon (pro/vip)
+    if (lifetime % 3 === 0 && (planKey === 'pro' || planKey === 'vip')) {
+      try {
+        const loyalty = await createLoyaltyLessonCoupon(planKey);
+        if (loyalty) {
+          loyalty.milestonePaymentNo = lifetime;
+          lessonCoupons = pushUnique(lessonCoupons, loyalty);
+        }
+      } catch (e) {
+        console.warn('[webhook] loyalty coupon creation failed:', e?.message || e);
+      }
+    }
+
+    // VIP 6x → aboneliğe 1 defalık %10 kuponu uygula
+    if (planKey === 'vip' && lifetime % 6 === 0) {
+      try {
+        const vip = await createVipSubscriptionMilestoneCoupon();
+        if (vip?.couponId) {
+          await stripe.subscriptions.update(subscriptionId, { coupon: vip.couponId });
+          subscriptionCoupons = pushUnique(subscriptionCoupons, {
+            code: vip.couponId,
+            percent: 10,
+            type: 'subscription',
+            source: 'vip-6x',
+            used: false,
+            active: true,
+            createdAt: new Date(),
+            milestonePaymentNo: lifetime,
+          });
+        }
+      } catch (e) {
+        console.warn('[webhook] VIP6 coupon apply failed:', e?.message || e);
+      }
+    }
+
+    await doc.ref.set({
+      lessonCoupons,
+      subscriptionCoupons,
+      subscription: {
+        ...(sub || {}),
+        lifetimePayments: lifetime,
+        lastInvoiceId: invoiceId,
+        lastPaymentAt: new Date(),
+      },
+    }, { merge: true });
+
+    console.log(`🔥 lifetimePayments -> ${lifetime} (${doc.id})`);
+  }
+}
+
 /* -------------------- Handler -------------------- */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -143,6 +216,7 @@ export default async function handler(req, res) {
         activeUntilMillis: currentEnd,
         lastPaymentAt: new Date(),
         lifetimePayments: 1,
+        lastInvoiceId: null,            // ilk kayıt; ilk fatura invoice.payment_succeeded ile dolacak
         pending_downgrade_to: null,
       },
       stripe: {
@@ -168,7 +242,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ received: true });
   }
 
-  // 2) Abonelik güncellendi (upgrade/downgrade switch)
+  // 2) Abonelik güncellendi (upgrade/downgrade switch + proration fix + lifetime yakalama)
   if (event.type === 'customer.subscription.updated') {
     const sub = event.data.object;
     const item = sub.items?.data?.[0];
@@ -207,6 +281,27 @@ export default async function handler(req, res) {
       await uref.set(update, { merge: true });
     }
 
+    // 🔥 ÖNEMLİ: Upgrade sırasında oluşan proration faturası çoğu zaman burada "paid" olur.
+    try {
+      if (sub.latest_invoice) {
+        const invoice = await stripe.invoices.retrieve(sub.latest_invoice);
+        const effectivePlan = planKey || (() => {
+          const it = sub.items?.data?.[0];
+          return PRICE_TO_PLAN[it?.price?.id || ''] || 'starter';
+        })();
+
+        await applyLifetimeAndCouponsForDocs({
+          docs: q.docs,
+          planKey: effectivePlan,
+          invoice,
+          subscriptionId: sub.id,
+          itemId: item?.id,
+        });
+      }
+    } catch (e) {
+      console.warn('[webhook] lifetime/coupon on subscription.updated failed:', e?.message || e);
+    }
+
     return res.status(200).json({ received: true });
   }
 
@@ -226,7 +321,6 @@ export default async function handler(req, res) {
     const q = await adminDb.collection('users').where('stripe.subscriptionId', '==', subscriptionId).get();
     for (const doc of q.docs) {
       const udata = doc.data();
-      const lifetime = Number(udata?.subscription?.lifetimePayments || 0) + 1;
       const pending = udata?.subscription?.pending_downgrade_to || null;
       let finalPlan = planKey;
 
@@ -240,39 +334,15 @@ export default async function handler(req, res) {
             : process.env.STRIPE_PRICE_ID_VIP;
 
         if (targetPriceId) {
-          await stripe.subscriptions.update(subscriptionId, {
-            cancel_at_period_end: false,
-            proration_behavior: 'none',
-            items: [{ id: item.id, price: targetPriceId }],
-          });
-        }
-      }
-
-      let lessonCoupons = udata?.lessonCoupons || [];
-      let subscriptionCoupons = udata?.subscriptionCoupons || [];
-
-      if (lifetime % 3 === 0 && (finalPlan === 'pro' || finalPlan === 'vip')) {
-        const loyalty = await createLoyaltyLessonCoupon(finalPlan);
-        if (loyalty) {
-          loyalty.milestonePaymentNo = lifetime;
-          lessonCoupons = pushUnique(lessonCoupons, loyalty);
-        }
-      }
-
-      if (finalPlan === 'vip' && lifetime % 6 === 0) {
-        const vip = await createVipSubscriptionMilestoneCoupon();
-        if (vip?.couponId) {
-          await stripe.subscriptions.update(subscriptionId, { coupon: vip.couponId });
-          subscriptionCoupons = pushUnique(subscriptionCoupons, {
-            code: vip.couponId,
-            percent: 10,
-            type: 'subscription',
-            source: 'vip-6x',
-            used: false,
-            active: true,
-            createdAt: new Date(),
-            milestonePaymentNo: lifetime,
-          });
+          try {
+            await stripe.subscriptions.update(subscriptionId, {
+              cancel_at_period_end: false,
+              proration_behavior: 'none',
+              items: [{ id: item.id, price: targetPriceId }],
+            });
+          } catch (e) {
+            console.warn('[webhook] pending downgrade switch failed:', e?.message || e);
+          }
         }
       }
 
@@ -287,12 +357,9 @@ export default async function handler(req, res) {
           planKey: finalPlan,
           activeUntil: new Date(currentEnd),
           activeUntilMillis: currentEnd,
-          lastPaymentAt: new Date(),
-          lifetimePayments: lifetime,
+          // lastPaymentAt ve lifetimePayments'i aşağıdaki ortak fonksiyon set edecek
           pending_downgrade_to: null,
         },
-        lessonCoupons,
-        subscriptionCoupons,
         stripe: {
           ...(udata.stripe || {}),
           customerId,
@@ -300,6 +367,19 @@ export default async function handler(req, res) {
           subscriptionItemId: item?.id,
         },
       }, { merge: true });
+    }
+
+    // 🧠 Lifetime & kuponları burada da güncelle (yenileme faturası)
+    try {
+      await applyLifetimeAndCouponsForDocs({
+        docs: q.docs,
+        planKey,
+        invoice,
+        subscriptionId: sub.id,
+        itemId: item?.id,
+      });
+    } catch (e) {
+      console.warn('[webhook] lifetime/coupon on invoice.payment_succeeded failed:', e?.message || e);
     }
 
     return res.status(200).json({ received: true });
