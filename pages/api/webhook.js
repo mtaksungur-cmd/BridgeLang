@@ -128,7 +128,9 @@ export default async function handler(req, res) {
     const item = sub.items?.data?.[0];
     const priceId = item?.price?.id || '';
     const planKey = PRICE_TO_PLAN[priceId] || 'starter'; // güvenli varsayım
-    const currentEnd = (sub.current_period_end || 0) * 1000;
+    const currentEnd = sub.current_period_end
+      ? sub.current_period_end * 1000
+      : Date.now() + 30 * 86400000;
 
     const uref = adminDb.collection('users').doc(userId);
     await uref.set({
