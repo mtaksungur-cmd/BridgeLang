@@ -41,13 +41,27 @@ async function createDailyRoom({ teacherId, date, startTime, durationMinutes, ti
   return data.url;
 }
 
-/* -------------------- Constants -------------------- */
 const PLAN_LIMITS = {
   free: { viewLimit: 10, messagesLeft: 3 },
   starter: { viewLimit: 30, messagesLeft: 8 },
   pro: { viewLimit: 60, messagesLeft: 20 },
   vip: { viewLimit: 9999, messagesLeft: 9999 },
 };
+
+/* 🔹 VIP kupon oluşturucu */
+async function createVipLoyaltyCoupon(userId, lifetime) {
+  const coupon = await stripe.coupons.create({
+    percent_off: 10,
+    duration: 'once',
+    name: `VIP Loyalty Discount — Month ${lifetime}`,
+  });
+  const promo = await stripe.promotionCodes.create({
+    coupon: coupon.id,
+    code: `VIP-${userId.slice(0, 5)}-${lifetime}`,
+    max_redemptions: 1,
+  });
+  return { coupon, promo };
+}
 
 /* -------------------- Handler -------------------- */
 export default async function handler(req, res) {
@@ -64,13 +78,13 @@ export default async function handler(req, res) {
   }
 
   /* -------------------------------------------------
-   * ONE-OFF UPGRADE VE DERS ÖDEMELERİ
+   * ONE-OFF SUBSCRIPTION UPGRADE / RENEWALS
    * ------------------------------------------------- */
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const meta = session.metadata || {};
 
-    // 🔹 Abonelik yükseltmesi (one-off)
+    // 🔹 One-off abonelik yükseltmesi
     if (meta.bookingType === 'subscription_upgrade') {
       const uref = adminDb.collection('users').doc(meta.userId);
       const snap = await uref.get();
@@ -81,26 +95,65 @@ export default async function handler(req, res) {
       const base = PLAN_LIMITS[meta.upgradeTo] || PLAN_LIMITS.free;
       const now = Date.now();
       const nextMonth = now + 30 * 86400000; // 30 gün ileri
+      const updatedSub = {
+        ...sub,
+        planKey: meta.upgradeTo,
+        activeUntil: new Date(nextMonth),
+        activeUntilMillis: nextMonth,
+        lastPaymentAt: new Date(),
+        lifetimePayments: lifetime,
+        pending_downgrade_to: null,
+      };
+
+      let subscriptionCoupons = Array.isArray(udata.subscriptionCoupons)
+        ? [...udata.subscriptionCoupons]
+        : [];
+
+      // 🎁 VIP kupon kontrolü (6, 12, 18... ödemelerde oluştur)
+      if (meta.upgradeTo === 'vip' && lifetime % 6 === 0) {
+        try {
+          const { coupon, promo } = await createVipLoyaltyCoupon(meta.userId, lifetime);
+          subscriptionCoupons.push({
+            code: promo.code,
+            couponId: coupon.id,
+            percent: 10,
+            type: 'subscription',
+            source: 'vip-loyalty',
+            used: false,
+            active: true,
+            createdAt: new Date(),
+            milestonePaymentNo: lifetime,
+          });
+
+          await sendMail({
+            to: udata.email,
+            subject: '🎁 VIP Loyalty Discount Activated',
+            html: `
+              <p>Hi ${udata.name || 'there'},</p>
+              <p>Congratulations! You've unlocked a <b>10% VIP loyalty discount</b> for your next billing cycle.</p>
+              <p>Your next VIP payment will automatically include this discount.</p>
+              <p>Keep learning with BridgeLang!</p>
+            `,
+          });
+
+          console.log(`🎁 VIP loyalty coupon created for ${meta.userId} (payment #${lifetime})`);
+        } catch (e) {
+          console.error('[VIP loyalty coupon error]', e);
+        }
+      }
 
       await uref.set(
         {
           subscriptionPlan: meta.upgradeTo,
           viewLimit: base.viewLimit,
           messagesLeft: base.messagesLeft,
-          subscription: {
-            ...sub,
-            planKey: meta.upgradeTo,
-            activeUntil: new Date(nextMonth),
-            activeUntilMillis: nextMonth,
-            lastPaymentAt: new Date(),
-            lifetimePayments: lifetime,
-            pending_downgrade_to: null,
-          },
+          subscription: updatedSub,
+          subscriptionCoupons,
         },
         { merge: true }
       );
 
-      console.log(`✅ One-off upgrade applied: ${meta.upgradeFrom} → ${meta.upgradeTo} for ${meta.userId}`);
+      console.log(`✅ Subscription upgrade applied: ${meta.upgradeFrom} → ${meta.upgradeTo}`);
       return res.status(200).json({ received: true });
     }
 
@@ -158,6 +211,7 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
+      // 🔄 Ders alan öğrenci kupon aktivasyonu
       if (studentId) {
         const uref = adminDb.collection('users').doc(studentId);
         const usnap = await uref.get();
