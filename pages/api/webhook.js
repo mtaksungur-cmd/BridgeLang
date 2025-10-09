@@ -89,9 +89,9 @@ function pushUnique(arr, item) {
 
 /* ---- Price → planKey map (recurring içindir) ---- */
 const PRICE_TO_PLAN = {
-  [process.env.STRIPE_PRICE_STARTER || '']: 'starter',
-  [process.env.STRIPE_PRICE_PRO || '']: 'pro',
-  [process.env.STRIPE_PRICE_VIP || '']: 'vip',
+  [process.env.STRIPE_PRICE_ID_STARTER || '']: 'starter',
+  [process.env.STRIPE_PRICE_ID_PRO || '']: 'pro',
+  [process.env.STRIPE_PRICE_ID_VIP || '']: 'vip',
 };
 
 const PLAN_LIMITS = {
