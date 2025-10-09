@@ -4,9 +4,8 @@ import { sendMail } from '../../../lib/mailer';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
-// Plan → Stripe Price ID eşlemesi (Vercel env'de tanımla)
 const PRICE_MAP = {
-  starter: process.env.STRIPE_PRICE_ID_STARTER, // ör: price_123
+  starter: process.env.STRIPE_PRICE_ID_STARTER,
   pro: process.env.STRIPE_PRICE_ID_PRO,
   vip: process.env.STRIPE_PRICE_ID_VIP,
 };
@@ -39,7 +38,6 @@ export default async function handler(req, res) {
     const priceId = PRICE_MAP[planKey];
     if (!priceId) return res.status(400).json({ error: 'Invalid plan' });
 
-    // Firestore'daki mevcut durum
     const uref = adminDb.collection('users').doc(userId);
     const usnap = await uref.get();
     const udata = usnap.exists ? usnap.data() : {};
@@ -50,25 +48,34 @@ export default async function handler(req, res) {
     }
 
     const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(current);
-
-    // Müşteriyi garanti altına al
     const customerId = await getOrCreateCustomer({ userId, userEmail });
-
-    // Mevcut aktif subscription var mı?
     const subscriptionId = udata?.stripe?.subscriptionId || null;
     const itemId = udata?.stripe?.subscriptionItemId || null;
 
+    /* ---------------------- UPGRADE ---------------------- */
     if (isUpgrade) {
-      // UPGRADE
       if (subscriptionId && itemId) {
-        // Var olan abonelikte plan değiştir → proration otomatik (farkı tahsil eder)
+        // Yalnızca farkı (proration) tahsil et
         const updated = await stripe.subscriptions.update(subscriptionId, {
           cancel_at_period_end: false,
           proration_behavior: 'create_prorations',
+          billing_cycle_anchor: 'unchanged',
+          payment_behavior: 'pending_if_incomplete',
           items: [{ id: itemId, price: priceId }],
         });
 
-        // Firestore stripe meta güncelle
+        // Sadece proration faturası varsa hemen öde
+        const latestInvoiceId =
+          typeof updated.latest_invoice === 'string'
+            ? updated.latest_invoice
+            : updated.latest_invoice?.id;
+
+        if (latestInvoiceId) {
+          const inv = await stripe.invoices.retrieve(latestInvoiceId);
+          const onlyProration = inv.lines.data.every(l => l.proration === true);
+          if (!inv.paid && onlyProration) await stripe.invoices.pay(latestInvoiceId);
+        }
+
         const subItem = updated.items?.data?.[0];
         await uref.set({
           stripe: {
@@ -78,54 +85,50 @@ export default async function handler(req, res) {
           },
         }, { merge: true });
 
-        // UI mevcut akışla uyumlu: URL yerine mesaj döndürüyoruz
-        return res.status(200).json({ message: 'Subscription upgraded. Proration will be charged automatically.' });
+        return res.status(200).json({ message: 'Subscription upgraded. Proration charged.' });
       } else {
-        // İlk kez abonelik başlat → Checkout (mode: subscription)
+        // İlk kez abonelik başlat
         const session = await stripe.checkout.sessions.create({
           mode: 'subscription',
           customer: customerId,
           payment_method_types: ['card'],
           line_items: [{ price: priceId, quantity: 1 }],
           allow_promotion_codes: true,
-          subscription_data: {
-            metadata: { userId, planKey },
-          },
+          subscription_data: { metadata: { userId, planKey } },
           success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
           cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
           metadata: { bookingType: 'subscription_start', userId, planKey },
         });
         return res.status(200).json({ url: session.url });
       }
-    } else {
-      // DOWNGRADE → dönem sonuna ertele (biz uygulayacağız)
-      const sub = udata.subscription || {};
-      await uref.set({
-        subscription: { ...sub, pending_downgrade_to: planKey },
-      }, { merge: true });
-
-      // İsteğe bağlı: Stripe tarafında da dönem sonu iptal açık kalabilir
-      if (subscriptionId) {
-        try {
-          await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: false });
-        } catch (e) {
-          console.warn('[plan-checkout] Could not update subscription flags:', e?.message || e);
-        }
-      }
-
-      await sendMail({
-        to: userEmail,
-        subject: '📅 Subscription downgrade scheduled',
-        html: `
-          <p>Hello,</p>
-          <p>Your downgrade to the <b>${planKey.toUpperCase()}</b> plan will take effect at the end of your current billing cycle.</p>
-          <p>No refunds are issued for early downgrades.</p>
-          <p>— BridgeLang Team</p>
-        `
-      });
-
-      return res.status(200).json({ message: 'Downgrade scheduled for next billing cycle.' });
     }
+
+    /* ---------------------- DOWNGRADE ---------------------- */
+    const sub = udata.subscription || {};
+    await uref.set({
+      subscription: { ...sub, pending_downgrade_to: planKey },
+    }, { merge: true });
+
+    if (subscriptionId) {
+      try {
+        await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: false });
+      } catch (e) {
+        console.warn('[plan-checkout] Could not update subscription flags:', e?.message || e);
+      }
+    }
+
+    await sendMail({
+      to: userEmail,
+      subject: '📅 Subscription downgrade scheduled',
+      html: `
+        <p>Hello,</p>
+        <p>Your downgrade to the <b>${planKey.toUpperCase()}</b> plan will take effect at the end of your current billing cycle.</p>
+        <p>No refunds are issued for early downgrades.</p>
+        <p>— BridgeLang Team</p>
+      `,
+    });
+
+    return res.status(200).json({ message: 'Downgrade scheduled for next billing cycle.' });
   } catch (err) {
     console.error('plan-checkout (recurring) error:', err);
     res.status(500).json({ error: 'Checkout failed' });
