@@ -42,7 +42,6 @@ export default async function handler(req, res) {
     const usnap = await uref.get();
     const udata = usnap.exists ? usnap.data() : {};
     const current = udata.subscriptionPlan || 'free';
-
     if (current === planKey) {
       return res.status(400).json({ error: 'You already have this plan.' });
     }
@@ -55,24 +54,28 @@ export default async function handler(req, res) {
     /* ---------------------- UPGRADE ---------------------- */
     if (isUpgrade) {
       if (subscriptionId && itemId) {
-        // Yalnızca farkı (proration) tahsil et
         const updated = await stripe.subscriptions.update(subscriptionId, {
-          proration_behavior: 'create_prorations',
           billing_cycle_anchor: 'unchanged',
-          payment_behavior: 'default_incomplete', // ← güvenli ve proration destekli
+          proration_behavior: 'create_prorations',
+          payment_behavior: 'default_incomplete',
           items: [{ id: itemId, price: priceId }],
         });
 
-        // Sadece proration faturası varsa hemen öde
-        const latestInvoiceId =
+        // Anında fark tahsilatı
+        const invoiceId =
           typeof updated.latest_invoice === 'string'
             ? updated.latest_invoice
             : updated.latest_invoice?.id;
 
-        if (latestInvoiceId) {
-          const inv = await stripe.invoices.retrieve(latestInvoiceId);
-          const onlyProration = inv.lines.data.every(l => l.proration === true);
-          if (!inv.paid && onlyProration) await stripe.invoices.pay(latestInvoiceId);
+        if (invoiceId) {
+          const invoice = await stripe.invoices.retrieve(invoiceId, { expand: ['payment_intent'] });
+          if (!invoice.paid && invoice.amount_due > 0) {
+            try {
+              await stripe.invoices.pay(invoiceId);
+            } catch (e) {
+              console.warn('[upgrade] Auto pay failed:', e.message);
+            }
+          }
         }
 
         const subItem = updated.items?.data?.[0];
@@ -84,22 +87,22 @@ export default async function handler(req, res) {
           },
         }, { merge: true });
 
-        return res.status(200).json({ message: 'Subscription upgraded. Proration charged.' });
-      } else {
-        // İlk kez abonelik başlat
-        const session = await stripe.checkout.sessions.create({
-          mode: 'subscription',
-          customer: customerId,
-          payment_method_types: ['card'],
-          line_items: [{ price: priceId, quantity: 1 }],
-          allow_promotion_codes: true,
-          subscription_data: { metadata: { userId, planKey } },
-          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
-          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
-          metadata: { bookingType: 'subscription_start', userId, planKey },
-        });
-        return res.status(200).json({ url: session.url });
+        return res.status(200).json({ message: 'Plan upgraded. Difference charged immediately.' });
       }
+
+      // Eğer ilk kez abonelik alıyorsa → Checkout
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [{ price: priceId, quantity: 1 }],
+        allow_promotion_codes: true,
+        subscription_data: { metadata: { userId, planKey } },
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+        metadata: { bookingType: 'subscription_start', userId, planKey },
+      });
+      return res.status(200).json({ url: session.url });
     }
 
     /* ---------------------- DOWNGRADE ---------------------- */
