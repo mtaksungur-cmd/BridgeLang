@@ -6,12 +6,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 
 const PLAN_PRICES = { starter: 4.99, pro: 9.99, vip: 14.99 };
 const PLAN_ORDER = ['free', 'starter', 'pro', 'vip'];
-const PLAN_LIMITS = {
-  free: { viewLimit: 10, messagesLeft: 3 },
-  starter: { viewLimit: 30, messagesLeft: 8 },
-  pro: { viewLimit: 60, messagesLeft: 20 },
-  vip: { viewLimit: 9999, messagesLeft: 9999 },
-};
 
 /* 🔹 Firestore'dan kullanıcıyı getir veya oluştur */
 async function getOrCreateCustomer({ userId, userEmail }) {
@@ -28,18 +22,16 @@ async function getOrCreateCustomer({ userId, userEmail }) {
   return customerId;
 }
 
-/* 🔹 Kalan gün oranı hesapla (ör: 15 gün kalmışsa %50) */
-function remainingRatio(userData) {
-  const sub = userData?.subscription || {};
-  const end = sub.activeUntilMillis || 0;
+/* 🔹 Kalan gün oranı (tam tarih bazlı) */
+function calcRemainingRatio(subscription) {
+  const lastPayment = subscription?.lastPaymentAt?.toMillis?.() || Date.parse(subscription?.lastPaymentAt) || 0;
   const now = Date.now();
-  if (!end || end < now) return 0;
-  const total = 30 * 86400000; // 30 gün
-  const remain = Math.max(0, end - now);
-  return Math.min(1, remain / total);
+  if (!lastPayment) return 0;
+  const elapsedDays = Math.floor((now - lastPayment) / (1000 * 60 * 60 * 24));
+  const remainingDays = Math.max(0, 30 - elapsedDays);
+  return Math.min(1, remainingDays / 30);
 }
 
-/* 🔹 Ana handler */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   const { userId, userEmail, planKey, currentPlan } = req.body;
@@ -54,62 +46,24 @@ export default async function handler(req, res) {
     const current = currentPlan || userData.subscriptionPlan || 'free';
     const sub = userData.subscription || {};
     const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(current);
+    const customerId = await getOrCreateCustomer({ userId, userEmail });
 
     /* 🔹 Plan düşürme */
     if (!isUpgrade && current !== planKey && current !== 'free') {
-      await ref.set(
-        {
-          subscription: {
-            ...(userData.subscription || {}),
-            pending_downgrade_to: planKey,
-          },
+      await ref.set({
+        subscription: {
+          ...(userData.subscription || {}),
+          pending_downgrade_to: planKey,
         },
-        { merge: true }
-      );
+      }, { merge: true });
 
       await sendMail({
         to: userEmail,
         subject: '📅 Downgrade scheduled',
-        html: `<p>Your downgrade to <b>${planKey.toUpperCase()}</b> will take effect after your current period.</p>`,
+        html: `<p>Your downgrade to <b>${planKey.toUpperCase()}</b> will take effect after your current billing cycle.</p>`,
       });
 
       return res.status(200).json({ message: 'Downgrade scheduled for next period.' });
-    }
-
-    const customerId = await getOrCreateCustomer({ userId, userEmail });
-
-    /* 🔹 Eğer aynı planı tekrar seçtiyse */
-    if (current === planKey) {
-      const expired = !sub.activeUntilMillis || sub.activeUntilMillis < Date.now();
-
-      if (expired) {
-        const price = PLAN_PRICES[planKey];
-        const session = await stripe.checkout.sessions.create({
-          mode: 'payment',
-          customer: customerId,
-          payment_method_types: ['card'],
-          line_items: [{
-            price_data: {
-              currency: 'gbp',
-              product_data: { name: `${planKey.toUpperCase()} Plan (Renewal)` },
-              unit_amount: Math.round(price * 100)
-            },
-            quantity: 1
-          }],
-          metadata: {
-            bookingType: 'subscription_upgrade',
-            userId,
-            upgradeFrom: planKey,
-            upgradeTo: planKey,
-            diff: price,
-          },
-          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
-          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
-        });
-        return res.status(200).json({ url: session.url });
-      } else {
-        return res.status(400).json({ error: 'You already have this active plan.' });
-      }
     }
 
     /* 🔹 İlk abonelik (free → X) */
@@ -119,53 +73,49 @@ export default async function handler(req, res) {
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
+        allow_promotion_codes: true,
         line_items: [{
           price_data: {
             currency: 'gbp',
             product_data: { name: `${planKey.toUpperCase()} Plan` },
-            unit_amount: Math.round(price * 100)
+            unit_amount: Math.round(price * 100),
           },
-          quantity: 1
+          quantity: 1,
         }],
-        metadata: {
-          bookingType: 'subscription_upgrade',
-          userId,
-          upgradeFrom: 'free',
-          upgradeTo: planKey,
-          diff: price
-        },
+        metadata: { userId, upgradeFrom: 'free', upgradeTo: planKey, bookingType: 'subscription_upgrade' },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
       return res.status(200).json({ url: session.url });
     }
 
-    /* 🔹 Upgrade (ör: starter → pro veya pro → vip) */
+    /* 🔹 Upgrade (ör: pro → vip) */
     if (isUpgrade) {
-      const ratio = remainingRatio(userData); // kalan gün oranı
+      const remainingRatio = calcRemainingRatio(sub);
       const currentPrice = PLAN_PRICES[current] || 0;
       const newPrice = PLAN_PRICES[planKey];
-      const credit = currentPrice * ratio;
-      const diff = Math.max(0, newPrice - credit);
+      const credit = currentPrice * remainingRatio;
+      const payable = Math.max(0, newPrice - credit);
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
+        allow_promotion_codes: true, // 🎁 kupon girişi aktif
         line_items: [{
           price_data: {
             currency: 'gbp',
             product_data: { name: `${planKey.toUpperCase()} Plan (Upgrade)` },
-            unit_amount: Math.round(diff * 100)
+            unit_amount: Math.round(payable * 100),
           },
-          quantity: 1
+          quantity: 1,
         }],
         metadata: {
-          bookingType: 'subscription_upgrade',
           userId,
           upgradeFrom: current,
           upgradeTo: planKey,
-          diff,
+          payable,
+          bookingType: 'subscription_upgrade',
         },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
@@ -174,7 +124,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url });
     }
 
-    /* 🔹 Diğer durumlar (güvenlik fallback) */
     return res.status(400).json({ error: 'Invalid plan change request.' });
   } catch (err) {
     console.error('plan-checkout error:', err);
