@@ -411,10 +411,21 @@ export default async function handler(req, res) {
       const udata = snap.exists ? snap.data() : {};
       const sub = udata.subscription || {};
       const lifetime = (sub.lifetimePayments || 0) + 1;
-
+    
+      const PLAN_LIMITS = {
+        free: { viewLimit: 10, messagesLeft: 3 },
+        starter: { viewLimit: 30, messagesLeft: 8 },
+        pro: { viewLimit: 60, messagesLeft: 20 },
+        vip: { viewLimit: 9999, messagesLeft: 9999 },
+      };
+    
+      const base = PLAN_LIMITS[meta.upgradeTo] || PLAN_LIMITS.free;
+    
       await uref.set(
         {
           subscriptionPlan: meta.upgradeTo,
+          viewLimit: base.viewLimit,
+          messagesLeft: base.messagesLeft,
           subscription: {
             ...sub,
             planKey: meta.upgradeTo,
@@ -425,7 +436,7 @@ export default async function handler(req, res) {
         },
         { merge: true }
       );
-
+    
       console.log(`✅ One-off upgrade applied: ${meta.upgradeFrom} → ${meta.upgradeTo} for ${meta.userId}`);
       return res.status(200).json({ received: true });
     }
