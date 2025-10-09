@@ -5,103 +5,128 @@ import { sendMail } from '../../../lib/mailer';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
-const PRICE_MAP = {
-  starter: process.env.STRIPE_PRICE_ID_STARTER,
-  pro: process.env.STRIPE_PRICE_ID_PRO,
-  vip: process.env.STRIPE_PRICE_ID_VIP,
-};
-
+const PLAN_PRICES = { starter: 4.99, pro: 9.99, vip: 14.99 };
 const PLAN_ORDER = ['free', 'starter', 'pro', 'vip'];
 
+/* 🔹 Firestore'dan kullanıcıyı getir veya oluştur */
 async function getOrCreateCustomer({ userId, userEmail }) {
-  const uref = adminDb.collection('users').doc(userId);
-  const snap = await uref.get();
+  const ref = adminDb.collection('users').doc(userId);
+  const snap = await ref.get();
   const data = snap.exists ? snap.data() : {};
   let customerId = data?.stripe?.customerId;
 
   if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: userEmail,
-      metadata: { userId },
-    });
-    customerId = customer.id;
-    await uref.set({ stripe: { ...(data.stripe || {}), customerId } }, { merge: true });
+    const c = await stripe.customers.create({ email: userEmail, metadata: { userId } });
+    customerId = c.id;
+    await ref.set({ stripe: { ...(data.stripe || {}), customerId } }, { merge: true });
   }
   return customerId;
 }
 
+/* 🔹 Kalan gün oranı hesapla (ör: 15 gün kalmışsa %50) */
+function remainingRatio(userData) {
+  const sub = userData?.subscription || {};
+  const end = sub.activeUntilMillis || 0;
+  const now = Date.now();
+  if (!end || end < now) return 0;
+  const total = 30 * 86400000; // 30 gün
+  const remain = Math.max(0, end - now);
+  return Math.min(1, remain / total);
+}
+
+/* 🔹 Ana handler */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   const { userId, userEmail, planKey, currentPlan } = req.body;
+
   if (!userId || !userEmail || !planKey)
     return res.status(400).json({ error: 'Missing fields' });
 
   try {
-    const priceId = PRICE_MAP[planKey];
-    const uref = adminDb.collection('users').doc(userId);
-    const usnap = await uref.get();
-    const udata = usnap.exists ? usnap.data() : {};
-    const current = currentPlan || udata.subscriptionPlan || 'free';
-
-    // 🔹 yeni sistem: upgrade durumunda one-off ödeme API'sine yönlendir
+    const ref = adminDb.collection('users').doc(userId);
+    const snap = await ref.get();
+    const userData = snap.exists ? snap.data() : {};
+    const current = currentPlan || userData.subscriptionPlan || 'free';
     const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(current);
-    if (isUpgrade && current !== 'free') {
-      const apiUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/upgrade-calculator`;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, newPlan: planKey }),
-      });
-      const data = await response.json();
-      if (data.url) return res.status(200).json({ url: data.url });
-      else return res.status(400).json({ error: data.error || 'Upgrade failed' });
-    }
 
-    // 🔻 free → ilk abonelik veya downgrade flow (mevcut mantık korunuyor)
-    const customerId = await getOrCreateCustomer({ userId, userEmail });
-    const subscriptionId = udata?.stripe?.subscriptionId || null;
-    const itemId = udata?.stripe?.subscriptionItemId || null;
-
-    if (!priceId) {
-      return res.status(400).json({ error: 'Invalid plan' });
-    }
-
-    if (subscriptionId && itemId) {
-      // Dönem sonunda downgrade planla
-      const sub = udata.subscription || {};
-      await uref.set({
-        subscription: { ...sub, pending_downgrade_to: planKey },
-      }, { merge: true });
+    /* 🔹 Plan düşürme */
+    if (!isUpgrade && current !== planKey && current !== 'free') {
+      await ref.set(
+        {
+          subscription: {
+            ...(userData.subscription || {}),
+            pending_downgrade_to: planKey,
+          },
+        },
+        { merge: true }
+      );
 
       await sendMail({
         to: userEmail,
-        subject: '📅 Subscription downgrade scheduled',
-        html: `
-          <p>Hello,</p>
-          <p>Your downgrade to the <b>${planKey.toUpperCase()}</b> plan will take effect at the end of your current billing cycle.</p>
-          <p>No refunds are issued for early downgrades.</p>
-          <p>— BridgeLang Team</p>
-        `,
+        subject: '📅 Downgrade scheduled',
+        html: `<p>Your downgrade to <b>${planKey.toUpperCase()}</b> will take effect after your current period.</p>`,
       });
 
-      return res.status(200).json({ message: 'Downgrade scheduled.' });
+      return res.status(200).json({ message: 'Downgrade scheduled for next period.' });
     }
 
-    // İlk abonelik (free → X)
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer: customerId,
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      allow_promotion_codes: true,
-      subscription_data: { metadata: { userId, planKey } },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
-      metadata: { bookingType: 'subscription_start', userId, planKey },
-    });
-    return res.status(200).json({ url: session.url });
+    const customerId = await getOrCreateCustomer({ userId, userEmail });
+
+    /* 🔹 İlk abonelik (free → X) */
+    if (current === 'free') {
+      const price = PLAN_PRICES[planKey];
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [{ price_data: { currency: 'gbp', product_data: { name: `${planKey.toUpperCase()} Plan` }, unit_amount: Math.round(price * 100) }, quantity: 1 }],
+        metadata: { bookingType: 'subscription_upgrade', userId, upgradeFrom: 'free', upgradeTo: planKey },
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      });
+      return res.status(200).json({ url: session.url });
+    }
+
+    /* 🔹 Upgrade (ör: starter → pro) */
+    if (isUpgrade) {
+      const ratio = remainingRatio(userData); // kalan gün oranı
+      const currentPrice = PLAN_PRICES[current] || 0;
+      const newPrice = PLAN_PRICES[planKey];
+      const credit = currentPrice * ratio;
+      const diff = Math.max(0, newPrice - credit);
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'gbp',
+              product_data: { name: `${planKey.toUpperCase()} Plan (Upgrade)` },
+              unit_amount: Math.round(diff * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          bookingType: 'subscription_upgrade',
+          userId,
+          upgradeFrom: current,
+          upgradeTo: planKey,
+          diff,
+        },
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      });
+
+      return res.status(200).json({ url: session.url });
+    }
+
+    /* 🔹 Aynı planı tekrar seçtiyse */
+    return res.status(400).json({ error: 'You already have this plan.' });
   } catch (err) {
     console.error('plan-checkout error:', err);
-    res.status(500).json({ error: 'Checkout failed' });
+    return res.status(500).json({ error: 'Checkout failed' });
   }
 }
