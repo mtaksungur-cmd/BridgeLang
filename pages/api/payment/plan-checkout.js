@@ -1,4 +1,3 @@
-// pages/api/payment/plan-checkout.js
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { sendMail } from '../../../lib/mailer';
@@ -7,6 +6,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 
 const PLAN_PRICES = { starter: 4.99, pro: 9.99, vip: 14.99 };
 const PLAN_ORDER = ['free', 'starter', 'pro', 'vip'];
+const PLAN_LIMITS = {
+  free: { viewLimit: 10, messagesLeft: 3 },
+  starter: { viewLimit: 30, messagesLeft: 8 },
+  pro: { viewLimit: 60, messagesLeft: 20 },
+  vip: { viewLimit: 9999, messagesLeft: 9999 },
+};
 
 /* 🔹 Firestore'dan kullanıcıyı getir veya oluştur */
 async function getOrCreateCustomer({ userId, userEmail }) {
@@ -79,8 +84,21 @@ export default async function handler(req, res) {
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
-        line_items: [{ price_data: { currency: 'gbp', product_data: { name: `${planKey.toUpperCase()} Plan` }, unit_amount: Math.round(price * 100) }, quantity: 1 }],
-        metadata: { bookingType: 'subscription_upgrade', userId, upgradeFrom: 'free', upgradeTo: planKey },
+        line_items: [{
+          price_data: {
+            currency: 'gbp',
+            product_data: { name: `${planKey.toUpperCase()} Plan` },
+            unit_amount: Math.round(price * 100)
+          },
+          quantity: 1
+        }],
+        metadata: {
+          bookingType: 'subscription_upgrade',
+          userId,
+          upgradeFrom: 'free',
+          upgradeTo: planKey,
+          diff: price
+        },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
@@ -89,7 +107,7 @@ export default async function handler(req, res) {
 
     /* 🔹 Upgrade (ör: starter → pro) */
     if (isUpgrade) {
-      const ratio = remainingRatio(userData); // kalan gün oranı
+      const ratio = remainingRatio(userData);
       const currentPrice = PLAN_PRICES[current] || 0;
       const newPrice = PLAN_PRICES[planKey];
       const credit = currentPrice * ratio;
@@ -99,16 +117,14 @@ export default async function handler(req, res) {
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'gbp',
-              product_data: { name: `${planKey.toUpperCase()} Plan (Upgrade)` },
-              unit_amount: Math.round(diff * 100),
-            },
-            quantity: 1,
+        line_items: [{
+          price_data: {
+            currency: 'gbp',
+            product_data: { name: `${planKey.toUpperCase()} Plan (Upgrade)` },
+            unit_amount: Math.round(diff * 100)
           },
-        ],
+          quantity: 1
+        }],
         metadata: {
           bookingType: 'subscription_upgrade',
           userId,
