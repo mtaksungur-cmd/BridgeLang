@@ -4,12 +4,19 @@ import { sendMail } from '../../../lib/mailer';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
+/* ------- Sabit fiyatlar ve plan sırası -------- */
 const PLAN_PRICES = { starter: 4.99, pro: 9.99, vip: 14.99 };
-const PLAN_ORDER = ['free', 'starter', 'pro', 'vip'];
+const PLAN_ORDER  = ['free', 'starter', 'pro', 'vip'];
+const PLAN_LIMITS = {
+  free:    { viewLimit: 10,  messagesLeft: 3  },
+  starter: { viewLimit: 30,  messagesLeft: 8  },
+  pro:     { viewLimit: 60,  messagesLeft: 20 },
+  vip:     { viewLimit: 9999,messagesLeft: 9999 },
+};
 
-/* 🔹 Firestore'dan kullanıcıyı getir veya oluştur */
+/* ------- Firestore müşteri id helper -------- */
 async function getOrCreateCustomer({ userId, userEmail }) {
-  const ref = adminDb.collection('users').doc(userId);
+  const ref  = adminDb.collection('users').doc(userId);
   const snap = await ref.get();
   const data = snap.exists ? snap.data() : {};
   let customerId = data?.stripe?.customerId;
@@ -22,39 +29,56 @@ async function getOrCreateCustomer({ userId, userEmail }) {
   return customerId;
 }
 
-/* 🔹 Kalan gün oranı (tam tarih bazlı) */
+/* ------- Güne bölme: kalan oran --------
+ * lastPaymentAt baz alınır. Örn 15 gün kullanılmışsa kalan %50 → 0.5
+ */
 function calcRemainingRatio(subscription) {
-  const lastPayment = subscription?.lastPaymentAt?.toMillis?.() || Date.parse(subscription?.lastPaymentAt) || 0;
-  const now = Date.now();
-  if (!lastPayment) return 0;
-  const elapsedDays = Math.floor((now - lastPayment) / (1000 * 60 * 60 * 24));
-  const remainingDays = Math.max(0, 30 - elapsedDays);
-  return Math.min(1, remainingDays / 30);
+  const last =
+    subscription?.lastPaymentAt?.toMillis?.() ||
+    Date.parse(subscription?.lastPaymentAt) ||
+    0;
+  if (!last) return 0;
+  const now         = Date.now();
+  const elapsedDays = Math.max(0, Math.floor((now - last) / (1000 * 60 * 60 * 24)));
+  const remaining   = Math.max(0, 30 - elapsedDays);
+  return Math.min(1, remaining / 30);
 }
 
+/* ------- VIP sadakat kuponu (tek kullanımlık %10) -------- */
+async function createVipLoyaltyCouponForNextPayment({ userId, nextPaymentNo }) {
+  // 6/12/18… ödemelerde indirim
+  if (nextPaymentNo % 6 !== 0) return null;
+
+  const coupon = await stripe.coupons.create({
+    percent_off: 10,
+    duration: 'once',
+    name: `VIP Loyalty — Payment #${nextPaymentNo}`,
+  });
+  // checkout.session.create'te discounts ile kuponu doğrudan uygulayacağız
+  return coupon.id;
+}
+
+/* --------------- Handler ---------------- */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   const { userId, userEmail, planKey, currentPlan } = req.body;
-
   if (!userId || !userEmail || !planKey)
     return res.status(400).json({ error: 'Missing fields' });
 
   try {
-    const ref = adminDb.collection('users').doc(userId);
-    const snap = await ref.get();
-    const userData = snap.exists ? snap.data() : {};
-    const current = currentPlan || userData.subscriptionPlan || 'free';
-    const sub = userData.subscription || {};
+    const ref   = adminDb.collection('users').doc(userId);
+    const snap  = await ref.get();
+    const udata = snap.exists ? snap.data() : {};
+    const current = currentPlan || udata.subscriptionPlan || 'free';
+    const sub     = udata.subscription || {};
     const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(current);
+
     const customerId = await getOrCreateCustomer({ userId, userEmail });
 
-    /* 🔹 Plan düşürme */
+    /* ---------- DOW N G R A D E ---------- */
     if (!isUpgrade && current !== planKey && current !== 'free') {
       await ref.set({
-        subscription: {
-          ...(userData.subscription || {}),
-          pending_downgrade_to: planKey,
-        },
+        subscription: { ...(sub || {}), pending_downgrade_to: planKey },
       }, { merge: true });
 
       await sendMail({
@@ -66,7 +90,62 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: 'Downgrade scheduled for next period.' });
     }
 
-    /* 🔹 İlk abonelik (free → X) */
+    /* ---------- AYNI PLAN (YENİLEME) ---------- */
+    if (current === planKey) {
+      const expired = !sub.activeUntilMillis || sub.activeUntilMillis < Date.now();
+      if (!expired) {
+        return res.status(400).json({ error: 'You already have this active plan.' });
+      }
+
+      const price = PLAN_PRICES[planKey];
+      // VIP 6/12/18… ödemede otomatik kupon
+      const nextPaymentNo = (sub.lifetimePayments || 0) + 1;
+      const discounts = [];
+      let appliedVipCouponId = null;
+
+      if (planKey === 'vip') {
+        const vipCouponId = await createVipLoyaltyCouponForNextPayment({
+          userId,
+          nextPaymentNo,
+        });
+        if (vipCouponId) {
+          discounts.push({ coupon: vipCouponId });
+          appliedVipCouponId = vipCouponId;
+        }
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer: customerId,
+        payment_method_types: ['card'],
+        allow_promotion_codes: true, // kullanıcı isterse kendi kodunu da girebilir
+        discounts,
+        line_items: [{
+          price_data: {
+            currency: 'gbp',
+            product_data: { name: `${planKey.toUpperCase()} Plan (Renewal)` },
+            unit_amount: Math.round(price * 100),
+          },
+          quantity: 1,
+        }],
+        metadata: {
+          bookingType: 'subscription_upgrade',
+          userId,
+          upgradeFrom: planKey,
+          upgradeTo: planKey,
+          payable: price,
+          vipAppliedCouponId: appliedVipCouponId || '',
+          vipNextPaymentNo: String(nextPaymentNo),
+          renewal: '1',
+        },
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      });
+
+      return res.status(200).json({ url: session.url });
+    }
+
+    /* ---------- İLK ABONELİK (FREE → X) ---------- */
     if (current === 'free') {
       const price = PLAN_PRICES[planKey];
       const session = await stripe.checkout.sessions.create({
@@ -82,26 +161,34 @@ export default async function handler(req, res) {
           },
           quantity: 1,
         }],
-        metadata: { userId, upgradeFrom: 'free', upgradeTo: planKey, bookingType: 'subscription_upgrade' },
+        metadata: {
+          bookingType: 'subscription_upgrade',
+          userId,
+          upgradeFrom: 'free',
+          upgradeTo: planKey,
+          payable: price,
+          renewal: '0',
+        },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
+
       return res.status(200).json({ url: session.url });
     }
 
-    /* 🔹 Upgrade (ör: pro → vip) */
+    /* ---------- U P G R A D E (gün bazlı fark) ---------- */
     if (isUpgrade) {
-      const remainingRatio = calcRemainingRatio(sub);
+      const ratio        = calcRemainingRatio(sub);           // kalan oran (0..1)
       const currentPrice = PLAN_PRICES[current] || 0;
-      const newPrice = PLAN_PRICES[planKey];
-      const credit = currentPrice * remainingRatio;
-      const payable = Math.max(0, newPrice - credit);
+      const newPrice     = PLAN_PRICES[planKey];
+      const credit       = currentPrice * ratio;
+      const payable      = Math.max(0, newPrice - credit);
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
-        allow_promotion_codes: true, // 🎁 kupon girişi aktif
+        allow_promotion_codes: true,
         line_items: [{
           price_data: {
             currency: 'gbp',
@@ -111,11 +198,13 @@ export default async function handler(req, res) {
           quantity: 1,
         }],
         metadata: {
+          bookingType: 'subscription_upgrade',
           userId,
           upgradeFrom: current,
           upgradeTo: planKey,
           payable,
-          bookingType: 'subscription_upgrade',
+          // VIP sadakat indirimi UPGRADE’de uygulanmaz (aylık ödeme mantığı)
+          renewal: '0',
         },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
