@@ -118,8 +118,10 @@ export default async function handler(req, res) {
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
-        allow_promotion_codes: true, // kullanıcı isterse kendi kodunu da girebilir
-        discounts,
+        ...(discounts?.length
+          ? { discounts }                // sistem kuponu varsa bunu uygula
+          : { allow_promotion_codes: true } // yoksa kullanıcı kod girebilir
+        ),
         line_items: [{
           price_data: {
             currency: 'gbp',
