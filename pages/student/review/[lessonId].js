@@ -46,7 +46,7 @@ export default function ReviewLesson() {
     try {
       setSubmitting(true);
 
-      const res = await fetch(`/api/reviews/${lesson.id}`, {
+      const res = await fetch(`/api/review/${lesson.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating, comment }),
