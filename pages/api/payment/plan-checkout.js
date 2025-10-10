@@ -1,4 +1,3 @@
-// pages/api/payment/plan-checkout.js
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { sendMail } from '../../../lib/mailer';
@@ -30,9 +29,7 @@ async function getOrCreateCustomer({ userId, userEmail }) {
   return customerId;
 }
 
-/* ------- Güne bölme: kalan oran --------
- * lastPaymentAt baz alınır. Örn 15 gün kullanılmışsa kalan %50 → 0.5
- */
+/* ------- Güne bölme: kalan oran -------- */
 function calcRemainingRatio(subscription) {
   const last =
     subscription?.lastPaymentAt?.toMillis?.() ||
@@ -45,19 +42,15 @@ function calcRemainingRatio(subscription) {
   return Math.min(1, remaining / 30);
 }
 
-/* ------- VIP sadakat kuponu (tek kullanımlık %10) --------
- * Amaç: 6/12/18… ÖDEMEDE uygulanacak indirim.
- * Bu yüzden “bir SONRAKİ” ödeme #’sını kontrol ediyoruz ve 6’nın katı ise
- * kuponu ŞİMDİ oluşturup bu oluşturulan checkout’ta “discounts” ile uyguluyoruz.
- */
+/* ------- VIP sadakat kuponu (tek kullanımlık %10) -------- */
 async function createVipLoyaltyCouponForNextPayment({ userId, nextPaymentNo }) {
-  if (nextPaymentNo % 6 !== 0) return null; // sadece 6/12/18… ödemelerde
+  if (nextPaymentNo % 6 !== 0) return null;
   const coupon = await stripe.coupons.create({
     percent_off: 10,
     duration: 'once',
     name: `VIP Loyalty — Payment #${nextPaymentNo}`,
   });
-  return coupon.id; // session.discounts için coupon id
+  return coupon.id;
 }
 
 /* --------------- Handler ---------------- */
@@ -80,7 +73,7 @@ export default async function handler(req, res) {
     /* ---------- DOW N G R A D E ---------- */
     if (!isUpgrade && current !== planKey && current !== 'free') {
       await ref.set({
-        subscription: { ...(sub || {}), pending_downgrade_to: planKey },
+        subscription: { ...(sub || {}), pending_downgrade_to: planKey, lifetimePayments: 1 },
       }, { merge: true });
 
       await sendMail({
@@ -95,24 +88,17 @@ export default async function handler(req, res) {
     /* ---------- AYNI PLAN (YENİLEME) ---------- */
     if (current === planKey) {
       const expired = !sub.activeUntilMillis || sub.activeUntilMillis < Date.now();
-      if (!expired) {
-        return res.status(400).json({ error: 'You already have this active plan.' });
-      }
+      if (!expired) return res.status(400).json({ error: 'You already have this active plan.' });
 
       const price = PLAN_PRICES[planKey];
-
-      // VIP 6/12/18… ödemede otomatik kupon (bu yenileme o “ödemelerden” biri mi?)
       const nextPaymentNo = (sub.lifetimePayments || 0) + 1;
       const discounts = [];
       let appliedVipCouponId = null;
 
       if (planKey === 'vip') {
-        const vipCouponId = await createVipLoyaltyCouponForNextPayment({
-          userId,
-          nextPaymentNo,
-        });
+        const vipCouponId = await createVipLoyaltyCouponForNextPayment({ userId, nextPaymentNo });
         if (vipCouponId) {
-          discounts.push({ coupon: vipCouponId }); // ⚠️ allow_promotion_codes ile birlikte kullanılamaz
+          discounts.push({ coupon: vipCouponId });
           appliedVipCouponId = vipCouponId;
         }
       }
@@ -121,7 +107,6 @@ export default async function handler(req, res) {
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
-        // “allow_promotion_codes” ve “discounts” AYNI ANDA kullanılamaz.
         ...(discounts.length ? { discounts } : { allow_promotion_codes: true }),
         line_items: [{
           price_data: {
@@ -144,7 +129,6 @@ export default async function handler(req, res) {
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
-
       return res.status(200).json({ url: session.url });
     }
 
@@ -175,23 +159,24 @@ export default async function handler(req, res) {
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
-
       return res.status(200).json({ url: session.url });
     }
 
     /* ---------- U P G R A D E (gün bazlı fark) ---------- */
     if (isUpgrade) {
-      const ratio        = calcRemainingRatio(sub);           // kalan oran (0..1)
+      const ratio        = calcRemainingRatio(sub);
       const currentPrice = PLAN_PRICES[current] || 0;
       const newPrice     = PLAN_PRICES[planKey];
       const credit       = currentPrice * ratio;
       const payable      = Math.max(0, newPrice - credit);
 
+      await ref.set({ subscription: { ...(sub || {}), lifetimePayments: 1 } }, { merge: true });
+
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         customer: customerId,
         payment_method_types: ['card'],
-        allow_promotion_codes: true, // upgrade’de VIP otomatiği yok; kullanıcı isterse kupon girebilir
+        allow_promotion_codes: true,
         line_items: [{
           price_data: {
             currency: 'gbp',
@@ -211,7 +196,6 @@ export default async function handler(req, res) {
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
-
       return res.status(200).json({ url: session.url });
     }
 
