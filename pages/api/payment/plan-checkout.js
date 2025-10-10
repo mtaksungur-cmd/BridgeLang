@@ -1,6 +1,6 @@
+// pages/api/payment/plan-checkout.js
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
-import { sendMail } from '../../../lib/mailer';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
@@ -29,7 +29,7 @@ async function getOrCreateCustomer({ userId, userEmail }) {
   return customerId;
 }
 
-/* ------- Güne bölme: kalan oran -------- */
+/* ------- Güne bölme: kalan oran (upgrade proration) -------- */
 function calcRemainingRatio(subscription) {
   const last =
     subscription?.lastPaymentAt?.toMillis?.() ||
@@ -42,7 +42,9 @@ function calcRemainingRatio(subscription) {
   return Math.min(1, remaining / 30);
 }
 
-/* ------- VIP sadakat kuponu (6/12/18...) -------- */
+/* ------- VIP sadakat kuponu (6/12/18...) --------
+ * Not: Sadece VIP yenilemelerinde otomatik uygulanır (downgrade/upgrade’de uygulanmaz).
+ */
 async function createVipLoyaltyCouponForNextPayment({ userId, nextPaymentNo }) {
   if (nextPaymentNo % 6 !== 0) return null;
   const coupon = await stripe.coupons.create({
@@ -67,33 +69,82 @@ export default async function handler(req, res) {
     const current   = currentPlan || udata.subscriptionPlan || 'free';
     const sub       = udata.subscription || {};
     const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(current);
+
     const customerId = await getOrCreateCustomer({ userId, userEmail });
 
-    /* ---------- DOW N G R A D E ---------- */
-    if (!isUpgrade && current !== planKey && current !== 'free') {
+    /* ---------- D O W N G R A D E ---------- */
+    if (!isUpgrade && current !== planKey) {
+      const now = Date.now();
+      const activeUntilMillis = sub?.activeUntilMillis || 0;
 
-      // 🔹 aktif süresi devam ediyorsa uyarı döndür
-      if (sub.activeUntilMillis && sub.activeUntilMillis > Date.now()) {
+      // aktif dönem devam ediyorsa işlem yapma
+      if (activeUntilMillis && activeUntilMillis > now) {
         return res.status(400).json({
-          error: 'You can change your plan after your current subscription period ends.',
+          error: 'Mevcut abonelik süreniz bittiğinde plan değiştirebilirsiniz.',
+          code: 'PERIOD_NOT_FINISHED',
         });
       }
 
-      // 🔹 aktif süresi bittiyse downgrade yap
-      await ref.set({
-        subscription: {
-          ...(sub || {}),
-          planKey,
-          pending_downgrade_to: null,
-          activeUntil: null,
-          activeUntilMillis: null,
-          lifetimePayments: 1,
-        },
-        subscriptionPlan: planKey,
-      }, { merge: true });
+      // dönem bitmiş → hedef plana göre davran
+      if (planKey === 'free') {
+        // ÜCRETSİZ downgrade: ödeme yok, Firestore’u anında güncelle
+        const base = PLAN_LIMITS.free;
+        await ref.set({
+          subscriptionPlan: 'free',
+          viewLimit: base.viewLimit,
+          messagesLeft: base.messagesLeft,
+          subscription: {
+            ...sub,
+            planKey: 'free',
+            activeUntil: null,
+            activeUntilMillis: null,
+            lastPaymentAt: null,
+            lifetimePayments: 0,
+            pending_downgrade_to: null,
+          },
+        }, { merge: true });
 
-      console.log(`✅ Downgrade applied immediately: ${current} → ${planKey}`);
-      return res.status(200).json({ message: 'Downgrade applied successfully.' });
+        console.log(`✅ Downgrade applied (free): ${current} → free (uid=${userId})`);
+        return res.status(200).json({ message: 'Plan changed to FREE successfully.' });
+      } else {
+        // PARALI downgrade (starter/pro): tek seferlik ödeme al → webhook günceller
+        const price = PLAN_PRICES[planKey];
+        const base  = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
+
+        // downgrade akışına girdiğimizi not edelim (lifetimePayments resetlenir)
+        await ref.set({
+          subscription: { ...(sub || {}), lifetimePayments: 1, pending_downgrade_to: null },
+        }, { merge: true });
+
+        const session = await stripe.checkout.sessions.create({
+          mode: 'payment',
+          customer: customerId,
+          payment_method_types: ['card'],
+          allow_promotion_codes: true,
+          line_items: [{
+            price_data: {
+              currency: 'gbp',
+              product_data: { name: `${planKey.toUpperCase()} Plan (Downgrade)` },
+              unit_amount: Math.round(price * 100),
+            },
+            quantity: 1,
+          }],
+          metadata: {
+            bookingType: 'subscription_upgrade', // webhook akışını bozmayalım
+            userId,
+            upgradeFrom: current,           // mevcut plan (örn: vip)
+            upgradeTo: planKey,             // hedef (starter/pro)
+            payable: price,
+            renewal: '0',
+            viewLimit: base.viewLimit,
+            messagesLeft: base.messagesLeft,
+          },
+          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+        });
+
+        return res.status(200).json({ url: session.url });
+      }
     }
 
     /* ---------- AYNI PLAN (YENİLEME) ---------- */
@@ -147,6 +198,7 @@ export default async function handler(req, res) {
     if (current === 'free') {
       const price = PLAN_PRICES[planKey];
       const base = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
+
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         customer: customerId,
@@ -176,7 +228,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url });
     }
 
-    /* ---------- U P G R A D E ---------- */
+    /* ---------- U P G R A D E (gün bazlı fark) ---------- */
     if (isUpgrade) {
       const ratio        = calcRemainingRatio(sub);
       const currentPrice = PLAN_PRICES[current] || 0;
@@ -185,6 +237,7 @@ export default async function handler(req, res) {
       const payable      = Math.max(0, newPrice - credit);
       const base         = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
 
+      // plan değiştiği için ödeme sayacını resetle (senin önceki akışın)
       await ref.set({ subscription: { ...(sub || {}), lifetimePayments: 1 } }, { merge: true });
 
       const session = await stripe.checkout.sessions.create({
