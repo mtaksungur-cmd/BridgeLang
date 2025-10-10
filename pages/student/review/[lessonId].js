@@ -42,34 +42,18 @@ export default function ReviewLesson() {
       return;
     }
     if (!lesson) return;
-  
+
     try {
       setSubmitting(true);
-  
-      const res = await fetch(`/api/review/${lesson.id}`, {
+
+      const res = await fetch(`/api/reviews/${lesson.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating, comment }),
       });
-  
+
       if (!res.ok) throw new Error('Review save failed');
-  
-      // ✅ Kullanıcının mevcut kuponlarını kontrol et
-      const userSnap = await getDoc(doc(db, 'users', lesson.studentId));
-      const userData = userSnap.exists() ? userSnap.data() : {};
-      const hasCoupons = Array.isArray(userData.lessonCoupons) && userData.lessonCoupons.length > 0;
-  
-      // ✅ Eğer zaten kupon varsa, API'yi hiç çağırma
-      if (!hasCoupons) {
-        await fetch('/api/apply-review-bonus', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: lesson.studentId }),
-        });
-      } else {
-        console.log('⚠️ User already has review coupon, skipping apply-review-bonus');
-      }
-  
+
       alert('Thanks for your feedback!');
       router.push('/student/dashboard');
     } catch (e) {
@@ -104,13 +88,15 @@ export default function ReviewLesson() {
 
         <label className={styles.label}>Rating (1–5):</label>
         <div className={styles.stars} onMouseLeave={() => setHovered(0)}>
-          {[1,2,3,4,5].map((star) => (
+          {[1, 2, 3, 4, 5].map((star) => (
             <span
               key={star}
               className={`${styles.star} ${star <= (hovered || rating) ? styles.filled : ''}`}
               onClick={() => setRating(star)}
               onMouseEnter={() => setHovered(star)}
-            >★</span>
+            >
+              ★
+            </span>
           ))}
         </div>
 
