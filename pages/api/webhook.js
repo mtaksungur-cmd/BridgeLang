@@ -49,6 +49,25 @@ const PLAN_LIMITS = {
   vip:     { viewLimit: 9999,messagesLeft: 9999 },
 };
 
+/* -------------------- Sadakat bonusu oluşturucu -------------------- */
+async function createLoyaltyLessonCoupon(plan, lifetime) {
+  const percent = plan === 'vip' ? 20 : plan === 'pro' ? 10 : 0;
+  if (!percent) return null;
+  if (lifetime % 3 !== 0) return null; // her 3., 6., 9. ödeme
+
+  const coupon = await stripe.coupons.create({
+    percent_off: percent,
+    duration: 'once',
+    name: `${plan.toUpperCase()} Loyalty — Payment #${lifetime}`,
+  });
+  const promo = await stripe.promotionCodes.create({
+    coupon: coupon.id,
+    code: `LOY-${plan}-${lifetime}-${Date.now().toString().slice(-5)}`,
+    max_redemptions: 1,
+  });
+  return { code: promo.code, promoId: promo.id, percent };
+}
+
 /* -------------------- Handler -------------------- */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -79,7 +98,8 @@ export default async function handler(req, res) {
       const sub    = udata.subscription || {};
 
       const lifetime = (sub.lifetimePayments || 0) + 1;
-      const base     = PLAN_LIMITS[meta.upgradeTo] || PLAN_LIMITS.free;
+      const plan     = meta.upgradeTo;
+      const base     = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
       // Yeni dönem: 30 gün ileri
       const now       = Date.now();
@@ -87,7 +107,7 @@ export default async function handler(req, res) {
 
       const updatedSub = {
         ...sub,
-        planKey: meta.upgradeTo,
+        planKey: plan,
         activeUntil: new Date(nextMonth),
         activeUntilMillis: nextMonth,
         lastPaymentAt: new Date(),
@@ -95,7 +115,7 @@ export default async function handler(req, res) {
         pending_downgrade_to: null,
       };
 
-      // Uygulanmış VIP kuponunu (varsa) dokümana not düş
+      // 🔹 Uygulanmış VIP kuponu (varsa)
       let subscriptionCoupons = Array.isArray(udata.subscriptionCoupons)
         ? [...udata.subscriptionCoupons]
         : [];
@@ -112,19 +132,56 @@ export default async function handler(req, res) {
         });
       }
 
+      // 🔹 Sadakat bonusu oluştur (her 3 ayda bir)
+      let lessonCoupons = Array.isArray(udata.lessonCoupons) ? [...udata.lessonCoupons] : [];
+      const loyalty = await createLoyaltyLessonCoupon(plan, lifetime);
+      if (loyalty) {
+        lessonCoupons.push({
+          code: loyalty.code,
+          promoId: loyalty.promoId,
+          percent: loyalty.percent,
+          type: 'lesson',
+          source: 'loyalty-3x',
+          active: true,
+          used: false,
+          createdAt: new Date(),
+          milestonePaymentNo: lifetime,
+        });
+
+        // 🎁 bilgilendirme e-postası
+        try {
+          await sendMail({
+            to: udata.email,
+            subject: `🎁 ${plan.toUpperCase()} Loyalty Bonus — ${loyalty.percent}% Off`,
+            html: `
+              <p>Hi ${udata.name || 'there'},</p>
+              <p>Congratulations! You've unlocked a <b>${loyalty.percent}% loyalty discount</b> for your next lesson booking.</p>
+              <p>Use your loyalty coupon code: <b>${loyalty.code}</b></p>
+              <p>Keep learning with BridgeLang!</p>
+            `,
+          });
+        } catch (e) {
+          console.warn('⚠️ Loyalty email failed:', e.message);
+        }
+      }
+
+      // 🔹 Firestore güncelle
       await uref.set({
-        subscriptionPlan: meta.upgradeTo,
+        subscriptionPlan: plan,
         viewLimit: base.viewLimit,
         messagesLeft: base.messagesLeft,
         subscription: updatedSub,
         subscriptionCoupons,
+        lessonCoupons,
       }, { merge: true });
 
-      console.log(`✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${meta.upgradeFrom} → ${meta.upgradeTo} (uid=${userId})`);
+      console.log(
+        `✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${meta.upgradeFrom} → ${plan} | lifetime #${lifetime} | loyalty=${!!loyalty}`
+      );
       return res.status(200).json({ received: true });
     }
 
-    // 🔹 Normal ders ödemesi (var olan akış)
+    // 🔹 Normal ders ödemesi
     if (meta.bookingType === 'lesson') {
       const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
@@ -175,7 +232,7 @@ export default async function handler(req, res) {
         updatedAt: new Date(),
       }, { merge: true });
 
-      // Ders sayacı + review kupon aktivasyonu (mevcut mantık)
+      // 🔹 Öğrenci kupon aktivasyonu (mevcut akış)
       if (studentId) {
         const uref    = adminDb.collection('users').doc(studentId);
         const usnap   = await uref.get();
