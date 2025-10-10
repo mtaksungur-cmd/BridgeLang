@@ -71,26 +71,29 @@ export default async function handler(req, res) {
 
     /* ---------- DOW N G R A D E ---------- */
     if (!isUpgrade && current !== planKey && current !== 'free') {
-      // zaten aynı downgrade varsa tekrar mail atma
-      if (sub.pending_downgrade_to === planKey) {
-        return res.status(200).json({ message: 'Downgrade already scheduled.' });
+
+      // 🔹 aktif süresi devam ediyorsa uyarı döndür
+      if (sub.activeUntilMillis && sub.activeUntilMillis > Date.now()) {
+        return res.status(400).json({
+          error: 'You can change your plan after your current subscription period ends.',
+        });
       }
 
+      // 🔹 aktif süresi bittiyse downgrade yap
       await ref.set({
-        subscription: { ...(sub || {}), pending_downgrade_to: planKey, lifetimePayments: 1 },
+        subscription: {
+          ...(sub || {}),
+          planKey,
+          pending_downgrade_to: null,
+          activeUntil: null,
+          activeUntilMillis: null,
+          lifetimePayments: 1,
+        },
+        subscriptionPlan: planKey,
       }, { merge: true });
 
-      try {
-        await sendMail({
-          to: userEmail,
-          subject: '📅 Downgrade scheduled',
-          html: `<p>Your downgrade to <b>${planKey.toUpperCase()}</b> will take effect after your current billing cycle.</p>`,
-        });
-      } catch (e) {
-        console.warn('⚠️ Downgrade mail failed:', e.message);
-      }
-
-      return res.status(200).json({ message: 'Downgrade scheduled for next period.' });
+      console.log(`✅ Downgrade applied immediately: ${current} → ${planKey}`);
+      return res.status(200).json({ message: 'Downgrade applied successfully.' });
     }
 
     /* ---------- AYNI PLAN (YENİLEME) ---------- */
