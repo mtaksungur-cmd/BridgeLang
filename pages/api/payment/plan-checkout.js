@@ -80,7 +80,7 @@ export default async function handler(req, res) {
       // aktif dönem devam ediyorsa işlem yapma
       if (activeUntilMillis && activeUntilMillis > now) {
         return res.status(400).json({
-          error: 'Mevcut abonelik süreniz bittiğinde plan değiştirebilirsiniz.',
+          error: 'You can change your plan after your current subscription period ends.',
           code: 'PERIOD_NOT_FINISHED',
         });
       }
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
 
         // downgrade akışına girdiğimizi not edelim (lifetimePayments resetlenir)
         await ref.set({
-          subscription: { ...(sub || {}), lifetimePayments: 1, pending_downgrade_to: null },
+          subscription: { ...(sub || {}), lifetimePayments: 0, pending_downgrade_to: null },
         }, { merge: true });
 
         const session = await stripe.checkout.sessions.create({
