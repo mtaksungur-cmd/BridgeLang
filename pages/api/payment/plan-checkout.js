@@ -7,6 +7,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 /* ------- Sabit fiyatlar ve plan sırası -------- */
 const PLAN_PRICES = { starter: 4.99, pro: 9.99, vip: 14.99 };
 const PLAN_ORDER  = ['free', 'starter', 'pro', 'vip'];
+const PLAN_LIMITS = {
+  free:    { viewLimit: 10,  messagesLeft: 3  },
+  starter: { viewLimit: 30,  messagesLeft: 8  },
+  pro:     { viewLimit: 60,  messagesLeft: 20 },
+  vip:     { viewLimit: 9999, messagesLeft: 9999 },
+};
 
 /* ------- Firestore müşteri id helper -------- */
 async function getOrCreateCustomer({ userId, userEmail }) {
@@ -61,12 +67,11 @@ export default async function handler(req, res) {
     const current   = currentPlan || udata.subscriptionPlan || 'free';
     const sub       = udata.subscription || {};
     const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(current);
-
     const customerId = await getOrCreateCustomer({ userId, userEmail });
 
     /* ---------- DOW N G R A D E ---------- */
     if (!isUpgrade && current !== planKey && current !== 'free') {
-      // Eğer zaten bekleyen downgrade varsa tekrar mail atma
+      // zaten aynı downgrade varsa tekrar mail atma
       if (sub.pending_downgrade_to === planKey) {
         return res.status(200).json({ message: 'Downgrade already scheduled.' });
       }
@@ -138,6 +143,7 @@ export default async function handler(req, res) {
     /* ---------- İLK ABONELİK (FREE → X) ---------- */
     if (current === 'free') {
       const price = PLAN_PRICES[planKey];
+      const base = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         customer: customerId,
@@ -158,6 +164,8 @@ export default async function handler(req, res) {
           upgradeTo: planKey,
           payable: price,
           renewal: '0',
+          viewLimit: base.viewLimit,
+          messagesLeft: base.messagesLeft,
         },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
@@ -172,6 +180,7 @@ export default async function handler(req, res) {
       const newPrice     = PLAN_PRICES[planKey];
       const credit       = currentPrice * ratio;
       const payable      = Math.max(0, newPrice - credit);
+      const base         = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
 
       await ref.set({ subscription: { ...(sub || {}), lifetimePayments: 1 } }, { merge: true });
 
@@ -195,6 +204,8 @@ export default async function handler(req, res) {
           upgradeTo: planKey,
           payable,
           renewal: '0',
+          viewLimit: base.viewLimit,
+          messagesLeft: base.messagesLeft,
         },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
