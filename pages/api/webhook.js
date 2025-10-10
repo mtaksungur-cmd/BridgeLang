@@ -22,7 +22,7 @@ async function createDailyRoom({ teacherId, date, startTime, durationMinutes, ti
   if (!process.env.DAILY_API_KEY) throw new Error('DAILY_API_KEY missing');
   const dt = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', { zone: timezone || 'UTC' });
   const startSec = dt.toSeconds();
-  const expSec   = startSec + (durationMinutes || 60) * 60;
+  const expSec = startSec + (durationMinutes || 60) * 60;
 
   const resp = await fetch('https://api.daily.co/v1/rooms', {
     method: 'POST',
@@ -32,21 +32,27 @@ async function createDailyRoom({ teacherId, date, startTime, durationMinutes, ti
     },
     body: JSON.stringify({
       name: `lesson-${teacherId || 't'}-${Date.now()}`,
-      properties: { nbf: Math.floor(startSec), exp: Math.floor(expSec), enable_screenshare: true, enable_chat: true },
+      properties: {
+        nbf: Math.floor(startSec),
+        exp: Math.floor(expSec),
+        enable_screenshare: true,
+        enable_chat: true,
+      },
     }),
   });
 
   const data = await resp.json();
-  if (!resp.ok || !data?.url) throw new Error(`Daily API error: ${data?.error || 'unknown'}`);
+  if (!resp.ok || !data?.url)
+    throw new Error(`Daily API error: ${data?.error || 'unknown'}`);
   return data.url;
 }
 
 /* -------------------- Limits -------------------- */
 const PLAN_LIMITS = {
-  free:    { viewLimit: 10,  messagesLeft: 3  },
-  starter: { viewLimit: 30,  messagesLeft: 8  },
-  pro:     { viewLimit: 60,  messagesLeft: 20 },
-  vip:     { viewLimit: 9999,messagesLeft: 9999 },
+  free: { viewLimit: 10, messagesLeft: 3 },
+  starter: { viewLimit: 30, messagesLeft: 8 },
+  pro: { viewLimit: 60, messagesLeft: 20 },
+  vip: { viewLimit: 9999, messagesLeft: 9999 },
 };
 
 /* -------------------- Sadakat bonusu oluşturucu -------------------- */
@@ -76,7 +82,11 @@ export default async function handler(req, res) {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(
+      buf,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
     console.error('❌ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -87,22 +97,22 @@ export default async function handler(req, res) {
    * ------------------------------------------------- */
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    const meta    = session.metadata || {};
+    const meta = session.metadata || {};
 
     // 🔹 Abonelik (one-off) – upgrade / renewal
     if (meta.bookingType === 'subscription_upgrade') {
       const userId = meta.userId;
-      const uref   = adminDb.collection('users').doc(userId);
-      const snap   = await uref.get();
-      const udata  = snap.exists ? snap.data() : {};
-      const sub    = udata.subscription || {};
+      const uref = adminDb.collection('users').doc(userId);
+      const snap = await uref.get();
+      const udata = snap.exists ? snap.data() : {};
+      const sub = udata.subscription || {};
 
       const lifetime = (sub.lifetimePayments || 0) + 1;
-      const plan     = meta.upgradeTo;
-      const base     = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+      const plan = meta.upgradeTo;
+      const base = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
       // Yeni dönem: 30 gün ileri
-      const now       = Date.now();
+      const now = Date.now();
       const nextMonth = now + 30 * 86400000;
 
       const updatedSub = {
@@ -133,7 +143,9 @@ export default async function handler(req, res) {
       }
 
       // 🔹 Sadakat bonusu oluştur (her 3 ayda bir)
-      let lessonCoupons = Array.isArray(udata.lessonCoupons) ? [...udata.lessonCoupons] : [];
+      let lessonCoupons = Array.isArray(udata.lessonCoupons)
+        ? [...udata.lessonCoupons]
+        : [];
       const loyalty = await createLoyaltyLessonCoupon(plan, lifetime);
       if (loyalty) {
         lessonCoupons.push({
@@ -166,90 +178,126 @@ export default async function handler(req, res) {
       }
 
       // 🔹 Firestore güncelle
-      await uref.set({
-        subscriptionPlan: plan,
-        viewLimit: base.viewLimit,
-        messagesLeft: base.messagesLeft,
-        subscription: updatedSub,
-        subscriptionCoupons,
-        lessonCoupons,
-      }, { merge: true });
+      await uref.set(
+        {
+          subscriptionPlan: plan,
+          viewLimit: base.viewLimit,
+          messagesLeft: base.messagesLeft,
+          subscription: updatedSub,
+          subscriptionCoupons,
+          lessonCoupons,
+        },
+        { merge: true }
+      );
 
       console.log(
-        `✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${meta.upgradeFrom} → ${plan} | lifetime #${lifetime} | loyalty=${!!loyalty}`
+        `✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${
+          meta.upgradeFrom
+        } → ${plan} | lifetime #${lifetime} | loyalty=${!!loyalty}`
       );
       return res.status(200).json({ received: true });
     }
 
-    // 🔹 Normal ders ödemesi
+    // 🔹 Normal ders ödemesi (lesson booking)
     if (meta.bookingType === 'lesson') {
-      const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
-      const durationMinutes = parseInt(duration, 10) || 60;
-      const startAtUtc      = toStartAtUtc({ date, startTime, timezone });
-      const bookingRef      = adminDb.collection('bookings').doc(session.id);
-
-      const originalCents    = Number(meta.original_unit_amount || 0);
-      const discountedCents  = Number(meta.discounted_unit_amount || session.amount_total || 0);
-      const discountPercent  = Number(meta.discountPercent || 0);
-
-      const originalPrice   = originalCents / 100;
-      const paidAmount      = discountedCents / 100;
-      const teacherShare    = (originalCents * 0.8) / 100;
-      const platformSubsidy = Math.max(0, originalPrice - paidAmount);
-
-      let meetingLink = '';
-      if (location === 'Online') {
-        try {
-          meetingLink = await createDailyRoom({ teacherId, date, startTime, durationMinutes, timezone });
-        } catch (e) {
-          console.error('Daily create exception:', e);
-        }
-      }
-
-      await bookingRef.set({
+      const {
         teacherId,
         studentId,
         date,
         startTime,
         endTime,
-        duration: durationMinutes,
+        duration,
         location,
-        meetingLink,
-        amountPaid: paidAmount,
-        originalPrice,
-        discountPercent,
-        teacherShare,
-        platformSubsidy,
-        discountLabel: meta.discountLabel || '',
-        status: 'pending-approval',
-        teacherApproved: false,
-        studentConfirmed: false,
-        reminderSent: false,
         timezone,
-        startAtUtc,
-        stripeSessionId: session.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }, { merge: true });
+      } = meta;
+      const durationMinutes = parseInt(duration, 10) || 60;
+      const startAtUtc = toStartAtUtc({ date, startTime, timezone });
+      const bookingRef = adminDb.collection('bookings').doc(session.id);
 
-      // 🔹 Öğrenci kupon aktivasyonu (mevcut akış)
+      const originalCents = Number(meta.original_unit_amount || 0);
+      const discountedCents =
+        Number(meta.discounted_unit_amount || session.amount_total || 0);
+      const discountPercent = Number(meta.discountPercent || 0);
+
+      const originalPrice = originalCents / 100;
+      const paidAmount = discountedCents / 100;
+      const teacherShare = (originalCents * 0.8) / 100;
+      const platformSubsidy = Math.max(0, originalPrice - paidAmount);
+
+      let meetingLink = '';
+      if (location === 'Online') {
+        try {
+          meetingLink = await createDailyRoom({
+            teacherId,
+            date,
+            startTime,
+            durationMinutes,
+            timezone,
+          });
+        } catch (e) {
+          console.error('Daily create exception:', e);
+        }
+      }
+
+      await bookingRef.set(
+        {
+          teacherId,
+          studentId,
+          date,
+          startTime,
+          endTime,
+          duration: durationMinutes,
+          location,
+          meetingLink,
+          amountPaid: paidAmount,
+          originalPrice,
+          discountPercent,
+          teacherShare,
+          platformSubsidy,
+          discountLabel: meta.discountLabel || '',
+          status: 'pending-approval',
+          teacherApproved: false,
+          studentConfirmed: false,
+          reminderSent: false,
+          timezone,
+          startAtUtc,
+          stripeSessionId: session.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
+
+      // 🔹 Öğrenci kupon aktivasyonu (review kuponları)
       if (studentId) {
-        const uref    = adminDb.collection('users').doc(studentId);
-        const usnap   = await uref.get();
-        const u       = usnap.exists ? usnap.data() : {};
-        const taken   = (u.lessonsTaken || 0) + 1;
-        let coupons   = u.lessonCoupons || [];
+        const uref = adminDb.collection('users').doc(studentId);
+        const usnap = await uref.get();
+        const u = usnap.exists ? usnap.data() : {};
+        const taken = (u.lessonsTaken || 0) + 1;
+        let coupons = u.lessonCoupons || [];
 
         if (taken >= 6) {
           const updated = [];
           for (const c of coupons) {
-            if (!c.active && !c.used && c.type === 'lesson' && c.code?.startsWith('REV-')) {
+            if (
+              !c.active &&
+              !c.used &&
+              c.type === 'lesson' &&
+              c.code?.startsWith('REV-')
+            ) {
               try {
-                await stripe.promotionCodes.update(c.promoId || c.code, { active: true });
+                await stripe.promotionCodes.update(c.promoId || c.code, {
+                  active: true,
+                });
                 c.active = true;
-                console.log(`✅ Review coupon activated for ${studentId}: ${c.code}`);
+                console.log(
+                  `✅ Review coupon activated for ${studentId}: ${c.code}`
+                );
               } catch (err) {
-                console.warn(`⚠️ Could not activate review coupon ${c.code}:`, err.message);
+                console.warn(
+                  `⚠️ Could not activate review coupon ${c.code}:`,
+                  err.message
+                );
               }
             }
             updated.push({ ...c, used: !!c.used, active: !!c.active });
