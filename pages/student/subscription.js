@@ -49,7 +49,6 @@ export default function SubscriptionPage() {
   }, []);
 
   const handleSelect = async (planKey) => {
-    if (planKey === "free") return;
     setSaving(true);
     const user = auth.currentUser;
     if (!user) return alert("Please log in again.");
@@ -64,9 +63,22 @@ export default function SubscriptionPage() {
           currentPlan: activePlan
         }),
       });
+
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else alert(data.message || data.error || "Error occurred.");
+
+      if (data.url) {
+        // Stripe ödeme varsa yönlendir
+        window.location.href = data.url;
+      } else if (data.message) {
+        // Ücretsiz downgrade gibi durumlarda sadece bilgi mesajı
+        alert(data.message);
+        window.location.reload();
+      } else if (data.error) {
+        alert(data.error);
+      } else {
+        alert("Unexpected response.");
+      }
+
     } catch (err) {
       console.error("plan checkout error:", err);
       alert("Could not start payment.");
@@ -83,13 +95,17 @@ export default function SubscriptionPage() {
       <div className={styles.policyBox}>
         <h3>Subscription Change Policy</h3>
         <ul>
-          <li><b>Upgrade:</b> Takes effect immediately. The remaining days are prorated and charged.</li>
-          <li><b>Downgrade:</b> Takes effect at the end of the current billing cycle. No refunds are issued.</li>
+          <li><b>Upgrade:</b> Takes effect immediately. Remaining days are prorated.</li>
+          <li><b>Downgrade:</b> Takes effect after your current billing cycle ends.</li>
         </ul>
       </div>
+
       <div className={styles.planList}>
         {PLANS.map((plan) => (
-          <div key={plan.key} className={`${styles.planCard} ${activePlan === plan.key ? styles.active : ""}`}>
+          <div
+            key={plan.key}
+            className={`${styles.planCard} ${activePlan === plan.key ? styles.active : ""}`}
+          >
             <h3>{plan.name}</h3>
             <div className={styles.planPrice}>{plan.price}</div>
             <ul className={styles.planFeatures}>
@@ -97,7 +113,10 @@ export default function SubscriptionPage() {
                 <li key={i}>{f}</li>
               ))}
             </ul>
-            <button onClick={() => handleSelect(plan.key)} disabled={saving}>
+            <button
+              onClick={() => handleSelect(plan.key)}
+              disabled={saving}
+            >
               {activePlan === plan.key ? "Selected" : "Change Plan"}
             </button>
           </div>
