@@ -1,8 +1,7 @@
-// pages/student/register.js
 import { useState, useRef } from 'react';
 import { auth, db } from '../../lib/firebase';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import ReCAPTCHA from 'react-google-recaptcha';
 import styles from '../../scss/StudentRegister.module.scss';
@@ -127,6 +126,7 @@ export default function StudentRegister() {
       let profilePhotoUrl = '';
       if (form.profilePhoto) profilePhotoUrl = await uploadFileViaApi(form.profilePhoto);
 
+      // 🔹 Firestore: kayıtla birlikte free plan başlat
       await setDoc(doc(db, 'users', user.uid), {
         name: form.name.trim(),
         email,
@@ -143,6 +143,17 @@ export default function StudentRegister() {
         createdAt: Date.now(),
         parentConsentRequired: age < 18,
         parentConsent: null,
+
+        // 🟢 Free plan başlangıç değerleri
+        subscriptionPlan: 'free',
+        viewLimit: 10,
+        messagesLeft: 3,
+        subscription: {
+          planKey: 'free',
+          activeUntil: null,
+          activeUntilMillis: null,
+          lifetimePayments: 0,
+        },
       });
 
       if (age < 18) {
@@ -166,6 +177,10 @@ export default function StudentRegister() {
         await sendEmailVerification(user);
         setSuccess(true);
       }
+
+      // 🔴 Kayıt sonrası otomatik login'i kapat
+      await signOut(auth);
+
     } catch (err) {
       setError(err?.message || 'Registration failed.');
     } finally {
