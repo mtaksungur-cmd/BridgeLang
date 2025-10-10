@@ -32,6 +32,8 @@ export default function LoyaltyBadge({
   infoNote = `
     All eligible discounts and loyalty bonuses are applied automatically.
     You don't need to enter any coupon codes manually.
+    Discounts are applied in this order: 
+    1️⃣ First 6-Lesson Discount → 2️⃣ Review Bonus → 3️⃣ Loyalty Bonus.
   `;
 
   return (
@@ -89,6 +91,7 @@ export default function LoyaltyBadge({
           color: "#003a8c",
           fontSize: 13,
           textAlign: "left",
+          lineHeight: "1.5em",
         }}
       >
         💡 <strong>Note:</strong> {infoNote}
