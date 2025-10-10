@@ -238,7 +238,7 @@ export default async function handler(req, res) {
       const base         = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
 
       // plan değiştiği için ödeme sayacını resetle (senin önceki akışın)
-      await ref.set({ subscription: { ...(sub || {}), lifetimePayments: 1 } }, { merge: true });
+      await ref.set({ subscription: { ...(sub || {}), lifetimePayments: 0 } }, { merge: true });
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
