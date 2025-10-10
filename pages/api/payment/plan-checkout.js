@@ -7,12 +7,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 /* ------- Sabit fiyatlar ve plan sırası -------- */
 const PLAN_PRICES = { starter: 4.99, pro: 9.99, vip: 14.99 };
 const PLAN_ORDER  = ['free', 'starter', 'pro', 'vip'];
-const PLAN_LIMITS = {
-  free:    { viewLimit: 10,  messagesLeft: 3  },
-  starter: { viewLimit: 30,  messagesLeft: 8  },
-  pro:     { viewLimit: 60,  messagesLeft: 20 },
-  vip:     { viewLimit: 9999,messagesLeft: 9999 },
-};
 
 /* ------- Firestore müşteri id helper -------- */
 async function getOrCreateCustomer({ userId, userEmail }) {
@@ -36,13 +30,13 @@ function calcRemainingRatio(subscription) {
     Date.parse(subscription?.lastPaymentAt) ||
     0;
   if (!last) return 0;
-  const now         = Date.now();
+  const now = Date.now();
   const elapsedDays = Math.max(0, Math.floor((now - last) / (1000 * 60 * 60 * 24)));
   const remaining   = Math.max(0, 30 - elapsedDays);
   return Math.min(1, remaining / 30);
 }
 
-/* ------- VIP sadakat kuponu (tek kullanımlık %10) -------- */
+/* ------- VIP sadakat kuponu (6/12/18...) -------- */
 async function createVipLoyaltyCouponForNextPayment({ userId, nextPaymentNo }) {
   if (nextPaymentNo % 6 !== 0) return null;
   const coupon = await stripe.coupons.create({
@@ -72,15 +66,24 @@ export default async function handler(req, res) {
 
     /* ---------- DOW N G R A D E ---------- */
     if (!isUpgrade && current !== planKey && current !== 'free') {
+      // Eğer zaten bekleyen downgrade varsa tekrar mail atma
+      if (sub.pending_downgrade_to === planKey) {
+        return res.status(200).json({ message: 'Downgrade already scheduled.' });
+      }
+
       await ref.set({
         subscription: { ...(sub || {}), pending_downgrade_to: planKey, lifetimePayments: 1 },
       }, { merge: true });
 
-      await sendMail({
-        to: userEmail,
-        subject: '📅 Downgrade scheduled',
-        html: `<p>Your downgrade to <b>${planKey.toUpperCase()}</b> will take effect after your current billing cycle.</p>`,
-      });
+      try {
+        await sendMail({
+          to: userEmail,
+          subject: '📅 Downgrade scheduled',
+          html: `<p>Your downgrade to <b>${planKey.toUpperCase()}</b> will take effect after your current billing cycle.</p>`,
+        });
+      } catch (e) {
+        console.warn('⚠️ Downgrade mail failed:', e.message);
+      }
 
       return res.status(200).json({ message: 'Downgrade scheduled for next period.' });
     }
@@ -162,7 +165,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url });
     }
 
-    /* ---------- U P G R A D E (gün bazlı fark) ---------- */
+    /* ---------- U P G R A D E ---------- */
     if (isUpgrade) {
       const ratio        = calcRemainingRatio(sub);
       const currentPrice = PLAN_PRICES[current] || 0;
