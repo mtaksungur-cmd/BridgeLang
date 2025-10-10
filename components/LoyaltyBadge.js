@@ -1,38 +1,38 @@
 export default function LoyaltyBadge({
   plan,
   lessonsTaken = 0,
-  subscriptionCoupons = [],
 }) {
   let badge = "🎟️";
   let planText = "";
   let lessonDiscount = "";
   let loyaltyText = "";
+  let infoNote = "";
 
   if (plan === "starter") {
     badge = "🎟️";
     planText = "Starter Plan – 10% off the first 6 lessons.";
     lessonDiscount =
-      "5% review coupon per review. Lesson discounts are automatically applied.";
+      "5% review coupon automatically applied to your next lesson after leaving feedback.";
   } else if (plan === "pro") {
     badge = "🥈";
     planText = "Pro Plan – 15% off the first 6 lessons.";
     lessonDiscount =
-      "10% review coupon + 10% loyalty discount every 3rd payment (auto).";
+      "10% review coupon + 10% loyalty discount every 3rd payment (both applied automatically).";
   } else if (plan === "vip") {
     badge = "🥇";
     planText = "VIP Plan – 20% off the first 6 lessons.";
     lessonDiscount =
-      "15% review coupon + 20% loyalty discount every 3rd payment (auto).";
+      "15% review coupon + 20% loyalty discount every 3rd payment (applied automatically).";
     loyaltyText =
-      "Every 6th renewal: 10% off subscription (manual code entry required).";
+      "Every 6th renewal also gives you a 10% discount on your subscription (applied automatically).";
   } else {
     planText = "Free Plan – No discounts available.";
   }
 
-  const copy = (code) => {
-    if (!code) return;
-    navigator.clipboard?.writeText(code).catch(() => {});
-  };
+  infoNote = `
+    All eligible discounts and loyalty bonuses are applied automatically.
+    You don't need to enter any coupon codes manually.
+  `;
 
   return (
     <div
@@ -79,64 +79,20 @@ export default function LoyaltyBadge({
         </div>
       )}
 
-      {subscriptionCoupons?.length > 0 && (
-        <div
-          style={{
-            marginTop: 20,
-            borderTop: "1px solid #ddd",
-            paddingTop: 10,
-            textAlign: "left",
-          }}
-        >
-          <h4 style={{ margin: "6px 0", fontSize: 15 }}>
-            🎟️ Subscription Coupon
-          </h4>
-          <p
-            style={{
-              fontSize: 13,
-              color: "#555",
-              marginBottom: 8,
-            }}
-          >
-            Only your latest coupon is shown below. Use it <strong>manually</strong> during your next subscription payment.
-          </p>
-
-          {[...subscriptionCoupons].slice(-1).map((c, i) => (
-            <div
-              key={i}
-              style={{
-                background: c.used ? "#f5f5f5" : "#fffaf0",
-                border: "1px dashed #ffc069",
-                padding: "8px 10px",
-                borderRadius: 6,
-                marginBottom: 6,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <div>
-                <strong>{c.code}</strong> – {c.discount || c.percent}% off{" "}
-                {c.used ? "(Used)" : "(Available)"}
-              </div>
-              {!c.used && (
-                <button
-                  onClick={() => copy(c.code)}
-                  style={{
-                    border: "1px solid #ffa940",
-                    background: "#fff",
-                    borderRadius: 6,
-                    padding: "3px 6px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Copy
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          marginTop: 18,
+          padding: "10px 12px",
+          background: "#e6f7ff",
+          border: "1px solid #91d5ff",
+          borderRadius: 8,
+          color: "#003a8c",
+          fontSize: 13,
+          textAlign: "left",
+        }}
+      >
+        💡 <strong>Note:</strong> {infoNote}
+      </div>
     </div>
   );
 }
