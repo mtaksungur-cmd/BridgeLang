@@ -63,15 +63,6 @@ export default function StudentNavbar() {
               </Link>
             </li>
             <li className="nav-item">
-              <Link href="/student/credits" className="btn m-2 bg-warning"
-              style={{
-                  color: '#222222',
-                  fontWeight: '500',
-                }}>
-                Buy Credits
-              </Link>
-            </li>
-            <li className="nav-item">
               <button
                 onClick={handleLogout}
                 className="btn m-2 bg-danger"
