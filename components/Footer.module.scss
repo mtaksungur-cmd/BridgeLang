@@ -122,6 +122,7 @@
   }
 }
 
+/* 🌐 Masaüstü düzenleri */
 @media (min-width: 768px) {
   .grid {
     text-align: left;
@@ -133,6 +134,7 @@
   }
 }
 
+/* 🌐 992px ve üzeri: Sadece "Follow Us" ortalansın */
 @media (min-width: 992px) {
   .footer {
     padding: 0.8rem 0;
@@ -149,5 +151,19 @@
 
   .bottomRow {
     font-size: 0.78rem;
+  }
+
+  /* 🟢 Sadece son kolon ("Follow Us") ortala */
+  .grid > div:last-child {
+    text-align: center;
+
+    .socials {
+      justify-content: center;
+    }
+
+    .whatsappLink {
+      margin: 0.5rem auto 0 auto;
+      display: inline-flex;
+    }
   }
 }
