@@ -4,6 +4,7 @@ import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firesto
 import Link from 'next/link';
 import Image from 'next/image';
 import SubscriptionBanner from "../../components/SubscriptionBanner";
+import LoyaltyBadge from "../../components/LoyaltyBadge"; // 🔹 eklendi
 import { useRouter } from 'next/router';
 import styles from "../../scss/TeachersList.module.scss";
 
@@ -14,6 +15,8 @@ export default function TeachersList() {
   const [activePlan, setActivePlan] = useState("");
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
+  const [lessonsTaken, setLessonsTaken] = useState(0); // 🔹 eklendi
+  const [subscriptionCoupons, setSubscriptionCoupons] = useState([]); // 🔹 eklendi
   const router = useRouter();
 
   useEffect(() => {
@@ -60,7 +63,12 @@ export default function TeachersList() {
       const user = auth.currentUser;
       if (!user) return;
       const sSnap = await getDoc(doc(db, "users", user.uid));
-      if (sSnap.exists()) setActivePlan(sSnap.data().subscriptionPlan || "free");
+      if (sSnap.exists()) {
+        const data = sSnap.data();
+        setActivePlan(data.subscriptionPlan || "free");
+        setLessonsTaken(data.lessonsTaken || 0);
+        setSubscriptionCoupons(data.subscriptionCoupons || []);
+      }
     };
 
     fetchTeachers();
@@ -98,6 +106,16 @@ export default function TeachersList() {
   return (
     <div>
       <SubscriptionBanner />
+
+      {/* 🔹 Kullanıcının planına göre LoyaltyBadge gösterimi */}
+      <div className={styles.loyaltyBox}>
+        <LoyaltyBadge
+          plan={activePlan}
+          lessonsTaken={lessonsTaken}
+          subscriptionCoupons={subscriptionCoupons}
+        />
+      </div>
+
       <div className={styles.container}>
         <h2>Browse Our Teachers</h2>
 
