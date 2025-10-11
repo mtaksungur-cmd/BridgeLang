@@ -1,6 +1,6 @@
-// components/Footer.js
 'use client';
 import Link from 'next/link';
+import { FaWhatsapp } from 'react-icons/fa';
 import styles from './Footer.module.scss';
 
 export default function Footer() {
@@ -51,14 +51,23 @@ export default function Footer() {
               <a href="https://www.facebook.com/share/17858srkmF/" target="_blank" rel="noopener noreferrer">
                 <i className="bi bi-facebook"></i>
               </a>
+              <a href="https://wa.me/442071111638" target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
+                <FaWhatsapp /> WhatsApp Chat
+              </a>
             </div>
           </div>
         </div>
 
+        {/* Footer Bilgileri */}
         <div className={styles.bottomRow}>
           <small>
-            © {new Date().getFullYear()} BridgeLang Ltd. | Company No: 16555217 | Registered in England and Wales
+            <strong>BridgeLang UK Ltd.</strong> | Company No: 16555217<br />
+            The Apex, Derriford Business Park, Brest Road, Plymouth, PL6 5FL, United Kingdom<br />
+            📧 <a href="mailto:contact@bridgelang.co.uk">contact@bridgelang.co.uk</a> | 📞 <a href="tel:+442071111638">+44 20 7111 1638</a>
           </small>
+          <div className={styles.copyright}>
+            © {new Date().getFullYear()} BridgeLang UK Ltd. All rights reserved.
+          </div>
         </div>
       </div>
     </footer>
