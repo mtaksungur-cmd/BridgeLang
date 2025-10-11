@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { FaWhatsapp } from "react-icons/fa";
 import styles from "../scss/Contact.module.scss";
 
 export default function Contact() {
@@ -98,7 +99,6 @@ export default function Contact() {
         <div className={styles.grid}>
           {/* FORM */}
           <form className={styles.form} onSubmit={onSubmit} noValidate>
-            {/* Full Name */}
             <div className={styles.field}>
               <label htmlFor="name" className={styles.label}>
                 Full Name <span className={styles.req}>*</span>
@@ -115,7 +115,6 @@ export default function Contact() {
               />
             </div>
 
-            {/* Email */}
             <div className={styles.field}>
               <label htmlFor="email" className={styles.label}>
                 Email Address <span className={styles.req}>*</span>
@@ -132,7 +131,6 @@ export default function Contact() {
               />
             </div>
 
-            {/* Subject (optional) */}
             <div className={styles.field}>
               <label htmlFor="subject" className={styles.label}>
                 Subject (optional)
@@ -153,7 +151,6 @@ export default function Contact() {
               </select>
             </div>
 
-            {/* Message */}
             <div className={styles.field}>
               <label htmlFor="message" className={styles.label}>
                 Message <span className={styles.req}>*</span>
@@ -171,7 +168,6 @@ export default function Contact() {
               />
             </div>
 
-            {/* Attachment (optional) */}
             <div className={styles.field}>
               <label htmlFor="attachment" className={styles.label}>
                 Attachment (optional)
@@ -187,7 +183,6 @@ export default function Contact() {
               <small className="text-muted">Max ~10MB; screenshots or documents.</small>
             </div>
 
-            {/* Consent */}
             <div className={`${styles.field} ${styles.consent}`}>
               <label className={styles.checkboxLabel}>
                 <input
@@ -204,7 +199,6 @@ export default function Contact() {
               </label>
             </div>
 
-            {/* Status */}
             {status.msg && (
               <div
                 className={`${styles.status} ${status.type === "ok" ? styles.ok : styles.err}`}
@@ -215,7 +209,6 @@ export default function Contact() {
               </div>
             )}
 
-            {/* Submit */}
             <div className={styles.actions}>
               <button
                 type="submit"
@@ -230,11 +223,10 @@ export default function Contact() {
 
           {/* ŞİRKET BİLGİLERİ (sağ kart) */}
           <aside className={styles.company} aria-label="Company details">
-            <h2 className={styles.company__title}>BridgeLang Ltd.</h2>
+            <h2 className={styles.company__title}>BridgeLang UK Ltd.</h2>
             <ul className={styles.company__list}>
               <li><strong>Company Number:</strong> 16555217</li>
-              <li><strong>Registered in:</strong> England and Wales</li>
-              <li className={styles.company__addrLabel}><strong>Registered Office:</strong></li>
+              <li><strong>Registered Address:</strong></li>
               <li className={styles.company__addr}>
                 The Apex, Derriford Business Park<br />
                 Brest Road, Plymouth, PL6 5FL<br />
@@ -244,7 +236,21 @@ export default function Contact() {
                 <strong>Email:</strong>{" "}
                 <a href="mailto:contact@bridgelang.co.uk">contact@bridgelang.co.uk</a>
               </li>
+              <li>
+                <strong>Phone:</strong>{" "}
+                <a href="tel:+442071111638">+44 20 7111 1638</a>
+              </li>
             </ul>
+
+            {/* WhatsApp Butonu */}
+            <a
+              href="https://wa.me/442071111638"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.whatsapp}
+            >
+              <FaWhatsapp /> Chat on WhatsApp
+            </a>
 
             <div className={styles.company__help}>
               Need quick help? Check{" "}
