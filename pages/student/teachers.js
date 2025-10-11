@@ -108,18 +108,11 @@ export default function TeachersList() {
   return (
       <div className={styles.container}>
       <SubscriptionBanner />
-        {loyalty && (
-          <LoyaltyBadge
-            plan={loyalty.plan}
-            loyaltyMonths={loyalty.loyaltyMonths}
-            loyaltyBonusCount={loyalty.loyaltyBonusCount}
-            discountEligible={loyalty.discountEligible}
-            promoCode={loyalty.promoCode}
-            lessonCoupons={data.lessonCoupons || []}
-            subscriptionCoupons={data.subscriptionCoupons || []}
-            lessonsTaken={data.lessonsTaken || 0}
-          />
-        )}
+        <LoyaltyBadge
+          plan={activePlan}
+          lessonsTaken={lessonsTaken}
+          subscriptionCoupons={subscriptionCoupons}
+        />
         <h2>Browse Our Teachers</h2>
 
         <div className={styles.filters} role="region" aria-label="Filters">
