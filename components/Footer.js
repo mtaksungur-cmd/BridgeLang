@@ -52,7 +52,7 @@ export default function Footer() {
                 <i className="bi bi-facebook"></i>
               </a>
               <a href="https://wa.me/442071111638" target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
-                <FaWhatsapp /> WhatsApp Chat
+                <FaWhatsapp /> Chat on WhatsApp
               </a>
             </div>
           </div>
