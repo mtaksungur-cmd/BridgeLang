@@ -49,15 +49,28 @@
 
 /* WhatsApp Link */
 .whatsappLink {
-  color: #25d366 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #25d366;  /* WhatsApp green */
+  color: #fff !important;
   font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-top: 4px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
 
   svg {
     font-size: 1.1rem;
   }
 
   &:hover {
-    color: #1ebe5d !important;
+    background-color: #1ebe5d;
+    transform: translateY(-1px);
+    text-decoration: none;
   }
 }
 
