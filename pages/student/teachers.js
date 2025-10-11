@@ -30,17 +30,14 @@ export default function TeachersList() {
       );
       const snap = await getDocs(q);
       const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+  
       const reviewMap = {};
       for (const t of data) {
-        const q = query(
-          collection(db, 'reviews'),
-          where('teacherId', '==', t.id)
-        );
-        const rs = await getDocs(q);
+        const rq = query(collection(db, 'reviews'), where('teacherId', '==', t.id));
+        const rs = await getDocs(rq);
         reviewMap[t.id] = rs.docs.map(d => d.data().rating);
       }
-
+  
       const withRatings = data.map(t => {
         const ratings = reviewMap[t.id] || [];
         const avg = ratings.length
@@ -50,31 +47,41 @@ export default function TeachersList() {
         const latestBadge = badges.length ? badges[badges.length - 1] : null;
         return { ...t, avgRating: avg, reviewCount: ratings.length, latestBadge };
       });
-
+  
       withRatings.sort((a, b) => {
         if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount;
         return (b.avgRating || 0) - (a.avgRating || 0);
       });
-
+  
       setAllTeachers(withRatings);
       setTeachers(withRatings);
       setLoading(false);
     };
-
-    const checkPlan = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      const sSnap = await getDoc(doc(db, "users", user.uid));
-      if (sSnap.exists()) {
-        const data = sSnap.data();
-        setActivePlan(data.subscriptionPlan || "free");
-        setLessonsTaken(data.lessonsTaken || 0);
-        setSubscriptionCoupons(data.subscriptionCoupons || []);
+  
+    // 🔹 Kullanıcı oturumunu dinle (auth senkronizasyonu)
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        setActivePlan("free");
+        return;
       }
-    };
-
+  
+      try {
+        const sSnap = await getDoc(doc(db, "users", user.uid));
+        if (sSnap.exists()) {
+          const data = sSnap.data();
+          setActivePlan(data.subscriptionPlan || "free");
+          setLessonsTaken(data.lessonsTaken || 0);
+          setSubscriptionCoupons(data.subscriptionCoupons || []);
+        }
+      } catch (err) {
+        console.error("checkPlan error:", err);
+      }
+    });
+  
     fetchTeachers();
-    checkPlan();
+  
+    // cleanup
+    return () => unsubscribe();
   }, []);
 
   const citiesForCountry = useMemo(() => {
