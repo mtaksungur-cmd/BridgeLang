@@ -4,7 +4,9 @@ import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firesto
 import Link from 'next/link';
 import Image from 'next/image';
 import SubscriptionBanner from "../../components/SubscriptionBanner";
-import LoyaltyBadge from "../../components/LoyaltyBadge"; // 🔹 eklendi
+import LoyaltyBadge from "../../components/LoyaltyBadge";
+import { getLoyaltyInfo } from '../../lib/loyalty';
+import { useSubscriptionGuard } from '../../lib/subscriptionGuard';
 import { useRouter } from 'next/router';
 import styles from "../../scss/TeachersList.module.scss";
 
@@ -104,19 +106,20 @@ export default function TeachersList() {
   if (loading) return <p className={styles.loading}>Loading teachers...</p>;
 
   return (
-    <div>
-      <SubscriptionBanner />
-
-      {/* 🔹 Kullanıcının planına göre LoyaltyBadge gösterimi */}
-      <div className={styles.loyaltyBox}>
-        <LoyaltyBadge
-          plan={activePlan}
-          lessonsTaken={lessonsTaken}
-          subscriptionCoupons={subscriptionCoupons}
-        />
-      </div>
-
       <div className={styles.container}>
+      <SubscriptionBanner />
+        {loyalty && (
+          <LoyaltyBadge
+            plan={loyalty.plan}
+            loyaltyMonths={loyalty.loyaltyMonths}
+            loyaltyBonusCount={loyalty.loyaltyBonusCount}
+            discountEligible={loyalty.discountEligible}
+            promoCode={loyalty.promoCode}
+            lessonCoupons={data.lessonCoupons || []}
+            subscriptionCoupons={data.subscriptionCoupons || []}
+            lessonsTaken={data.lessonsTaken || 0}
+          />
+        )}
         <h2>Browse Our Teachers</h2>
 
         <div className={styles.filters} role="region" aria-label="Filters">
@@ -221,6 +224,5 @@ export default function TeachersList() {
           })}
         </div>
       </div>
-    </div>
   );
 }
