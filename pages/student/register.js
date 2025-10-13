@@ -174,7 +174,11 @@ export default function StudentRegister() {
         setSuccess(true);
         setError('');
       } else {
-        await sendEmailVerification(user);
+        await fetch('/api/auth/send-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name: form.name }),
+        });
         setSuccess(true);
       }
 
