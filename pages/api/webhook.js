@@ -59,7 +59,7 @@ const PLAN_LIMITS = {
 async function createLoyaltyLessonCoupon(plan, lifetime) {
   const percent = plan === 'vip' ? 20 : plan === 'pro' ? 10 : 0;
   if (!percent) return null;
-  if (lifetime % 3 !== 0) return null; // her 3., 6., 9. ödeme
+  if (lifetime % 3 !== 0) return null;
 
   const coupon = await stripe.coupons.create({
     percent_off: percent,
@@ -99,7 +99,7 @@ export default async function handler(req, res) {
     const session = event.data.object;
     const meta = session.metadata || {};
 
-    // 🔹 Abonelik (one-off) – upgrade / renewal
+    // 🔹 Abonelik (one-off)
     if (meta.bookingType === 'subscription_upgrade') {
       const userId = meta.userId;
       const uref = adminDb.collection('users').doc(userId);
@@ -110,8 +110,6 @@ export default async function handler(req, res) {
       const lifetime = (sub.lifetimePayments || 0) + 1;
       const plan = meta.upgradeTo;
       const base = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
-
-      // Yeni dönem: 30 gün ileri
       const now = Date.now();
       const nextMonth = now + 30 * 86400000;
 
@@ -125,7 +123,6 @@ export default async function handler(req, res) {
         pending_downgrade_to: null,
       };
 
-      // 🔹 Uygulanmış VIP kuponu (varsa)
       let subscriptionCoupons = Array.isArray(udata.subscriptionCoupons)
         ? [...udata.subscriptionCoupons]
         : [];
@@ -142,7 +139,6 @@ export default async function handler(req, res) {
         });
       }
 
-      // 🔹 Sadakat bonusu oluştur (her 3 ayda bir)
       let lessonCoupons = Array.isArray(udata.lessonCoupons)
         ? [...udata.lessonCoupons]
         : [];
@@ -160,7 +156,6 @@ export default async function handler(req, res) {
           milestonePaymentNo: lifetime,
         });
 
-        // 🎁 bilgilendirme e-postası
         try {
           await sendMail({
             to: udata.email,
@@ -177,7 +172,6 @@ export default async function handler(req, res) {
         }
       }
 
-      // 🔹 Firestore güncelle
       await uref.set(
         {
           subscriptionPlan: plan,
@@ -190,35 +184,20 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
-      console.log(
-        `✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${
-          meta.upgradeFrom
-        } → ${plan} | lifetime #${lifetime} | loyalty=${!!loyalty}`
-      );
+      console.log(`✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${meta.upgradeFrom} → ${plan} | lifetime #${lifetime} | loyalty=${!!loyalty}`);
       return res.status(200).json({ received: true });
     }
 
     // 🔹 Normal ders ödemesi (lesson booking)
     if (meta.bookingType === 'lesson') {
-      const {
-        teacherId,
-        studentId,
-        date,
-        startTime,
-        endTime,
-        duration,
-        location,
-        timezone,
-      } = meta;
+      const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
       const startAtUtc = toStartAtUtc({ date, startTime, timezone });
       const bookingRef = adminDb.collection('bookings').doc(session.id);
 
       const originalCents = Number(meta.original_unit_amount || 0);
-      const discountedCents =
-        Number(meta.discounted_unit_amount || session.amount_total || 0);
+      const discountedCents = Number(meta.discounted_unit_amount || session.amount_total || 0);
       const discountPercent = Number(meta.discountPercent || 0);
-
       const originalPrice = originalCents / 100;
       const paidAmount = discountedCents / 100;
       const teacherShare = (originalCents * 0.8) / 100;
@@ -227,13 +206,7 @@ export default async function handler(req, res) {
       let meetingLink = '';
       if (location === 'Online') {
         try {
-          meetingLink = await createDailyRoom({
-            teacherId,
-            date,
-            startTime,
-            durationMinutes,
-            timezone,
-          });
+          meetingLink = await createDailyRoom({ teacherId, date, startTime, durationMinutes, timezone });
         } catch (e) {
           console.error('Daily create exception:', e);
         }
@@ -279,25 +252,13 @@ export default async function handler(req, res) {
         if (taken >= 6) {
           const updated = [];
           for (const c of coupons) {
-            if (
-              !c.active &&
-              !c.used &&
-              c.type === 'lesson' &&
-              c.code?.startsWith('REV-')
-            ) {
+            if (!c.active && !c.used && c.type === 'lesson' && c.code?.startsWith('REV-')) {
               try {
-                await stripe.promotionCodes.update(c.promoId || c.code, {
-                  active: true,
-                });
+                await stripe.promotionCodes.update(c.promoId || c.code, { active: true });
                 c.active = true;
-                console.log(
-                  `✅ Review coupon activated for ${studentId}: ${c.code}`
-                );
+                console.log(`✅ Review coupon activated for ${studentId}: ${c.code}`);
               } catch (err) {
-                console.warn(
-                  `⚠️ Could not activate review coupon ${c.code}:`,
-                  err.message
-                );
+                console.warn(`⚠️ Could not activate review coupon ${c.code}:`, err.message);
               }
             }
             updated.push({ ...c, used: !!c.used, active: !!c.active });
@@ -307,6 +268,54 @@ export default async function handler(req, res) {
 
         await uref.update({ lessonsTaken: taken, lessonCoupons: coupons });
         console.log(`📘 Lesson count updated for ${studentId}: ${taken}`);
+      }
+
+      /* -------------------- ✉️ Mail gönderimi -------------------- */
+      try {
+        // Öğrenci & öğretmen verilerini al
+        const teacherSnap = await adminDb.collection('users').doc(teacherId).get();
+        const studentSnap = await adminDb.collection('users').doc(studentId).get();
+        const teacher = teacherSnap.data() || {};
+        const student = studentSnap.data() || {};
+
+        const formattedDate = DateTime.fromFormat(date, 'yyyy-MM-dd').toFormat('dd LLL yyyy');
+        const baseInfo = `
+          <p><b>Date:</b> ${formattedDate}</p>
+          <p><b>Start:</b> ${startTime} ${timezone ? `(${timezone})` : ''}</p>
+          <p><b>Duration:</b> ${durationMinutes} minutes</p>
+          <p><b>Location:</b> ${location}</p>
+          ${meetingLink ? `<p><b>Join Link:</b> <a href="${meetingLink}">${meetingLink}</a></p>` : ''}
+        `;
+
+        // Öğrenci maili
+        await sendMail({
+          to: student.email,
+          subject: `✅ Lesson booked with ${teacher.name || 'your teacher'}`,
+          html: `
+            <p>Hi ${student.name || 'Student'},</p>
+            <p>Your lesson has been successfully booked.</p>
+            <p><b>Teacher:</b> ${teacher.name || 'Teacher'}</p>
+            ${baseInfo}
+            <p>We’ll notify you again 1 hour before the lesson.</p>
+            <p>Thank you for choosing BridgeLang!</p>
+          `,
+        });
+
+        // Öğretmen maili
+        await sendMail({
+          to: teacher.email,
+          subject: `📘 New lesson booked with ${student.name || 'a student'}`,
+          html: `
+            <p>Hi ${teacher.name || 'Teacher'},</p>
+            <p>You have a new lesson booking!</p>
+            <p><b>Student:</b> ${student.name || 'Student'}</p>
+            ${baseInfo}
+            <p>Please review your schedule and prepare for the session.</p>
+            <p>BridgeLang Teacher Portal</p>
+          `,
+        });
+      } catch (mailErr) {
+        console.warn('⚠️ Lesson booking mail failed:', mailErr.message);
       }
 
       return res.status(200).json({ received: true });
