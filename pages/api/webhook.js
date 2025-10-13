@@ -82,11 +82,7 @@ export default async function handler(req, res) {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(
-      buf,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error('❌ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -99,7 +95,7 @@ export default async function handler(req, res) {
     const session = event.data.object;
     const meta = session.metadata || {};
 
-    // 🔹 Abonelik (one-off)
+    /* 🔹 Plan ödemesi (abonelik yükseltme / yenileme) */
     if (meta.bookingType === 'subscription_upgrade') {
       const userId = meta.userId;
       const uref = adminDb.collection('users').doc(userId);
@@ -184,7 +180,7 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
-      /* 🔹 Fatura / makbuz linki ile bilgilendirme e-postası */
+      /* 🔹 Fatura / makbuz e-postası */
       try {
         let receiptUrl = null;
         let invoiceNumber = null;
@@ -196,9 +192,7 @@ export default async function handler(req, res) {
         }
 
         if (!receiptUrl && session.payment_intent) {
-          const pi = await stripe.paymentIntents.retrieve(session.payment_intent, {
-            expand: ['charges'],
-          });
+          const pi = await stripe.paymentIntents.retrieve(session.payment_intent, { expand: ['charges'] });
           const charge = pi?.charges?.data?.[0];
           receiptUrl = charge?.receipt_url || null;
         }
@@ -231,7 +225,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true });
     }
 
-    // 🔹 Normal ders ödemesi (lesson booking)
+    /* 🔹 Normal ders ödemesi */
     if (meta.bookingType === 'lesson') {
       const { teacherId, studentId, date, startTime, endTime, duration, location } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
@@ -282,6 +276,36 @@ export default async function handler(req, res) {
         },
         { merge: true }
       );
+
+      /* 🔹 Öğrencinin lessonTaken sayısını artır ve kuponları güncelle */
+      try {
+        const uref = adminDb.collection('users').doc(studentId);
+        const snap = await uref.get();
+        const user = snap.exists ? snap.data() : {};
+        const newLessonCount = (user.lessonsTaken || 0) + 1;
+        let coupons = Array.isArray(user.lessonCoupons) ? [...user.lessonCoupons] : [];
+
+        if (newLessonCount >= 6) {
+          const updatedCoupons = [];
+          for (const c of coupons) {
+            if (!c.active && !c.used && c.type === 'lesson' && c.code?.startsWith('REV-')) {
+              try {
+                await stripe.promotionCodes.update(c.promoId || c.code, { active: true });
+                c.active = true;
+              } catch (err) {
+                console.warn(`⚠️ Coupon activation failed for ${c.code}:`, err.message);
+              }
+            }
+            updatedCoupons.push(c);
+          }
+          coupons = updatedCoupons;
+        }
+
+        await uref.update({ lessonsTaken: newLessonCount, lessonCoupons: coupons });
+        console.log(`📘 lessonsTaken updated: ${newLessonCount} for ${studentId}`);
+      } catch (err) {
+        console.warn('⚠️ lessonsTaken update failed:', err.message);
+      }
 
       /* -------------------- ✉️ Mail gönderimi -------------------- */
       try {
