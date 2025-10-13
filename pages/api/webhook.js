@@ -184,6 +184,46 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
+      /* 🔹 Fatura / makbuz linki ile bilgilendirme e-postası */
+      try {
+        // Öncelik: invoice linki; yoksa charge receipt linki
+        let invoiceUrl = null;
+        let invoiceNumber = null;
+
+        if (session.invoice) {
+          const invoice = await stripe.invoices.retrieve(session.invoice);
+          invoiceUrl = invoice?.hosted_invoice_url || invoice?.invoice_pdf || null;
+          invoiceNumber = invoice?.number || null;
+        }
+
+        if (!invoiceUrl && session.payment_intent) {
+          const pi = await stripe.paymentIntents.retrieve(session.payment_intent, { expand: ['charges'] });
+          const charge = pi?.charges?.data?.[0];
+          invoiceUrl = charge?.receipt_url || null;
+        }
+
+        const amount = (session.amount_total / 100).toFixed(2);
+        await sendMail({
+          to: udata.email,
+          subject: `✅ ${plan.toUpperCase()} plan payment confirmed${invoiceNumber ? ` — Invoice ${invoiceNumber}` : ''}`,
+          html: `
+            <p>Hi ${udata.name || 'there'},</p>
+            <p>Your <b>${plan.toUpperCase()}</b> plan payment was successful.</p>
+            <p><b>Amount Paid:</b> £${amount}</p>
+            <p><b>Date:</b> ${new Date().toLocaleDateString('en-GB')}</p>
+            ${
+              invoiceUrl
+                ? `<p>You can view or download your ${invoiceNumber ? 'invoice' : 'receipt'} here:<br/>
+                   <a href="${invoiceUrl}" target="_blank" rel="noopener">${invoiceUrl}</a></p>`
+                : `<p>You will receive your receipt shortly.</p>`
+            }
+            <p>Thank you for choosing BridgeLang!</p>
+          `,
+        });
+      } catch (e) {
+        console.warn('⚠️ Subscription invoice email failed:', e.message);
+      }
+
       console.log(`✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${meta.upgradeFrom} → ${plan} | lifetime #${lifetime} | loyalty=${!!loyalty}`);
       return res.status(200).json({ received: true });
     }
