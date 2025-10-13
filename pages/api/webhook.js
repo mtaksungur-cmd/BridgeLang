@@ -186,23 +186,26 @@ export default async function handler(req, res) {
 
       /* 🔹 Fatura / makbuz linki ile bilgilendirme e-postası */
       try {
-        // Öncelik: invoice linki; yoksa charge receipt linki
-        let invoiceUrl = null;
+        let receiptUrl = null;
         let invoiceNumber = null;
 
         if (session.invoice) {
           const invoice = await stripe.invoices.retrieve(session.invoice);
-          invoiceUrl = invoice?.hosted_invoice_url || invoice?.invoice_pdf || null;
+          receiptUrl = invoice?.hosted_invoice_url || invoice?.invoice_pdf || null;
           invoiceNumber = invoice?.number || null;
         }
 
-        if (!invoiceUrl && session.payment_intent) {
-          const pi = await stripe.paymentIntents.retrieve(session.payment_intent, { expand: ['charges'] });
+        if (!receiptUrl && session.payment_intent) {
+          const pi = await stripe.paymentIntents.retrieve(session.payment_intent, {
+            expand: ['charges'],
+          });
           const charge = pi?.charges?.data?.[0];
-          invoiceUrl = charge?.receipt_url || null;
+          receiptUrl = charge?.receipt_url || null;
         }
 
         const amount = (session.amount_total / 100).toFixed(2);
+        const dateUk = DateTime.now().setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm');
+
         await sendMail({
           to: udata.email,
           subject: `✅ ${plan.toUpperCase()} plan payment confirmed${invoiceNumber ? ` — Invoice ${invoiceNumber}` : ''}`,
@@ -210,11 +213,11 @@ export default async function handler(req, res) {
             <p>Hi ${udata.name || 'there'},</p>
             <p>Your <b>${plan.toUpperCase()}</b> plan payment was successful.</p>
             <p><b>Amount Paid:</b> £${amount}</p>
-            <p><b>Date:</b> ${new Date().toLocaleDateString('en-GB')}</p>
+            <p><b>Date (UK Time):</b> ${dateUk}</p>
             ${
-              invoiceUrl
+              receiptUrl
                 ? `<p>You can view or download your ${invoiceNumber ? 'invoice' : 'receipt'} here:<br/>
-                   <a href="${invoiceUrl}" target="_blank" rel="noopener">${invoiceUrl}</a></p>`
+                   <a href="${receiptUrl}" target="_blank" rel="noopener">${receiptUrl}</a></p>`
                 : `<p>You will receive your receipt shortly.</p>`
             }
             <p>Thank you for choosing BridgeLang!</p>
@@ -224,15 +227,15 @@ export default async function handler(req, res) {
         console.warn('⚠️ Subscription invoice email failed:', e.message);
       }
 
-      console.log(`✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${meta.upgradeFrom} → ${plan} | lifetime #${lifetime} | loyalty=${!!loyalty}`);
+      console.log(`✅ Subscription ${meta.renewal === '1' ? 'renewed' : 'changed'}: ${meta.upgradeFrom} → ${plan} | lifetime #${lifetime}`);
       return res.status(200).json({ received: true });
     }
 
     // 🔹 Normal ders ödemesi (lesson booking)
     if (meta.bookingType === 'lesson') {
-      const { teacherId, studentId, date, startTime, endTime, duration, location, timezone } = meta;
+      const { teacherId, studentId, date, startTime, endTime, duration, location } = meta;
       const durationMinutes = parseInt(duration, 10) || 60;
-      const startAtUtc = toStartAtUtc({ date, startTime, timezone });
+      const startAtUtc = toStartAtUtc({ date, startTime, timezone: 'Europe/London' });
       const bookingRef = adminDb.collection('bookings').doc(session.id);
 
       const originalCents = Number(meta.original_unit_amount || 0);
@@ -246,7 +249,7 @@ export default async function handler(req, res) {
       let meetingLink = '';
       if (location === 'Online') {
         try {
-          meetingLink = await createDailyRoom({ teacherId, date, startTime, durationMinutes, timezone });
+          meetingLink = await createDailyRoom({ teacherId, date, startTime, durationMinutes, timezone: 'Europe/London' });
         } catch (e) {
           console.error('Daily create exception:', e);
         }
@@ -267,12 +270,11 @@ export default async function handler(req, res) {
           discountPercent,
           teacherShare,
           platformSubsidy,
-          discountLabel: meta.discountLabel || '',
           status: 'pending-approval',
           teacherApproved: false,
           studentConfirmed: false,
           reminderSent: false,
-          timezone,
+          timezone: 'Europe/London',
           startAtUtc,
           stripeSessionId: session.id,
           createdAt: new Date(),
@@ -281,53 +283,23 @@ export default async function handler(req, res) {
         { merge: true }
       );
 
-      // 🔹 Öğrenci kupon aktivasyonu (review kuponları)
-      if (studentId) {
-        const uref = adminDb.collection('users').doc(studentId);
-        const usnap = await uref.get();
-        const u = usnap.exists ? usnap.data() : {};
-        const taken = (u.lessonsTaken || 0) + 1;
-        let coupons = u.lessonCoupons || [];
-
-        if (taken >= 6) {
-          const updated = [];
-          for (const c of coupons) {
-            if (!c.active && !c.used && c.type === 'lesson' && c.code?.startsWith('REV-')) {
-              try {
-                await stripe.promotionCodes.update(c.promoId || c.code, { active: true });
-                c.active = true;
-                console.log(`✅ Review coupon activated for ${studentId}: ${c.code}`);
-              } catch (err) {
-                console.warn(`⚠️ Could not activate review coupon ${c.code}:`, err.message);
-              }
-            }
-            updated.push({ ...c, used: !!c.used, active: !!c.active });
-          }
-          coupons = updated;
-        }
-
-        await uref.update({ lessonsTaken: taken, lessonCoupons: coupons });
-        console.log(`📘 Lesson count updated for ${studentId}: ${taken}`);
-      }
-
       /* -------------------- ✉️ Mail gönderimi -------------------- */
       try {
-        // Öğrenci & öğretmen verilerini al
         const teacherSnap = await adminDb.collection('users').doc(teacherId).get();
         const studentSnap = await adminDb.collection('users').doc(studentId).get();
         const teacher = teacherSnap.data() || {};
         const student = studentSnap.data() || {};
 
-        const formattedDate = DateTime.fromFormat(date, 'yyyy-MM-dd').toFormat('dd LLL yyyy');
+        const formattedDate = DateTime.fromFormat(date, 'yyyy-MM-dd', { zone: 'Europe/London' }).toFormat('dd LLL yyyy');
+        const formattedTime = DateTime.fromFormat(startTime, 'HH:mm', { zone: 'Europe/London' }).toFormat('HH:mm');
         const baseInfo = `
           <p><b>Date:</b> ${formattedDate}</p>
-          <p><b>Start:</b> ${startTime} ${timezone ? `(${timezone})` : ''}</p>
+          <p><b>Start:</b> ${formattedTime} (UK Time)</p>
           <p><b>Duration:</b> ${durationMinutes} minutes</p>
           <p><b>Location:</b> ${location}</p>
           ${meetingLink ? `<p><b>Join Link:</b> <a href="${meetingLink}">${meetingLink}</a></p>` : ''}
         `;
 
-        // Öğrenci maili
         await sendMail({
           to: student.email,
           subject: `✅ Lesson booked with ${teacher.name || 'your teacher'}`,
@@ -341,7 +313,6 @@ export default async function handler(req, res) {
           `,
         });
 
-        // Öğretmen maili
         await sendMail({
           to: teacher.email,
           subject: `📘 New lesson booked with ${student.name || 'a student'}`,
