@@ -146,6 +146,16 @@ export default function TeacherApply() {
 
       await getBadgesForTeacher(uid); // istersen açabilirsin
 
+      // ✅ Mail gönderimi (başvuru alındı)
+      await fetch('/api/mail/teacher-application', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+        }),
+      });
+
       setSuccess(
         '✅ Your application has been submitted. You will be contacted within 3–5 business days.'
       );
