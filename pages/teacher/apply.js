@@ -141,7 +141,7 @@ export default function TeacherApply() {
         status: 'pending',
         createdAt: Timestamp.now(),
         role: 'teacher',
-        badges: []
+        badges: ['🆕 New Teacher']
       });
 
       await getBadgesForTeacher(uid); // istersen açabilirsin
