@@ -159,7 +159,7 @@ export default async function handler(req, res) {
             html: `
               <p>Hi ${udata.name || 'there'},</p>
               <p>Congratulations! You've unlocked a <b>${loyalty.percent}% loyalty discount</b> for your next lesson booking.</p>
-              <p>Use your loyalty coupon code: <b>${loyalty.code}</b></p>
+              <p>Your loyalty discount has been automatically applied and will appear during your next lesson payment.</p>
               <p>Keep learning with BridgeLang!</p>
             `,
           });
