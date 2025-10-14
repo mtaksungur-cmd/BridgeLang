@@ -96,24 +96,42 @@ export default function TeacherLessons() {
   }, [router]);
 
   const handleComplete = async (booking) => {
-    const updates = { teacherApproved: true };
+    try {
+      const updates = { teacherApproved: true };
 
-    if (booking.studentConfirmed) {
-      updates.status = 'approved';
-      updates.payoutSent = false;
-    } else {
-      updates.status = 'teacher_approved';
-    }
+      if (booking.studentConfirmed) {
+        updates.status = 'approved';
+        updates.payoutSent = false;
+      } else {
+        updates.status = 'teacher_approved';
+      }
 
-    await updateDoc(doc(db, 'bookings', booking.id), updates);
-    setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
+      await updateDoc(doc(db, 'bookings', booking.id), updates);
+      setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
 
-    if (updates.status === 'approved') {
-      await fetch('/api/transfer-payout', {
+      alert('You confirmed the lesson.');
+
+      // 🔹 Mail ve server işlemleri
+      await fetch('/api/booking/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: booking.id })
+        body: JSON.stringify({
+          bookingId: booking.id,
+          role: 'teacher', // 👈 öğrencinin mail almasını sağlar
+        }),
       });
+
+      // 🔹 Eğer iki taraf da onayladıysa ödeme gönder
+      if (updates.status === 'approved') {
+        await fetch('/api/transfer-payout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: booking.id }),
+        });
+      }
+    } catch (err) {
+      console.error('handleComplete error:', err);
+      alert('Something went wrong confirming the lesson.');
     }
   };
 
