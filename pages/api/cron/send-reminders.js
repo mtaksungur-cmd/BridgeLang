@@ -1,6 +1,6 @@
-// pages/api/cron/send-reminders.js
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { sendMail, buildReminderEmail } from '../../../lib/mailer';
+import { DateTime } from 'luxon';
 
 export default async function handler(req, res) {
   // --- FORCE PATH (tek booking'i anında gönder) ---
@@ -64,8 +64,9 @@ export default async function handler(req, res) {
 
   // --- CRON PATH (60 dk kala otomatik) ---
   try {
-    const now = Date.now();
-    const in60 = now + 60 * 60 * 1000;
+    // 🔹 UK saatine göre çalıştır
+    const nowUk = DateTime.now().setZone('Europe/London').toMillis();
+    const in60 = nowUk + 60 * 60 * 1000;
     const toleranceMs = 5 * 60 * 1000;
     const minTs = in60 - toleranceMs;
     const maxTs = in60 + toleranceMs;
@@ -79,6 +80,7 @@ export default async function handler(req, res) {
       .get();
 
     if (qs.empty) {
+      console.log('[cron] no reminders found (UK time window).');
       return res.status(200).json({ ok: true, found: 0 });
     }
 
@@ -106,9 +108,9 @@ export default async function handler(req, res) {
         duration: b.duration || null,
         location: b.location || '—',
         meetingLink: b.meetingLink || '',
-        timezone: b.timezone || null,
+        timezone: 'Europe/London',
       });
-      
+
       const forTeacher = buildReminderEmail({
         who: 'teacher',
         teacherName: teacher?.name || 'Teacher',
@@ -119,7 +121,7 @@ export default async function handler(req, res) {
         duration: b.duration || null,
         location: b.location || '—',
         meetingLink: b.meetingLink || '',
-        timezone: b.timezone || null,
+        timezone: 'Europe/London',
       });
 
       const tasks = [];
