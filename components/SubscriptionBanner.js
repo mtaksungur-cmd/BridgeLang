@@ -21,6 +21,8 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState("");
   const [credits, setCredits] = useState(null);
+  const [messagesLeft, setMessagesLeft] = useState(null);
+  const [viewsLeft, setViewsLeft] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -31,6 +33,8 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
         const d = snap.data();
         setPlan(d.subscriptionPlan || "");
         setCredits(typeof d.credits === "number" ? d.credits : null);
+        setMessagesLeft(typeof d.messagesLeft === "number" ? d.messagesLeft : null);
+        setViewsLeft(typeof d.viewsLeft === "number" ? d.viewsLeft : null);
       }
       setLoading(false);
     };
@@ -48,7 +52,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
         borderRadius: 12,
         margin: "18px auto 36px auto",
         padding: "16px 28px",
-        maxWidth: 600,
+        maxWidth: 700,
         textAlign: "center",
         fontWeight: 500,
         boxShadow: "0 1px 8px #f1f3fa",
@@ -56,6 +60,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
         alignItems: "center",
         justifyContent: "center",
         flexWrap: "wrap",
+        gap: 12,
       }}
     >
       {!plan ? (
@@ -66,7 +71,6 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
           <Link href="/student/subscription">
             <button
               style={{
-                marginLeft: 18,
                 background: "#1464ff",
                 color: "#fff",
                 border: 0,
@@ -80,47 +84,6 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
             </button>
           </Link>
         </>
-      ) : plan === "free" ? (
-        <>
-          <span
-            style={{
-              color: PLAN_COLORS.free,
-              fontWeight: 700,
-              fontSize: 17,
-              marginRight: 12,
-            }}
-          >
-            🆓 Free Plan Active
-          </span>
-          <span
-            style={{
-              background: "#fff",
-              border: "1px solid #ccc",
-              borderRadius: 7,
-              padding: "5px 13px",
-              fontWeight: 600,
-              color: "#333",
-              marginRight: 12,
-            }}
-          >
-            10 profiles / 3 messages this month
-          </span>
-          <Link href="/student/subscription">
-            <button
-              style={{
-                background: "#fff",
-                color: "#1464ff",
-                border: "1.5px solid #1464ff",
-                borderRadius: 7,
-                padding: "6px 15px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Upgrade
-            </button>
-          </Link>
-        </>
       ) : (
         <>
           <span
@@ -128,11 +91,11 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
               color: PLAN_COLORS[plan] || "#1464ff",
               fontWeight: 700,
               fontSize: 17,
-              marginRight: 18,
             }}
           >
             {PLAN_LABELS[plan]} Plan Active
           </span>
+
           {typeof credits === "number" && (
             <span
               style={{
@@ -142,12 +105,42 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
                 padding: "5px 13px",
                 fontWeight: 600,
                 color: "#333",
-                marginRight: 12,
               }}
             >
               {credits} lesson credits left
             </span>
           )}
+
+          {typeof messagesLeft === "number" && (
+            <span
+              style={{
+                background: "#fff",
+                border: "1px solid #dde",
+                borderRadius: 7,
+                padding: "5px 13px",
+                fontWeight: 600,
+                color: "#333",
+              }}
+            >
+              {messagesLeft} messages left
+            </span>
+          )}
+
+          {typeof viewsLeft === "number" && (
+            <span
+              style={{
+                background: "#fff",
+                border: "1px solid #dde",
+                borderRadius: 7,
+                padding: "5px 13px",
+                fontWeight: 600,
+                color: "#333",
+              }}
+            >
+              {viewsLeft} profile views left
+            </span>
+          )}
+
           <Link href="/student/subscription">
             <button
               style={{
@@ -160,7 +153,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
                 cursor: "pointer",
               }}
             >
-              Change Plan
+              {plan === "free" ? "Upgrade" : "Change Plan"}
             </button>
           </Link>
         </>
