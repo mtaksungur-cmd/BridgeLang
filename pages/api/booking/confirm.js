@@ -1,7 +1,5 @@
 // pages/api/booking/confirm.js
-import { db } from '../../../lib/firebase';
 import { adminDb } from '../../../lib/firebaseAdmin';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { sendMail } from '../../../lib/mailer';
 
 export default async function handler(req, res) {
@@ -12,30 +10,30 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid payload' });
   }
 
-  const ref = doc(db, 'bookings', bookingId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return res.status(404).json({ error: 'Not found' });
+  const ref = adminDb.collection('bookings').doc(bookingId);
+  const snap = await ref.get();
+  if (!snap.exists) return res.status(404).json({ error: 'Booking not found' });
 
   const data = snap.data();
   const updates =
-    role === 'student' ? { studentConfirmed: true } : { teacherApproved: true };
+    role === 'student'
+      ? { studentConfirmed: true }
+      : { teacherApproved: true };
 
-  await updateDoc(ref, updates);
+  await ref.update(updates);
 
   /* --- Mail gönderimi --- */
   try {
-    // Kullanıcı bilgilerini getir
-    const teacherRef = doc(db, 'users', data.teacherId);
-    const studentRef = doc(db, 'users', data.studentId);
+    const teacherRef = adminDb.collection('users').doc(data.teacherId);
+    const studentRef = adminDb.collection('users').doc(data.studentId);
     const [teacherSnap, studentSnap] = await Promise.all([
-      getDoc(teacherRef),
-      getDoc(studentRef),
+      teacherRef.get(),
+      studentRef.get(),
     ]);
 
     const teacher = teacherSnap.data() || {};
     const student = studentSnap.data() || {};
 
-    // Ortak ders bilgileri
     const baseInfo = `
       <p><b>Date:</b> ${data.date}</p>
       <p><b>Time:</b> ${data.startTime} – ${data.endTime}</p>
@@ -75,13 +73,13 @@ export default async function handler(req, res) {
     console.warn('⚠️ Lesson confirmation mail failed:', e.message);
   }
 
-  // --- İki taraf da onayladıysa dersi onayla ---
+  // --- İki taraf da onayladıysa statüyü güncelle ---
   if (
     (role === 'student' && data.teacherApproved) ||
     (role === 'teacher' && data.studentConfirmed)
   ) {
-    await updateDoc(ref, { status: 'approved' });
+    await ref.update({ status: 'approved' });
   }
 
-  res.status(200).json({ success: true });
+  return res.status(200).json({ success: true });
 }
