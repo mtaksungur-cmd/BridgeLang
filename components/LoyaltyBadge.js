@@ -1,7 +1,25 @@
-export default function LoyaltyBadge({
-  plan,
-  lessonsTaken = 0,
-}) {
+import { useEffect, useState } from "react";
+import { auth, db } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+export default function LoyaltyBadge({ plan, lessonsTaken = 0 }) {
+  const [messagesLeft, setMessagesLeft] = useState(null);
+  const [viewsLeft, setViewsLeft] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) {
+        const d = snap.data();
+        setMessagesLeft(typeof d.messagesLeft === "number" ? d.messagesLeft : null);
+        setViewsLeft(typeof d.viewsLeft === "number" ? d.viewsLeft : null);
+      }
+    };
+    fetchUser();
+  }, []);
+
   let badge = "🎟️";
   let planText = "";
   let lessonDiscount = "";
@@ -54,6 +72,18 @@ export default function LoyaltyBadge({
       <div style={{ fontSize: 14, color: "#333", marginTop: 6 }}>
         📘 Lessons Taken: <strong>{lessonsTaken}</strong>
       </div>
+
+      {messagesLeft !== null && (
+        <div style={{ fontSize: 14, color: "#333", marginTop: 6 }}>
+          💬 Messages Left: <strong>{messagesLeft}</strong>
+        </div>
+      )}
+
+      {viewsLeft !== null && (
+        <div style={{ fontSize: 14, color: "#333", marginTop: 6 }}>
+          👀 Profile Views Left: <strong>{viewsLeft}</strong>
+        </div>
+      )}
 
       <div
         style={{
