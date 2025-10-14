@@ -60,25 +60,42 @@ export default function StudentLessons() {
   }, []);
 
   const confirmLesson = async (booking) => {
-    const updates = { studentConfirmed: true };
+    try {
+      // 🔹 Local güncelleme (isteğe bağlı)
+      const updates = { studentConfirmed: true };
+      if (booking.teacherApproved) {
+        updates.status = 'approved';
+        updates.payoutSent = false;
+      } else {
+        updates.status = 'student_approved';
+      }
 
-    if (booking.teacherApproved) {
-      updates.status = 'approved';
-      updates.payoutSent = false;
-    } else {
-      updates.status = 'student_approved';
-    }
+      // 🔹 Firestore güncelle
+      await updateDoc(doc(db, 'bookings', booking.id), updates);
+      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...updates } : b));
+      alert('You confirmed the lesson.');
 
-    await updateDoc(doc(db, 'bookings', booking.id), updates);
-    setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...updates } : b));
-    alert('You confirmed the lesson.');
-
-    if (updates.status === 'approved') {
-      await fetch('/api/transfer-payout', {
+      // 🔹 Mail ve server tarafı işlemleri (API)
+      await fetch('/api/booking/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: booking.id })
+        body: JSON.stringify({
+          bookingId: booking.id,
+          role: 'student', // 👈 öğretmene mail gidecek
+        }),
       });
+
+      // 🔹 Eğer her iki taraf da onayladıysa ödeme gönder
+      if (updates.status === 'approved') {
+        await fetch('/api/transfer-payout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: booking.id }),
+        });
+      }
+    } catch (err) {
+      console.error('confirmLesson error:', err);
+      alert('Something went wrong confirming the lesson.');
     }
   };
 
@@ -183,7 +200,10 @@ export default function StudentLessons() {
                     )}
 
                     {isPastLesson(b.date, b.endTime, b.timezone) && !b.studentConfirmed && (
-                      <button className={`btn btn-success w-100 mb-2 ${styles.confirmBtn}`} onClick={() => confirmLesson(b)}>
+                      <button
+                        className={`btn btn-success w-100 mb-2 ${styles.confirmBtn}`}
+                        onClick={() => confirmLesson(b)}
+                      >
                         ✅ I attended
                       </button>
                     )}
