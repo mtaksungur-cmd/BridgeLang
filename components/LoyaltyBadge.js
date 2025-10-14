@@ -4,7 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 export default function LoyaltyBadge({ plan, lessonsTaken = 0 }) {
   const [messagesLeft, setMessagesLeft] = useState(null);
-  const [viewsLeft, setViewsLeft] = useState(null);
+  const [viewLimit, setViewLimit] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -14,7 +14,7 @@ export default function LoyaltyBadge({ plan, lessonsTaken = 0 }) {
       if (snap.exists()) {
         const d = snap.data();
         setMessagesLeft(typeof d.messagesLeft === "number" ? d.messagesLeft : null);
-        setViewsLeft(typeof d.viewsLeft === "number" ? d.viewsLeft : null);
+        setViewLimit(typeof d.viewLimit === "number" ? d.viewLimit : null);
       }
     };
     fetchUser();
@@ -79,9 +79,9 @@ export default function LoyaltyBadge({ plan, lessonsTaken = 0 }) {
         </div>
       )}
 
-      {viewsLeft !== null && (
+      {viewLimit !== null && (
         <div style={{ fontSize: 14, color: "#333", marginTop: 6 }}>
-          👀 Profile Views Left: <strong>{viewsLeft}</strong>
+          👀 Profile Views Left: <strong>{viewLimit}</strong>
         </div>
       )}
 
