@@ -64,6 +64,16 @@ export default function ChatBox({ chatId, userId, role, onFirstMessage }) {
       createdAt: serverTimestamp(),
     });
 
+    try {
+       await fetch('/api/chat/notifyMessage', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ chatId, senderId: userId, text, role }),
+       });
+     } catch (err) {
+       console.warn('⚠️ notifyMessage failed:', err);
+     }
+
     setInput("");
     setError("");
   };
