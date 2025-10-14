@@ -115,7 +115,8 @@ export default async function handler(req, res) {
             <p>Hi ${studentData.name || 'there'},</p>
             <p>Thanks for leaving a review on your recent lesson!</p>
             <p>You've earned a <b>${discountPercent}% discount</b> for your next booking.</p>
-            <p>Your coupon code: <b>${promo.code}</b></p>
+            <p>Your reward has been automatically added to your account and will apply automatically to your next eligible lesson payment.</p>
+            <p>If you still have an active “first 6 lessons” discount, this loyalty reward will activate once that offer ends.</p>
             <p>Keep learning with BridgeLang!</p>
           `,
         });
