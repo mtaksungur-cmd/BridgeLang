@@ -1,5 +1,6 @@
 // pages/api/booking/confirm.js
 import { db } from '../../../lib/firebase';
+import { adminDb } from '../../../lib/firebaseAdmin';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { sendMail } from '../../../lib/mailer';
 
