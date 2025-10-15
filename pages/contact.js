@@ -248,6 +248,7 @@ export default function Contact() {
               target="_blank"
               rel="noopener noreferrer"
               className={styles.whatsapp}
+              title="Need help? Chat with us on WhatsApp."
             >
               <FaWhatsapp /> Chat on WhatsApp
             </a>
