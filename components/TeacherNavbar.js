@@ -49,6 +49,7 @@ export default function TeacherNavbar() {
           </li>
           <li className='nav-item'><Link href="/teacher/lessons" className="nav-link text-light">My Lessons</Link></li>
           <li className='nav-item'><Link href="/teacher/chats" className="nav-link text-light">Chats</Link></li>
+          <li className='nav-item'><Link href="/account/security" className="nav-link text-light">Security Settings</Link></li>
           <li className="nav-item">
                 <button
                   onClick={handleLogout}
@@ -61,7 +62,6 @@ export default function TeacherNavbar() {
                   Logout
                 </button>
               </li>
-          <li className='nav-item'><Link href="/account/security" className="nav-link text-light">Security Settings</Link></li>
         </ul>
       </div>
     </div>
