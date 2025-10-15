@@ -74,6 +74,12 @@ export default function StudentNavbar() {
                 Logout
               </button>
             </li>
+                  
+            <li className="nav-item">
+              <Link href="/account/security" className="nav-link text-light">
+                Security Settings
+              </Link> 
+            </li>
           </ul>
         </div>
       </div>
