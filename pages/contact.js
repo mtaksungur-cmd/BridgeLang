@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { FaWhatsapp } from "react-icons/fa";
 import styles from "../scss/Contact.module.scss";
 
 export default function Contact() {
@@ -80,23 +81,23 @@ export default function Contact() {
   return (
     <>
       <Head>
-        <title>Contact BridgeLang UK Ltd.</title>
+        <title>Contact / Submit a Request | BridgeLang</title>
         <meta
           name="description"
-          content="Contact BridgeLang – call us or message us on WhatsApp for quick support. Business hours: Monday – Friday, 9 AM – 6 PM (UK Time)."
+          content="Contact BridgeLang – technical support, account issues, refunds, teacher applications, general inquiries."
         />
       </Head>
 
       <main className={`container py-4 ${styles.page}`} style={{ "--nav-height": "64px" }}>
+        {/* Başlık */}
         <header className={styles.header}>
-          <h1>Contact BridgeLang UK Ltd.</h1>
-          <p className="text-muted mb-0">
-            You can reach us by phone or WhatsApp — we usually reply within 1–2 business days.
-          </p>
+          <h1>Contact / Submit a Request</h1>
+          <p className="text-muted mb-0">We usually respond within 1–2 business days.</p>
         </header>
 
+        {/* Izgara: Sol form — Sağ şirket bilgileri */}
         <div className={styles.grid}>
-          {/* CONTACT FORM */}
+          {/* FORM */}
           <form className={styles.form} onSubmit={onSubmit} noValidate>
             <div className={styles.field}>
               <label htmlFor="name" className={styles.label}>
@@ -131,7 +132,9 @@ export default function Contact() {
             </div>
 
             <div className={styles.field}>
-              <label htmlFor="subject" className={styles.label}>Subject (optional)</label>
+              <label htmlFor="subject" className={styles.label}>
+                Subject (optional)
+              </label>
               <select
                 id="subject"
                 name="subject"
@@ -141,7 +144,9 @@ export default function Contact() {
               >
                 <option value="">— Select —</option>
                 {subjects.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
@@ -164,7 +169,9 @@ export default function Contact() {
             </div>
 
             <div className={styles.field}>
-              <label htmlFor="attachment" className={styles.label}>Attachment (optional)</label>
+              <label htmlFor="attachment" className={styles.label}>
+                Attachment (optional)
+              </label>
               <input
                 id="attachment"
                 name="attachment"
@@ -193,33 +200,56 @@ export default function Contact() {
             </div>
 
             {status.msg && (
-              <div className={`${styles.status} ${status.type === "ok" ? styles.ok : styles.err}`}>
+              <div
+                className={`${styles.status} ${status.type === "ok" ? styles.ok : styles.err}`}
+                role="status"
+                aria-live="polite"
+              >
                 {status.msg}
               </div>
             )}
 
             <div className={styles.actions}>
-              <button type="submit" className={styles.submit} disabled={submitting}>
+              <button
+                type="submit"
+                className={styles.submit}
+                disabled={submitting}
+                aria-busy={submitting ? "true" : "false"}
+              >
                 {submitting ? "Sending…" : "Submit Request"}
               </button>
             </div>
           </form>
 
-          {/* COMPANY CONTACT CARD */}
+          {/* ŞİRKET BİLGİLERİ (sağ kart) */}
           <aside className={styles.company} aria-label="Company details">
-            <h2 className={styles.company__title}>Contact BridgeLang UK Ltd.</h2>
-            <p><strong>Phone / WhatsApp:</strong> +44 20 7111 1638</p>
-            <p>You can call us or message us directly on WhatsApp for quick support.</p>
-            <p>Business hours: Monday – Friday, 9 AM – 6 PM (UK Time)</p>
+            <h2 className={styles.company__title}>BridgeLang Ltd.</h2>
+            <ul className={styles.company__list}>
+              <li><strong>Company Number:</strong> 16555217</li>
+              <li><strong>Registered Address:</strong></li>
+              <li className={styles.company__addr}>
+                The Apex, Derriford Business Park<br />
+                Brest Road, Plymouth, PL6 5FL<br />
+                United Kingdom
+              </li>
+              <li>
+                <strong>Email:</strong>{" "}
+                <a href="mailto:contact@bridgelang.co.uk">contact@bridgelang.co.uk</a>
+              </li>
+              <li>
+                <strong>Phone:</strong>{" "}
+                <a href="tel:+442071111638">+44 20 7111 1638</a>
+              </li>
+            </ul>
 
+            {/* WhatsApp Butonu */}
             <a
               href="https://wa.me/442071111638"
-              className={styles.waContactBtn}
               target="_blank"
-              rel="noopener"
-              title="Need help? Chat with us on WhatsApp."
+              rel="noopener noreferrer"
+              className={styles.whatsapp}
             >
-              💬 Chat on WhatsApp
+              <FaWhatsapp /> Chat on WhatsApp
             </a>
 
             <div className={styles.company__help}>
