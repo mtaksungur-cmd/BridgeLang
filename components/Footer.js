@@ -51,9 +51,6 @@ export default function Footer() {
               <a href="https://www.facebook.com/share/17858srkmF/" target="_blank" rel="noopener noreferrer">
                 <i className="bi bi-facebook"></i>
               </a>
-              <a href="https://wa.me/442071111638" target="_blank" rel="noopener noreferrer" className={styles.whatsappLink}>
-                <FaWhatsapp /> Chat on WhatsApp
-              </a>
             </div>
           </div>
         </div>
@@ -61,9 +58,9 @@ export default function Footer() {
         {/* Footer Bilgileri */}
         <div className={styles.bottomRow}>
           <small>
-            <strong>BridgeLang UK Ltd.</strong> | Company No: 16555217<br />
+            <strong>BridgeLang Ltd.</strong> | Company No: 16555217<br />
             The Apex, Derriford Business Park, Brest Road, Plymouth, PL6 5FL, United Kingdom<br />
-            📧 <a href="mailto:contact@bridgelang.co.uk">contact@bridgelang.co.uk</a> | 📞 <a href="tel:+442071111638">+44 20 7111 1638</a>
+            📧 <a href="mailto:contact@bridgelang.co.uk">contact@bridgelang.co.uk</a>
           </small>
           <div className={styles.copyright}>
             © {new Date().getFullYear()} BridgeLang UK Ltd. All rights reserved.
