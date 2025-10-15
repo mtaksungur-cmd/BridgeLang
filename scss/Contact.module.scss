@@ -1,8 +1,10 @@
+/* Sayfa arkaplanı + grid */
 @use '../styles/variables' as v;
 
 .page {
   --card-bg: #ffffff;
   --beige: #f3f1eb;
+
   background: var(--beige);
   border-radius: 12px;
   padding: 1rem;
@@ -20,6 +22,7 @@
   }
 }
 
+/* 2 kolon: sol form, sağ şirket bilgisi */
 .grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -30,7 +33,7 @@
   }
 }
 
-/* Form alanı */
+/* FORM */
 .form {
   background: var(--card-bg);
   border: 1px solid rgba(0,0,0,.08);
@@ -55,6 +58,7 @@
 .textarea,
 .file {
   width: 100%;
+  display: block;
   border: 1px solid rgba(0,0,0,.12);
   border-radius: 8px;
   padding: 10px 12px;
@@ -95,6 +99,7 @@
 .actions { margin-top: 10px; }
 
 .submit {
+  display: inline-block;
   background: v.$accent-color;
   border: none;
   color: #fff;
@@ -105,13 +110,14 @@
 }
 .submit[disabled] { opacity: .7; cursor: not-allowed; }
 
-/* Şirket bilgi kartı */
+/* Şirket bilgi kartı (sağ) */
 .company {
   background: var(--card-bg);
   border: 1px solid rgba(0,0,0,.08);
   border-radius: 12px;
   padding: 14px 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  align-self: start;
 
   @media (min-width: 992px) {
     position: sticky;
@@ -122,48 +128,54 @@
 .company__title {
   font-size: 1.05rem;
   font-weight: 800;
-  margin-bottom: .35rem;
+  margin: 0 0 .35rem 0;
   color: #111827;
 }
 
+.company__list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 .75rem 0;
+
+  li { margin: .25rem 0; color: #374151; }
+  a { color: #2563eb; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+
+.company__addrLabel { margin-top: .35rem; }
+.company__addr { line-height: 1.5; }
+
 .company__help {
-  margin-top: .75rem;
+  margin-top: .5rem;
   padding-top: .5rem;
   border-top: 1px dashed rgba(0,0,0,.1);
   font-size: .95rem;
   color: #4b5563;
 
-  a {
-    color: #2563eb;
-    text-decoration: none;
-    &:hover { text-decoration: underline; }
-  }
+  a { color: #2563eb; text-decoration: none; }
+  a:hover { text-decoration: underline; }
 }
 
-/* ✅ Yeni WhatsApp butonu */
-.waContactBtn {
+.whatsapp {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
-  border-radius: 50px;
-  background-color: #25D366;
+  background-color: #25d366;
   color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
   text-decoration: none;
-  font-weight: 500;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 10px;
+  transition: background-color 0.2s ease;
+
+  svg {
+    font-size: 1.2rem;
+  }
 
   &:hover {
-    background-color: #20b858;
-    transform: translateY(-2px);
-  }
-}
-
-/* Mobil görünüm */
-@media (max-width: 480px) {
-  .waContactBtn {
-    width: 100%;
-    justify-content: center;
+    background-color: #1ebe5d;
   }
 }
