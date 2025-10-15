@@ -63,7 +63,7 @@ export default function Footer() {
             📧 <a href="mailto:contact@bridgelang.co.uk">contact@bridgelang.co.uk</a>
           </small>
           <div className={styles.copyright}>
-            © {new Date().getFullYear()} BridgeLang UK Ltd. All rights reserved.
+            © {new Date().getFullYear()} BridgeLang Ltd. All rights reserved.
           </div>
         </div>
       </div>
