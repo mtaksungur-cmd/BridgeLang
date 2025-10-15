@@ -237,10 +237,16 @@ export default function Contact() {
                 <a href="mailto:contact@bridgelang.co.uk">contact@bridgelang.co.uk</a>
               </li>
               <li>
-                <strong>Phone:</strong>{" "}
+                <strong>Phone / WhatsApp:</strong>{" "}
                 <a href="tel:+442071111638">+44 20 7111 1638</a>
               </li>
             </ul>
+
+            {/* Ek bilgiler */}
+            <p className={styles.company__note}>
+               You can call us or message us directly on WhatsApp for quick support.<br />
+               Business hours: Monday – Friday, 9 AM – 6 PM (UK Time)
+            </p>
 
             {/* WhatsApp Butonu */}
             <a
