@@ -33,11 +33,15 @@
   margin-top: 10px;
 }
 
+/* TABLO */
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
   margin-top: 12px;
+  overflow-x: auto;
+  display: block; /* mobilde yatay kaydırma */
+  white-space: nowrap;
 
   th,
   td {
@@ -57,6 +61,7 @@
   }
 }
 
+/* DURUMLAR */
 .success {
   color: #15803d;
   font-weight: 600;
@@ -72,6 +77,7 @@
   font-weight: 600;
 }
 
+/* TOPLAM */
 .totalBox {
   margin-top: 18px;
   padding: 12px;
@@ -86,5 +92,69 @@
   span {
     margin-left: 8px;
     color: #15803d;
+  }
+}
+
+/* 🔹 MOBİL GÖRÜNÜM (max 640px) */
+@media (max-width: 640px) {
+  .card {
+    padding: 18px;
+    border-radius: 10px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .table {
+    font-size: 13px;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    th,
+    td {
+      padding: 8px 10px;
+    }
+
+    th {
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    td {
+      white-space: nowrap;
+    }
+  }
+
+  .totalBox {
+    font-size: 14px;
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  .info {
+    font-size: 13px;
+  }
+}
+
+/* 🔸 Çok küçük ekranlar (max 400px) */
+@media (max-width: 400px) {
+  .title {
+    font-size: 18px;
+  }
+
+  .table {
+    font-size: 12px;
+
+    th,
+    td {
+      padding: 6px 8px;
+    }
+  }
+
+  .totalBox {
+    font-size: 13px;
+    padding: 10px;
   }
 }
