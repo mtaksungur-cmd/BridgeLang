@@ -6,14 +6,14 @@ import { useRouter } from 'next/router';
 import styles from '../../scss/PaymentsPage.module.scss';
 
 export default function PaymentsPage() {
-  const [lessons, setLessons] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [totalPaid, setTotalPaid] = useState(0);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    const fetchPayments = async () => {
+    const fetchBookings = async () => {
       const user = auth.currentUser;
       if (!user) {
         router.push('/login');
@@ -21,16 +21,17 @@ export default function PaymentsPage() {
       }
 
       try {
+        // ✅ bookings koleksiyonundan çekiyoruz
         const q = query(
-          collection(db, 'lessons'),
+          collection(db, 'bookings'),
           where('studentId', '==', user.uid),
           where('status', 'in', ['student_approved', 'completed'])
         );
 
         const snap = await getDocs(q);
         if (snap.empty) {
-          setMessage('No completed lessons or payments found.');
-          setLessons([]);
+          setMessage('No completed bookings or payments found.');
+          setBookings([]);
           setLoading(false);
           return;
         }
@@ -41,7 +42,7 @@ export default function PaymentsPage() {
         for (const docSnap of snap.docs) {
           const d = docSnap.data();
 
-          // Öğretmen adını users koleksiyonundan çekelim
+          // Öğretmen adını Firestore'dan çek
           let teacherName = '—';
           try {
             const tSnap = await getDoc(doc(db, 'users', d.teacherId));
@@ -65,10 +66,10 @@ export default function PaymentsPage() {
           });
         }
 
-        // Tarihe göre sıralama (en yeni yukarıda)
+        // Tarihe göre sıralama (yeniden eskiye)
         list.sort((a, b) => (a.date < b.date ? 1 : -1));
 
-        setLessons(list);
+        setBookings(list);
         setTotalPaid(total);
       } catch (err) {
         console.error(err);
@@ -78,7 +79,7 @@ export default function PaymentsPage() {
       }
     };
 
-    fetchPayments();
+    fetchBookings();
   }, [router]);
 
   return (
@@ -86,10 +87,10 @@ export default function PaymentsPage() {
       <section className={styles.card}>
         <h1 className={styles.title}>Payment History</h1>
 
-        {loading && <p className={styles.info}>Loading lessons...</p>}
+        {loading && <p className={styles.info}>Loading bookings...</p>}
         {message && <p className={styles.info}>{message}</p>}
 
-        {!loading && lessons.length > 0 && (
+        {!loading && bookings.length > 0 && (
           <>
             <table className={styles.table}>
               <thead>
@@ -104,15 +105,15 @@ export default function PaymentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {lessons.map((l) => (
-                  <tr key={l.id}>
-                    <td>{l.date}</td>
-                    <td>{l.startTime}</td>
-                    <td>{l.teacherName}</td>
-                    <td>{l.duration}</td>
-                    <td>{l.originalPrice.toFixed(2)}</td>
-                    <td>{l.discountPercent}</td>
-                    <td className={styles.success}>{l.amountPaid.toFixed(2)}</td>
+                {bookings.map((b) => (
+                  <tr key={b.id}>
+                    <td>{b.date}</td>
+                    <td>{b.startTime}</td>
+                    <td>{b.teacherName}</td>
+                    <td>{b.duration}</td>
+                    <td>{b.originalPrice.toFixed(2)}</td>
+                    <td>{b.discountPercent}</td>
+                    <td className={styles.success}>{b.amountPaid.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
