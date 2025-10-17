@@ -7,21 +7,33 @@ export default async function handler(req, res) {
     const { email, code } = req.body;
     if (!email || !code) return res.status(400).json({ error: 'Missing email or code' });
 
-    const snap = await adminDb.collection('loginCodes').where('email', '==', email).limit(1).get();
-    if (snap.empty) return res.status(400).json({ error: 'No code found' });
-
-    const docSnap = snap.docs[0];
-    const { code: savedCode, expiresAt } = docSnap.data();
-
-    if (Date.now() > expiresAt) return res.status(400).json({ error: 'Code expired' });
-    if (savedCode !== code.trim()) return res.status(400).json({ error: 'Invalid code' });
-
+    // 🔹 Kullanıcı kaydını çek (email → uid)
     const userRecord = await adminAuth.getUserByEmail(email);
-    await adminDb.collection('loginCodes').doc(userRecord.uid).delete(); // kodu kullanıldıktan sonra sil
+    if (!userRecord?.uid) return res.status(400).json({ error: 'User not found' });
 
-    res.json({ ok: true, uid: userRecord.uid });
+    // 🔹 loginCodes/{uid} dokümanını oku
+    const ref = adminDb.collection('loginCodes').doc(userRecord.uid);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(400).json({ error: 'No active code found' });
+
+    const data = snap.data();
+    const { code: savedCode, expiresAt } = data;
+
+    if (Date.now() > expiresAt) {
+      await ref.delete();
+      return res.status(400).json({ error: 'Code expired' });
+    }
+
+    if (savedCode !== code.trim()) {
+      return res.status(400).json({ error: 'Invalid code' });
+    }
+
+    // ✅ Kod doğruysa: tek seferlik olduğundan sil
+    await ref.delete();
+
+    return res.json({ ok: true, uid: userRecord.uid });
   } catch (err) {
     console.error('verify-login-code error:', err);
-    res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ error: 'Server error' });
   }
 }
