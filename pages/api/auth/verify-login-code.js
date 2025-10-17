@@ -7,31 +7,32 @@ export default async function handler(req, res) {
     const { email, code } = req.body;
     if (!email || !code) return res.status(400).json({ error: 'Missing email or code' });
 
-    // 🔹 Kullanıcı kaydını çek (email → uid)
+    // 🔹 Firebase üzerinden kullanıcıyı bul
     const userRecord = await adminAuth.getUserByEmail(email);
     if (!userRecord?.uid) return res.status(400).json({ error: 'User not found' });
 
-    // 🔹 loginCodes/{uid} dokümanını oku
+    // 🔹 Kod doğrulaması
     const ref = adminDb.collection('loginCodes').doc(userRecord.uid);
     const snap = await ref.get();
     if (!snap.exists) return res.status(400).json({ error: 'No active code found' });
 
     const data = snap.data();
-    const { code: savedCode, expiresAt } = data;
-
-    if (Date.now() > expiresAt) {
+    if (Date.now() > data.expiresAt) {
       await ref.delete();
       return res.status(400).json({ error: 'Code expired' });
     }
+    if (data.code !== code.trim()) return res.status(400).json({ error: 'Invalid code' });
 
-    if (savedCode !== code.trim()) {
-      return res.status(400).json({ error: 'Invalid code' });
-    }
-
-    // ✅ Kod doğruysa: tek seferlik olduğundan sil
+    // 🔹 Kod doğruysa sil
     await ref.delete();
 
-    return res.json({ ok: true, uid: userRecord.uid });
+    // 🔹 Kullanıcı rolünü Firestore’dan çek
+    const userDoc = await adminDb.collection('users').doc(userRecord.uid).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+    const role = userData?.role || 'student';
+
+    // 🔹 Frontend’e role ile dön
+    return res.json({ ok: true, uid: userRecord.uid, role });
   } catch (err) {
     console.error('verify-login-code error:', err);
     return res.status(500).json({ error: 'Server error' });
