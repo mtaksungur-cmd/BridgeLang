@@ -92,33 +92,36 @@ export default function PaymentsPage() {
 
         {!loading && bookings.length > 0 && (
           <>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Teacher</th>
-                  <th>Duration (min)</th>
-                  <th>Price (£)</th>
-                  <th>Discount (%)</th>
-                  <th>Paid (£)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((b) => (
-                  <tr key={b.id}>
-                    <td>{b.date}</td>
-                    <td>{b.startTime}</td>
-                    <td>{b.teacherName}</td>
-                    <td>{b.duration}</td>
-                    <td>{b.originalPrice.toFixed(2)}</td>
-                    <td>{b.discountPercent}</td>
-                    <td className={styles.success}>{b.amountPaid.toFixed(2)}</td>
+            {/* 🟩 Scrollable table wrapper */}
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Teacher</th>
+                    <th>Duration (min)</th>
+                    <th>Price (£)</th>
+                    <th>Discount (%)</th>
+                    <th>Paid (£)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-
+                </thead>
+                <tbody>
+                  {bookings.map((b) => (
+                    <tr key={b.id}>
+                      <td>{b.date}</td>
+                      <td>{b.startTime}</td>
+                      <td>{b.teacherName}</td>
+                      <td>{b.duration}</td>
+                      <td>{b.originalPrice.toFixed(2)}</td>
+                      <td>{b.discountPercent}</td>
+                      <td className={styles.success}>{b.amountPaid.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+        
             <div className={styles.totalBox}>
               <strong>Total Paid: </strong>
               <span>£{totalPaid.toFixed(2)}</span>
