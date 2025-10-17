@@ -1,3 +1,5 @@
+@use './_variables' as v;
+
 .page {
   min-height: calc(100vh - 64px);
   display: grid;
@@ -72,11 +74,22 @@
   font-weight: 600;
   padding: 0 16px;
   cursor: pointer;
-  transition: filter 0.15s ease, transform 0.03s ease;
+  background: gray;
+  transition: background-color 0.2s ease, transform 0.03s ease, filter 0.15s ease;
 
   &:hover { filter: brightness(1.05); }
   &:active { transform: translateY(1px); }
-  &:disabled { opacity: .7; cursor: not-allowed; }
+  &:disabled { opacity: .7; cursor: not-allowed; background: #cbd5e1; }
+}
+
+/* 🔹 6 haneli kod girildiğinde aktif stil (mavi) */
+.submit:not(:disabled) {
+  background: v.$primary-color; /* örn: #2563eb */
+  color: #fff;
+
+  &:hover {
+    background: darken(v.$primary-color, 5%);
+  }
 }
 
 .linkBtn {
