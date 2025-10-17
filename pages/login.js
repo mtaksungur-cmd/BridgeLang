@@ -2,9 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from "next/link";
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { signInWithEmailAndPassword, signOut, reload } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import styles from '../scss/LoginPage.module.scss';
 
 export default function LoginPage() {
@@ -20,6 +19,7 @@ export default function LoginPage() {
     setMessage('');
   };
 
+  // 🔹 1) Email & password ile giriş isteği
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -30,7 +30,7 @@ export default function LoginPage() {
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
       await reload(user);
 
-      // Sunucuya kod gönderimini tetikle
+      // 🔸 Sunucuya OTP gönderimi tetikle
       const res = await fetch('/api/auth/send-login-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -39,7 +39,9 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || 'Failed to send code');
-      await signOut(auth); // Kod girilmeden önce oturumu açık bırakmıyoruz
+
+      // 🔸 Login oturumunu geçici olarak kapat (OTP doğrulaması bekleniyor)
+      await signOut(auth);
 
       setMessage('✅ A 6-digit code has been sent to your email.');
       setStage('verify');
@@ -51,6 +53,7 @@ export default function LoginPage() {
     }
   };
 
+  // 🔹 2) OTP doğrulaması
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -60,21 +63,24 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/verify-login-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.email.trim().toLowerCase(), code: otp.trim() }),
+        body: JSON.stringify({
+          email: form.email.trim().toLowerCase(),
+          code: otp.trim(),
+        }),
       });
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || 'Invalid code');
 
-      // Kullanıcı rolünü al
-      const userRef = doc(db, 'users', data.uid);
-      const snap = await getDoc(userRef);
-      const u = snap.data();
-
-      if (u.role === 'teacher') router.push('/teacher/dashboard');
-      else if (u.role === 'student') router.push('/student/dashboard');
-      else if (u.role === 'admin') router.push('/admin/teachers');
+      // 🔸 Backend artık role döndürüyor → client Firestore’a dokunmuyor
+      if (data.role === 'teacher') router.push('/teacher/dashboard');
+      else if (data.role === 'student') router.push('/student/dashboard');
+      else if (data.role === 'admin') router.push('/admin/teachers');
       else router.push('/');
+
+      setMessage('✅ Login successful.');
     } catch (err) {
+      console.error(err);
       setMessage('❌ ' + (err.message || 'Verification failed.'));
     } finally {
       setLoading(false);
@@ -85,7 +91,20 @@ export default function LoginPage() {
     <main className={styles.page}>
       <section className={styles.card}>
         <h1 className={styles.title}>Login</h1>
-        {message && <p className={styles.info}>{message}</p>}
+
+        {message && (
+          <p
+            className={
+              message.startsWith('✅')
+                ? styles.success
+                : message.startsWith('❌')
+                ? styles.error
+                : styles.info
+            }
+          >
+            {message}
+          </p>
+        )}
 
         {stage === 'login' && (
           <form onSubmit={handleLogin} className={styles.form}>
@@ -115,7 +134,11 @@ export default function LoginPage() {
               />
             </label>
 
-            <button type="submit" disabled={loading} className={`bg-danger ${styles.submit}`}>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`bg-danger ${styles.submit}`}
+            >
               {loading ? 'Please wait…' : 'Login'}
             </button>
           </form>
@@ -134,7 +157,12 @@ export default function LoginPage() {
                 required
               />
             </label>
-            <button type="submit" className={styles.submit} disabled={loading}>
+
+            <button
+              type="submit"
+              className={styles.submit}
+              disabled={loading || otp.length < 6}
+            >
               {loading ? 'Verifying…' : 'Verify & Login'}
             </button>
           </form>
