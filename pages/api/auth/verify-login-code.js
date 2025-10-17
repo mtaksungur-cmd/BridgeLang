@@ -7,11 +7,9 @@ export default async function handler(req, res) {
     const { email, code } = req.body;
     if (!email || !code) return res.status(400).json({ error: 'Missing email or code' });
 
-    // 🔹 Firebase üzerinden kullanıcıyı bul
     const userRecord = await adminAuth.getUserByEmail(email);
     if (!userRecord?.uid) return res.status(400).json({ error: 'User not found' });
 
-    // 🔹 Kod doğrulaması
     const ref = adminDb.collection('loginCodes').doc(userRecord.uid);
     const snap = await ref.get();
     if (!snap.exists) return res.status(400).json({ error: 'No active code found' });
@@ -23,16 +21,21 @@ export default async function handler(req, res) {
     }
     if (data.code !== code.trim()) return res.status(400).json({ error: 'Invalid code' });
 
-    // 🔹 Kod doğruysa sil
     await ref.delete();
 
-    // 🔹 Kullanıcı rolünü Firestore’dan çek
     const userDoc = await adminDb.collection('users').doc(userRecord.uid).get();
-    const userData = userDoc.exists ? userDoc.data() : null;
+    const userData = userDoc.exists ? userDoc.data() : {};
     const role = userData?.role || 'student';
 
-    // 🔹 Frontend’e role ile dön
-    return res.json({ ok: true, uid: userRecord.uid, role });
+    // 🔹 Firebase Custom Token oluştur
+    const token = await adminAuth.createCustomToken(userRecord.uid);
+
+    return res.json({
+      ok: true,
+      uid: userRecord.uid,
+      role,
+      token, // 🔹 Frontend login için
+    });
   } catch (err) {
     console.error('verify-login-code error:', err);
     return res.status(500).json({ error: 'Server error' });
