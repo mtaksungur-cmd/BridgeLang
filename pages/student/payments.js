@@ -25,7 +25,7 @@ export default function PaymentsPage() {
         const q = query(
           collection(db, 'bookings'),
           where('studentId', '==', user.uid),
-          where('status', 'in', ['student_approved', 'pending-approval', 'Approved', 'teacher-approved'])
+          where('status', 'in', ['student_approved', 'pending-approval', 'approved', 'teacher-approved'])
         );
 
         const snap = await getDocs(q);
