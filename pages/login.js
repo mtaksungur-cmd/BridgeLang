@@ -3,7 +3,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from "next/link";
 import { auth } from '../lib/firebase';
-import { signInWithEmailAndPassword, signOut, reload } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  reload,
+  signInWithCustomToken
+} from 'firebase/auth';
 import styles from '../scss/LoginPage.module.scss';
 
 export default function LoginPage() {
@@ -30,7 +35,7 @@ export default function LoginPage() {
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
       await reload(user);
 
-      // 🔸 Sunucuya OTP gönderimi tetikle
+      // 🔸 Sunucuya OTP gönderimini tetikle
       const res = await fetch('/api/auth/send-login-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,7 +58,7 @@ export default function LoginPage() {
     }
   };
 
-  // 🔹 2) OTP doğrulaması
+  // 🔹 2) OTP doğrulaması (Custom Token ile Firebase Auth login)
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -72,7 +77,10 @@ export default function LoginPage() {
 
       if (!res.ok) throw new Error(data.error || 'Invalid code');
 
-      // 🔸 Backend artık role döndürüyor → client Firestore’a dokunmuyor
+      // 🔸 Backend'ten gelen custom token ile oturum aç
+      await signInWithCustomToken(auth, data.token);
+
+      // 🔸 Rol bazlı yönlendirme
       if (data.role === 'teacher') router.push('/teacher/dashboard');
       else if (data.role === 'student') router.push('/student/dashboard');
       else if (data.role === 'admin') router.push('/admin/teachers');
