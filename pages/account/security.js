@@ -1,15 +1,12 @@
+// pages/account/security.js
 'use client';
 import { useState, useEffect } from 'react';
-import {
-  auth,
-  db
-} from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import {
   updatePassword,
   RecaptchaVerifier,
   PhoneAuthProvider,
   multiFactor,
-  PhoneMultiFactorGenerator
 } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import styles from '../../scss/SecuritySettings.module.scss';
@@ -24,12 +21,17 @@ export default function SecuritySettings() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Mevcut durum + varsa phone alanını doldur
   useEffect(() => {
     const fetchUser = async () => {
       const user = auth.currentUser;
       if (!user) return;
       const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) setMfaEnabled(!!snap.data().mfaEnabled);
+      if (snap.exists()) {
+        const d = snap.data();
+        setMfaEnabled(!!d.mfaEnabled);
+        if (d.phone) setPhone(d.phone);
+      }
     };
     fetchUser();
   }, []);
@@ -62,43 +64,41 @@ export default function SecuritySettings() {
     try {
       setMessage('');
       const user = auth.currentUser;
+      if (!user) return setMessage('Please sign in again.');
+
+      // Kullanıcının doc’undaki phone’u da güncelle (opsiyonel ama tutarlı)
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { phone: phone.trim() });
+      } catch {}
+
       const session = await multiFactor(user).getSession();
 
-      const recaptcha = new RecaptchaVerifier('recaptcha-container', {
-        size: 'invisible'
-      }, auth);
-
-      const phoneOptions = {
-        phoneNumber: phone,
-        session
-      };
+      const recaptcha = new RecaptchaVerifier('recaptcha-container', { size: 'invisible' }, auth);
+      await recaptcha.render();
 
       const provider = new PhoneAuthProvider(auth);
-      const id = await provider.verifyPhoneNumber(phoneOptions, recaptcha);
+      const id = await provider.verifyPhoneNumber({ phoneNumber: phone.trim(), session }, recaptcha);
       setVerificationId(id);
       setMessage('📲 Verification code sent to ' + phone);
     } catch (err) {
       console.error(err);
-      setMessage('❌ Failed to send code. Check the phone number.');
+      setMessage('❌ Failed to send code. Check the phone number (E.164 format like +905551112233).');
     }
   };
 
-  /* ---------- VERIFY SMS CODE ---------- */
+  /* ---------- VERIFY & ENROLL ---------- */
   const confirmCode = async () => {
     try {
       const cred = PhoneAuthProvider.credential(verificationId, code);
-      await multiFactor(auth.currentUser).enroll(
-        cred,
-        'My phone'
-      );
+      await multiFactor(auth.currentUser).enroll(cred, 'My phone');
 
       await updateDoc(doc(db, 'users', auth.currentUser.uid), {
         mfaEnabled: true,
+        phone: phone.trim(),
       });
 
       setMfaEnabled(true);
       setMessage('✅ Two-Step Verification enabled successfully.');
-      setPhone('');
       setCode('');
       setVerificationId('');
     } catch (err) {
@@ -107,16 +107,14 @@ export default function SecuritySettings() {
     }
   };
 
-  /* ---------- DISABLE 2FA ---------- */
+  /* ---------- DISABLE FLAG (bilgi amaçlı) ---------- */
   const disableMfa = async () => {
     try {
-      // Firebase'te enrolled faktörleri kaldırma doğrudan SDK'da yok;
-      // kullanıcı manuel olarak "Remove factor" panelinden kaldırabilir.
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-        mfaEnabled: false,
-      });
+      // Not: Enrolled faktörü tamamen kaldırmak Firebase client SDK’da yok;
+      // kullanıcı kendi Google hesabı panelinden kaldırabilir.
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), { mfaEnabled: false });
       setMfaEnabled(false);
-      setMessage('⚙️ Two-Step Verification disabled.');
+      setMessage('⚙️ Two-Step Verification disabled (flag only).');
     } catch (err) {
       console.error(err);
       setMessage('❌ Failed to disable 2FA.');
@@ -154,11 +152,12 @@ export default function SecuritySettings() {
       {/* ---------- 2FA SECTION ---------- */}
       <section className={styles.section}>
         <h3>Two-Step Verification (SMS-based)</h3>
+
         {!mfaEnabled ? (
           <>
             <input
               type="tel"
-              placeholder="+44 7700 900123"
+              placeholder="+905551112233"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className={styles.input}
@@ -166,11 +165,7 @@ export default function SecuritySettings() {
             <div id="recaptcha-container"></div>
 
             {!verificationId ? (
-              <button
-                onClick={startVerification}
-                className={styles.saveBtn}
-                disabled={!phone}
-              >
+              <button onClick={startVerification} className={styles.saveBtn} disabled={!phone}>
                 Send Verification Code
               </button>
             ) : (
@@ -182,11 +177,7 @@ export default function SecuritySettings() {
                   onChange={(e) => setCode(e.target.value)}
                   className={styles.input}
                 />
-                <button
-                  onClick={confirmCode}
-                  className={styles.saveBtn}
-                  disabled={!code}
-                >
+                <button onClick={confirmCode} className={styles.saveBtn} disabled={!code}>
                   Confirm & Enable 2FA
                 </button>
               </>
@@ -194,7 +185,7 @@ export default function SecuritySettings() {
           </>
         ) : (
           <button onClick={disableMfa} className={styles.toggleBtn}>
-            Disable 2FA
+            Disable 2FA (flag)
           </button>
         )}
       </section>
