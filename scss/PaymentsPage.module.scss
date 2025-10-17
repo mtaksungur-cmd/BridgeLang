@@ -108,6 +108,7 @@
 @media (max-width: 768px) {
   .card {
     padding: 20px;
+    max-width: 360px;
     border-radius: 12px;
   }
 
@@ -117,7 +118,7 @@
 
   .table {
     font-size: 13px;
-    max-width: 600px;
+    min-width: 600px;
 
     th,
     td {
@@ -142,6 +143,7 @@
 /* 🔸 Küçük mobil ekranlar (max 480px) */
 @media (max-width: 480px) {
   .card {
+    max-width: 360px;
     padding: 16px;
   }
 
