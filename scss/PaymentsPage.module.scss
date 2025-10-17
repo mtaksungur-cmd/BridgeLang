@@ -1,0 +1,73 @@
+.page {
+  min-height: calc(100vh - 64px);
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  background: #f6f8fb;
+}
+
+.card {
+  width: 100%;
+  max-width: 720px;
+  background: #fff;
+  border: 1px solid #e5e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow:
+    0 10px 20px rgba(28, 37, 44, 0.04),
+    0 2px 6px rgba(28, 37, 44, 0.06);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #111;
+  text-align: center;
+}
+
+.info {
+  text-align: center;
+  font-size: 15px;
+  color: #475569;
+  margin-top: 10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 12px;
+
+  th,
+  td {
+    border: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  th {
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) {
+    background: #f9fafb;
+  }
+}
+
+.success {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.failed {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.pending {
+  color: #ca8a04;
+  font-weight: 600;
+}
