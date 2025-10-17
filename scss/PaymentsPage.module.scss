@@ -6,6 +6,7 @@
   background: #f6f8fb;
 }
 
+/* Ana kart yapısı */
 .card {
   width: 100%;
   max-width: 720px;
@@ -33,21 +34,29 @@
   margin-top: 10px;
 }
 
+/* ✅ Kaydırılabilir tablo kabı */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 12px;
+  padding-bottom: 6px; /* scrollbar boşluğu */
+}
+
 /* TABLO */
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
-  margin-top: 12px;
-  overflow-x: auto;
-  display: block; /* mobilde yatay kaydırma */
-  white-space: nowrap;
+  min-width: 640px; /* 🔹 mobilde kaydırılabilirlik */
+  background: #fff;
 
   th,
   td {
     border: 1px solid #e2e8f0;
     padding: 10px 12px;
     text-align: left;
+    white-space: nowrap;
   }
 
   th {
@@ -95,22 +104,20 @@
   }
 }
 
-/* 🔹 MOBİL GÖRÜNÜM (max 640px) */
-@media (max-width: 640px) {
+/* 🔹 Tablet ve Mobil görünüm (max 768px) */
+@media (max-width: 768px) {
   .card {
-    padding: 18px;
-    border-radius: 10px;
+    padding: 20px;
+    border-radius: 12px;
   }
 
   .title {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .table {
     font-size: 13px;
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    min-width: 600px;
 
     th,
     td {
@@ -119,18 +126,12 @@
 
     th {
       font-size: 12px;
-      white-space: nowrap;
-    }
-
-    td {
-      white-space: nowrap;
     }
   }
 
   .totalBox {
-    font-size: 14px;
+    font-size: 15px;
     text-align: center;
-    margin-top: 16px;
   }
 
   .info {
@@ -138,14 +139,20 @@
   }
 }
 
-/* 🔸 Çok küçük ekranlar (max 400px) */
-@media (max-width: 400px) {
+/* 🔸 Küçük mobil ekranlar (max 480px) */
+@media (max-width: 480px) {
+  .card {
+    padding: 16px;
+  }
+
   .title {
-    font-size: 18px;
+    font-size: 20px;
+    margin-bottom: 16px;
   }
 
   .table {
     font-size: 12px;
+    min-width: 560px;
 
     th,
     td {
@@ -154,7 +161,33 @@
   }
 
   .totalBox {
-    font-size: 13px;
+    font-size: 14px;
     padding: 10px;
+    text-align: center;
+  }
+
+  .info {
+    font-size: 12px;
+  }
+}
+
+/* 🔸 En küçük ekranlar (max 380px) */
+@media (max-width: 380px) {
+  .title {
+    font-size: 18px;
+  }
+
+  .table {
+    font-size: 11.5px;
+    min-width: 520px;
+
+    th,
+    td {
+      padding: 6px;
+    }
+  }
+
+  .totalBox {
+    font-size: 13px;
   }
 }
