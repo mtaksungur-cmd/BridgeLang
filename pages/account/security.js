@@ -1,42 +1,32 @@
 // pages/account/security.js
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
-import {
-  updatePassword,
-  RecaptchaVerifier,
-  PhoneAuthProvider,
-  multiFactor,
-} from 'firebase/auth';
+import { updatePassword, deleteUser } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import styles from '../../scss/SecuritySettings.module.scss';
 
 export default function SecuritySettings() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [mfaEnabled, setMfaEnabled] = useState(false);
-  const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [verificationId, setVerificationId] = useState('');
+  const [role, setRole] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  // Mevcut durum + varsa phone alanını doldur
+  // Kullanıcı rolünü çek
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchRole = async () => {
       const user = auth.currentUser;
       if (!user) return;
       const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) {
-        const d = snap.data();
-        setMfaEnabled(!!d.mfaEnabled);
-        if (d.phone) setPhone(d.phone);
-      }
+      if (snap.exists()) setRole(snap.data().role || '');
     };
-    fetchUser();
+    fetchRole();
   }, []);
 
-  /* ---------- PASSWORD CHANGE ---------- */
+  /* ---------- ŞİFRE DEĞİŞTİR ---------- */
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -59,73 +49,45 @@ export default function SecuritySettings() {
     }
   };
 
-  /* ---------- START 2FA ENROLL ---------- */
-  const startVerification = async () => {
+  /* ---------- HESABI DURAKLAT ---------- */
+  const handlePauseAccount = async () => {
     try {
-      setMessage('');
       const user = auth.currentUser;
-      if (!user) return setMessage('Please sign in again.');
-
-      // Kullanıcının doc’undaki phone’u da güncelle (opsiyonel ama tutarlı)
-      try {
-        await updateDoc(doc(db, 'users', user.uid), { phone: phone.trim() });
-      } catch {}
-
-      const session = await multiFactor(user).getSession();
-
-      const recaptcha = new RecaptchaVerifier('recaptcha-container', { size: 'invisible' }, auth);
-      await recaptcha.render();
-
-      const provider = new PhoneAuthProvider(auth);
-      const id = await provider.verifyPhoneNumber({ phoneNumber: phone.trim(), session }, recaptcha);
-      setVerificationId(id);
-      setMessage('📲 Verification code sent to ' + phone);
+      if (!user) return setMessage('Please log in again.');
+      await updateDoc(doc(db, 'users', user.uid), { status: 'paused' });
+      setMessage('⚙️ Your account has been paused. You can re-activate anytime.');
     } catch (err) {
       console.error(err);
-      setMessage('❌ Failed to send code. Check the phone number (E.164 format like +905551112233).');
+      setMessage('❌ Failed to pause account.');
     }
   };
 
-  /* ---------- VERIFY & ENROLL ---------- */
-  const confirmCode = async () => {
+  /* ---------- HESABI KALICI SİL ---------- */
+  const handleDeleteAccount = async () => {
+    if (!confirm('⚠️ This will permanently delete your account. Continue?')) return;
     try {
-      const cred = PhoneAuthProvider.credential(verificationId, code);
-      await multiFactor(auth.currentUser).enroll(cred, 'My phone');
-
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-        mfaEnabled: true,
-        phone: phone.trim(),
-      });
-
-      setMfaEnabled(true);
-      setMessage('✅ Two-Step Verification enabled successfully.');
-      setCode('');
-      setVerificationId('');
+      const user = auth.currentUser;
+      if (!user) return setMessage('Please log in again.');
+      await updateDoc(doc(db, 'users', user.uid), { status: 'deleted', deletedAt: Date.now() });
+      await deleteUser(user);
+      setMessage('🗑️ Your account has been permanently deleted.');
+      router.push('/');
     } catch (err) {
       console.error(err);
-      setMessage('❌ Verification failed.');
+      setMessage('❌ Failed to delete account.');
     }
   };
 
-  /* ---------- DISABLE FLAG (bilgi amaçlı) ---------- */
-  const disableMfa = async () => {
-    try {
-      // Not: Enrolled faktörü tamamen kaldırmak Firebase client SDK’da yok;
-      // kullanıcı kendi Google hesabı panelinden kaldırabilir.
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), { mfaEnabled: false });
-      setMfaEnabled(false);
-      setMessage('⚙️ Two-Step Verification disabled (flag only).');
-    } catch (err) {
-      console.error(err);
-      setMessage('❌ Failed to disable 2FA.');
-    }
+  /* ---------- ÖDEME GEÇMİŞİ (SADECE STUDENT) ---------- */
+  const goToPayments = () => {
+    router.push('/student/payments');
   };
 
   return (
     <div className={styles.wrapper}>
-      <h2 className={styles.title}>Security Settings</h2>
+      <h2 className={styles.title}>Account & Security</h2>
 
-      {/* ---------- PASSWORD SECTION ---------- */}
+      {/* ŞİFRE */}
       <section className={styles.section}>
         <h3>Change Password</h3>
         <form onSubmit={handlePasswordChange} className={styles.form}>
@@ -149,46 +111,34 @@ export default function SecuritySettings() {
         </form>
       </section>
 
-      {/* ---------- 2FA SECTION ---------- */}
+      {/* HESABI DURAKLAT */}
       <section className={styles.section}>
-        <h3>Two-Step Verification (SMS-based)</h3>
-
-        {!mfaEnabled ? (
-          <>
-            <input
-              type="tel"
-              placeholder="+905551112233"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className={styles.input}
-            />
-            <div id="recaptcha-container"></div>
-
-            {!verificationId ? (
-              <button onClick={startVerification} className={styles.saveBtn} disabled={!phone}>
-                Send Verification Code
-              </button>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  placeholder="Enter SMS Code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className={styles.input}
-                />
-                <button onClick={confirmCode} className={styles.saveBtn} disabled={!code}>
-                  Confirm & Enable 2FA
-                </button>
-              </>
-            )}
-          </>
-        ) : (
-          <button onClick={disableMfa} className={styles.toggleBtn}>
-            Disable 2FA (flag)
+        <h3>Account Control</h3>
+        <p className={styles.note}>
+          You can temporarily pause your account or permanently delete it.
+        </p>
+        <div className={styles.actions}>
+          <button onClick={handlePauseAccount} className={styles.pauseBtn}>
+            Pause Account
           </button>
-        )}
+          <button onClick={handleDeleteAccount} className={styles.deleteBtn}>
+            Delete Account
+          </button>
+        </div>
       </section>
+
+      {/* ÖDEME GEÇMİŞİ (SADECE ÖĞRENCİ) */}
+      {role === 'student' && (
+        <section className={styles.section}>
+          <h3>Payment History</h3>
+          <p className={styles.note}>
+            View your past subscriptions and payments.
+          </p>
+          <button onClick={goToPayments} className={styles.saveBtn}>
+            View Payment History
+          </button>
+        </section>
+      )}
 
       {message && <p className={styles.message}>{message}</p>}
     </div>
