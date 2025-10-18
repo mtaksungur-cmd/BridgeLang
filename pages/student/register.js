@@ -32,7 +32,7 @@ export default function StudentRegister() {
 
   const goalCategories = {
     exam: {
-      label: '🎓 Exam & Academic Goals',
+      label: 'Exam & Academic Goals',
       options: [
         'IELTS (Academic / General)',
         'TOEFL (iBT)',
@@ -47,7 +47,7 @@ export default function StudentRegister() {
       cambridgeLevels: ['KET', 'PET', 'FCE', 'CAE', 'CPE'],
     },
     professional: {
-      label: '💼 Professional & Career Goals',
+      label: 'Professional & Career Goals',
       options: [
         'Business English',
         'Workplace Communication & Writing',
@@ -61,7 +61,7 @@ export default function StudentRegister() {
       ],
     },
     general: {
-      label: '💬 General & Social Goals',
+      label: 'General & Social Goals',
       options: [
         'Everyday English',
         'Conversational Fluency',
@@ -74,7 +74,7 @@ export default function StudentRegister() {
       ],
     },
     personal: {
-      label: '🌍 Personal & Integration Goals',
+      label: 'Personal & Integration Goals',
       options: [
         'English for Immigration / Citizenship',
         'English for Life in the UK',
@@ -86,7 +86,7 @@ export default function StudentRegister() {
       ],
     },
     teen: {
-      label: '🧒 Teen Learners / Young Learners (Ages 14–17)',
+      label: 'Teen Learners / Young Learners (Ages 14–17)',
       options: [
         'School Projects & Presentations',
         'Speaking Confidence for Teenagers',
@@ -96,7 +96,7 @@ export default function StudentRegister() {
       ],
     },
     digital: {
-      label: '🌐 Digital & Modern English Goals',
+      label: 'Digital & Modern English Goals',
       options: [
         'English for Social Media / Influencers',
         'English for Content Creators',
@@ -258,7 +258,6 @@ export default function StudentRegister() {
 
         <textarea className={styles.textarea} name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} />
 
-        {/* 🔹 PROFILE PHOTO geri eklendi */}
         <div className={styles.files}>
           <label className={styles.fileLabel}>
             <span>Profile Photo (optional)</span>
@@ -276,7 +275,7 @@ export default function StudentRegister() {
         </div>
 
         {/* 🔹 Çoklu Learning Goals */}
-        <p className={styles.sectionTitle}>🎯 Your English Learning Goals</p>
+        <p className={styles.sectionTitle}>Your English Learning Goals</p>
         {Object.entries(goalCategories).map(([key, cat]) => {
           if (key === 'teen' && (age === null || age > 17)) return null;
           return (
