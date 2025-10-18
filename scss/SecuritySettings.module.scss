@@ -65,35 +65,6 @@
   }
 }
 
-.toggleBtn {
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: 0.2s;
-}
-
-.enable {
-  background: #f6ffed;
-  color: #0a0;
-  border: 1px solid #9f9;
-
-  &:hover {
-    background: #e8ffe2;
-  }
-}
-
-.disable {
-  background: #fff0f0;
-  color: #b11;
-  border: 1px solid #faa;
-
-  &:hover {
-    background: #ffeaea;
-  }
-}
-
 .note {
   font-size: 14px;
   color: #666;
@@ -123,7 +94,9 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
-  &:hover { background: #fff7b3; }
+  &:hover {
+    background: #fff7b3;
+  }
 }
 
 .deleteBtn {
@@ -135,5 +108,112 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
-  &:hover { background: #fecaca; }
+  &:hover {
+    background: #fecaca;
+  }
+}
+
+/* 🔹 MODAL (eklenen kısım) */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalBox {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+  h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 12px;
+  }
+
+  p {
+    font-size: 14px;
+    color: #444;
+    margin-bottom: 18px;
+  }
+}
+
+.modalActions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ✅ Buton varyantları */
+.confirmBtn {
+  background: #1464ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #0e50cc;
+  }
+}
+
+.cancelBtn {
+  background: #f1f5f9;
+  color: #111;
+  border: 1px solid #d0d7e2;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+}
+
+.deleteConfirm {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #b91c1c;
+  }
+}
+
+/* 🔸 küçük ekranlar için */
+@media (max-width: 480px) {
+  .wrapper {
+    padding: 20px;
+  }
+
+  .modalBox {
+    padding: 20px;
+  }
+
+  .confirmBtn,
+  .cancelBtn,
+  .deleteConfirm {
+    flex: 1;
+    min-width: 100px;
+  }
 }
