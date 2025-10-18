@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import Link from "next/link";
+import Link from 'next/link';
 import { auth } from '../lib/firebase';
 import {
   signInWithEmailAndPassword,
@@ -14,17 +14,14 @@ import styles from '../scss/LoginPage.module.scss';
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [otp, setOtp] = useState('');
-  const [stage, setStage] = useState('login'); // login | verify
+  const [stage, setStage] = useState('login');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setMessage('');
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  // 🔹 1) Email & password login
+  // 🔹 Email + Password Login
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -35,19 +32,17 @@ export default function LoginPage() {
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
       await reload(user);
 
-      // 🔸 OTP gönderimi
       const res = await fetch('/api/auth/send-login-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid: user.uid, email }),
       });
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || 'Failed to send code');
 
-      await signOut(auth); // geçici logout
-      setMessage('✅ A 6-digit code has been sent to your email.');
+      await signOut(auth);
       setStage('verify');
+      setMessage('✅ A 6-digit code has been sent to your email.');
     } catch (err) {
       console.error(err);
       setMessage('❌ ' + (err.message || 'Login failed.'));
@@ -56,7 +51,7 @@ export default function LoginPage() {
     }
   };
 
-  // 🔹 2) OTP doğrulaması (paused kontrolü dahil)
+  // 🔹 OTP Verification + Pause kontrolü
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -72,26 +67,22 @@ export default function LoginPage() {
         }),
       });
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || 'Invalid code');
 
-      // 🔸 Hesap paused mı kontrol et
+      // 🔸 PAUSED hesap kontrolü
       if (data.status === 'paused') {
-        // Kullanıcıya e-posta ile yeniden etkinleştirme linki gönder
         await fetch('/api/account/resend-unpause', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
         });
-
-        setMessage('⏸️ Your account is paused. We sent a reactivation link to your email.');
+        await signOut(auth);
+        setMessage('⏸️ Your account is paused. A reactivation link has been sent to your email.');
         return;
       }
 
-      // 🔸 Backend'ten gelen token ile oturum aç
       await signInWithCustomToken(auth, data.token);
 
-      // 🔸 Rol bazlı yönlendirme
       if (data.role === 'teacher') router.push('/teacher/dashboard');
       else if (data.role === 'student') router.push('/student/dashboard');
       else if (data.role === 'admin') router.push('/admin/teachers');
@@ -139,7 +130,6 @@ export default function LoginPage() {
                 placeholder="example@mail.com"
               />
             </label>
-
             <label className={styles.label}>
               <span>Password</span>
               <input
@@ -152,7 +142,6 @@ export default function LoginPage() {
                 placeholder="••••••••"
               />
             </label>
-
             <button
               type="submit"
               disabled={loading}
@@ -176,7 +165,6 @@ export default function LoginPage() {
                 required
               />
             </label>
-
             <button
               type="submit"
               className={styles.submit}
@@ -188,11 +176,11 @@ export default function LoginPage() {
         )}
 
         <div className={styles.hint}>
-          New here?{" "}
+          New here?{' '}
           <Link href="/student/register" className={styles.inlineLink}>
             Create a student account
-          </Link>{" "}
-          or{" "}
+          </Link>{' '}
+          or{' '}
           <Link href="/teacher/apply" className={styles.inlineLink}>
             apply as a teacher
           </Link>.
