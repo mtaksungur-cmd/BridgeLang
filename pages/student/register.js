@@ -21,7 +21,7 @@ export default function StudentRegister() {
     level: '',
     intro: '',
     profilePhoto: null,
-    learning_goals: {}, // { exam: [..], professional: [..] }
+    learning_goals: {},
     otherGoal: '',
     acceptTerms: false,
   });
@@ -162,14 +162,14 @@ export default function StudentRegister() {
     const flatGoals = Object.values(form.learning_goals).flat();
     if (flatGoals.length === 0 && !form.otherGoal.trim())
       return setError('Please select at least one learning goal.');
-
     if (form.otherGoal.length > 250)
       return setError('Other goal must be under 250 characters.');
-
-    const age = calcAge(form.dob);
-    if (age < 14) return setError('You must be at least 14 years old to register.');
     if (!form.acceptTerms)
       return setError('You must accept the Terms and Privacy Policy.');
+
+    const age = calcAge(form.dob);
+    if (age < 14)
+      return setError('You must be at least 14 years old to register.');
 
     setSubmitting(true);
     try {
@@ -177,10 +177,15 @@ export default function StudentRegister() {
       recaptchaRef.current.reset();
 
       const email = form.email.trim().toLowerCase();
-      const { user } = await createUserWithEmailAndPassword(auth, email, form.password);
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        form.password
+      );
 
       let profilePhotoUrl = '';
-      if (form.profilePhoto) profilePhotoUrl = await uploadFileViaApi(form.profilePhoto);
+      if (form.profilePhoto)
+        profilePhotoUrl = await uploadFileViaApi(form.profilePhoto);
 
       await setDoc(doc(db, 'users', user.uid), {
         name: form.name.trim(),
@@ -253,6 +258,23 @@ export default function StudentRegister() {
 
         <textarea className={styles.textarea} name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} />
 
+        {/* 🔹 PROFILE PHOTO geri eklendi */}
+        <div className={styles.files}>
+          <label className={styles.fileLabel}>
+            <span>Profile Photo (optional)</span>
+            <input
+              className={styles.hiddenFileInput}
+              type="file"
+              name="profilePhoto"
+              accept="image/*"
+              onChange={handleChange}
+            />
+          </label>
+          <span className={styles.fileName}>
+            {form.profilePhoto ? form.profilePhoto.name : 'No file chosen'}
+          </span>
+        </div>
+
         {/* 🔹 Çoklu Learning Goals */}
         <p className={styles.sectionTitle}>🎯 Your English Learning Goals</p>
         {Object.entries(goalCategories).map(([key, cat]) => {
@@ -273,7 +295,6 @@ export default function StudentRegister() {
                 ))}
               </div>
 
-              {/* Cambridge alt seviyesi */}
               {(form.learning_goals[key] || []).includes('Cambridge Exams') && (
                 <select
                   className={styles.input}
@@ -289,7 +310,6 @@ export default function StudentRegister() {
           );
         })}
 
-        {/* Other text alanı */}
         {Object.values(form.learning_goals).flat().includes('Other') && (
           <textarea
             className={styles.textarea}
