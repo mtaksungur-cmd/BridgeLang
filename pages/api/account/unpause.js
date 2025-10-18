@@ -30,9 +30,10 @@ export default async function handler(req, res) {
       status: 'active',
       unpauseHash: null,
       unpauseExpires: null,
+      reactivatedAt: Date.now(),
     });
 
-    return res.send(`
+    res.send(`
       <html>
         <body style="font-family:sans-serif;text-align:center;margin-top:100px;">
           <h2>Your BridgeLang account has been reactivated ✅</h2>
