@@ -14,14 +14,15 @@ import styles from '../scss/LoginPage.module.scss';
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [otp, setOtp] = useState('');
-  const [stage, setStage] = useState('login');
+  const [stage, setStage] = useState('login'); // login | verify
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
-  // 🔹 Email + Password Login
+  /* ------------------ 1️⃣ LOGIN (email + password) ------------------ */
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -37,10 +38,20 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid: user.uid, email }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send code');
 
-      await signOut(auth);
+      /* 🔹 Eğer hesap paused ise OTP ekranına geçmeden mail gönderildi demektir. */
+      if (data.paused) {
+        await signOut(auth);
+        setStage('login'); // geri dön
+        setMessage('⏸️ Your account is paused. We sent a reactivation link to your email.');
+        return;
+      }
+
+      /* 🔹 Normal durumda 6 haneli kod gönderilmiş olur */
+      await signOut(auth); // güvenlik için geçici logout
       setStage('verify');
       setMessage('✅ A 6-digit code has been sent to your email.');
     } catch (err) {
@@ -51,7 +62,7 @@ export default function LoginPage() {
     }
   };
 
-  // 🔹 OTP Verification + Pause kontrolü
+  /* ------------------ 2️⃣ OTP DOĞRULAMA ------------------ */
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -66,23 +77,22 @@ export default function LoginPage() {
           code: otp.trim(),
         }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Invalid code');
 
-      // 🔸 PAUSED hesap kontrolü
+      /* 🔸 Eğer backend “paused” döndürürse giriş iptal edilir */
       if (data.status === 'paused') {
-        await fetch('/api/account/resend-unpause', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
-        });
         await signOut(auth);
+        setStage('login');
         setMessage('⏸️ Your account is paused. A reactivation link has been sent to your email.');
         return;
       }
 
+      /* 🔸 Hesap aktif → custom token ile login */
       await signInWithCustomToken(auth, data.token);
 
+      /* 🔸 Rol bazlı yönlendirme */
       if (data.role === 'teacher') router.push('/teacher/dashboard');
       else if (data.role === 'student') router.push('/student/dashboard');
       else if (data.role === 'admin') router.push('/admin/teachers');
@@ -97,6 +107,7 @@ export default function LoginPage() {
     }
   };
 
+  /* ------------------ UI ------------------ */
   return (
     <main className={styles.page}>
       <section className={styles.card}>
@@ -116,6 +127,7 @@ export default function LoginPage() {
           </p>
         )}
 
+        {/* LOGIN FORM */}
         {stage === 'login' && (
           <form onSubmit={handleLogin} className={styles.form}>
             <label className={styles.label}>
@@ -130,6 +142,7 @@ export default function LoginPage() {
                 placeholder="example@mail.com"
               />
             </label>
+
             <label className={styles.label}>
               <span>Password</span>
               <input
@@ -142,6 +155,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
               />
             </label>
+
             <button
               type="submit"
               disabled={loading}
@@ -152,6 +166,7 @@ export default function LoginPage() {
           </form>
         )}
 
+        {/* VERIFY FORM */}
         {stage === 'verify' && (
           <form onSubmit={handleVerify} className={styles.form}>
             <label className={styles.label}>
@@ -165,6 +180,7 @@ export default function LoginPage() {
                 required
               />
             </label>
+
             <button
               type="submit"
               className={styles.submit}
@@ -175,6 +191,7 @@ export default function LoginPage() {
           </form>
         )}
 
+        {/* ALT BAĞLANTILAR */}
         <div className={styles.hint}>
           New here?{' '}
           <Link href="/student/register" className={styles.inlineLink}>
