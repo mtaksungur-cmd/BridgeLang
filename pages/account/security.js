@@ -53,7 +53,19 @@ export default function SecuritySettings() {
   const handlePauseAccount = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/account/pause', { method: 'POST' });
+      const user = auth.currentUser;
+      if (!user) return setMessage('Please log in again.');
+
+      const idToken = await user.getIdToken();
+
+      const res = await fetch('/api/account/pause', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setMessage('⏸️ Your account has been paused. Check your email to reactivate it.');
@@ -70,7 +82,19 @@ export default function SecuritySettings() {
   const handleDeleteAccount = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/account/delete', { method: 'POST' });
+      const user = auth.currentUser;
+      if (!user) return setMessage('Please log in again.');
+
+      const idToken = await user.getIdToken();
+
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setMessage('🗑️ Your account has been deleted.');
@@ -133,6 +157,7 @@ export default function SecuritySettings() {
         </div>
       </section>
 
+      {/* SADECE ÖĞRENCİLER İÇİN */}
       {role === 'student' && (
         <section className={styles.section}>
           <h3>Payment History</h3>
@@ -152,8 +177,12 @@ export default function SecuritySettings() {
               sent to your email.
             </p>
             <div className={styles.modalActions}>
-              <button onClick={handlePauseAccount} className={styles.confirmBtn}>Yes, Pause</button>
-              <button onClick={() => setShowPauseModal(false)} className={styles.cancelBtn}>No</button>
+              <button onClick={handlePauseAccount} className={styles.confirmBtn}>
+                Yes, Pause
+              </button>
+              <button onClick={() => setShowPauseModal(false)} className={styles.cancelBtn}>
+                No
+              </button>
             </div>
           </div>
         </div>
