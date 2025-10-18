@@ -1,8 +1,9 @@
+// pages/account/security.js
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
-import { updatePassword } from 'firebase/auth';
+import { updatePassword, signOut } from 'firebase/auth'; // ⬅️ signOut eklendi
 import { doc, getDoc } from 'firebase/firestore';
 import styles from '../../scss/SecuritySettings.module.scss';
 
@@ -68,8 +69,13 @@ export default function SecuritySettings() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
-      setMessage('⏸️ Your account has been paused. Check your email to reactivate it.');
+
+      // ⬇️ kritik: pause'dan sonra hemen local oturumu kapatıp login'e yolla
+      try { await signOut(auth); } catch {}
       setShowPauseModal(false);
+      // bilgi mesajı login ekranında bir banner vs ile verilmiyorsa burada kısa info bırakıyoruz:
+      router.push('/login');
+      // Not: e-posta mailer tarafından gönderildi (API). Loglarda "[mailer] rejected: []" görürsün.
     } catch (err) {
       console.error(err);
       setMessage('❌ Failed to pause account.');
@@ -97,7 +103,9 @@ export default function SecuritySettings() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
-      setMessage('🗑️ Your account has been deleted.');
+
+      // ⬇️ güvenlik için local oturumu da kapat
+      try { await signOut(auth); } catch {}
       setShowDeleteModal(false);
       router.push('/');
     } catch (err) {
