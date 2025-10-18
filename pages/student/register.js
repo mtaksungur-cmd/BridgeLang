@@ -1,3 +1,4 @@
+'use client';
 import { useState, useRef } from 'react';
 import { auth, db } from '../../lib/firebase';
 import Link from 'next/link';
@@ -19,8 +20,9 @@ export default function StudentRegister() {
     phone: '',
     level: '',
     intro: '',
-    profilePhoto: null,
-    goals: [],
+    learning_goal_category: '',
+    learning_goal: '',
+    cambridge_exam: '',
     otherGoal: '',
     acceptTerms: false,
   });
@@ -29,51 +31,84 @@ export default function StudentRegister() {
   const [error, setError] = useState('');
   const recaptchaRef = useRef(null);
 
-  const goalCategories = {
-    "Communication & Fluency": [
-      "Improve my speaking and fluency",
-      "Pronunciation and accent training",
-      "Everyday English for daily life",
-      "Conversation practice with native speakers",
-      "Confidence building in English communication",
-      "I am a complete beginner"
-    ],
-    "Academic & Exams": [
-      "Academic English (essays, presentations, etc.)",
-      "Grammar and writing skills",
-      "Prepare for IELTS",
-      "Prepare for TOEFL",
-      "Prepare for Cambridge exams (KET, PET, FCE, CAE, CPE)",
-      "Improve listening and comprehension"
-    ],
-    "Career & Professional": [
-      "Business English (meetings, emails, negotiations)",
-      "English for job interviews & CV preparation",
-      "English for Specific Purposes (Medicine, Law, IT, etc.)"
-    ],
-    "Life & Migration": [
-      "British citizenship or visa test preparation",
-      "English for travel and tourism"
-    ],
-    "Other": [
-      "Other"
-    ]
-  };
-
-  const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
-    if (type === 'checkbox' && name === 'goals') {
-      setForm((p) => ({
-        ...p,
-        goals: checked ? [...p.goals, value] : p.goals.filter((g) => g !== value),
-      }));
-    } else if (type === 'checkbox') {
-      setForm((p) => ({ ...p, [name]: checked }));
-    } else if (type === 'file') {
-      setForm((p) => ({ ...p, profilePhoto: files?.[0] || null }));
-    } else {
-      setForm((p) => ({ ...p, [name]: value }));
-    }
+  /* 🔹 Kategori & alt seçenekler */
+  const goalOptions = {
+    exam: {
+      label: '🎓 Exam & Academic Goals',
+      options: [
+        'IELTS (Academic / General)',
+        'TOEFL (iBT)',
+        'PTE (Pearson Test of English)',
+        'Cambridge Exams',
+        'OET (Occupational English Test)',
+        'SAT / ACT English',
+        'EAP (English for Academic Purposes)',
+        'Essay Writing / Research Skills',
+        'Academic Presentations',
+      ],
+      cambridgeLevels: ['KET', 'PET', 'FCE', 'CAE', 'CPE'],
+    },
+    professional: {
+      label: '💼 Professional & Career Goals',
+      options: [
+        'Business English',
+        'Workplace Communication & Writing',
+        'Interview Preparation',
+        'Presentation Skills',
+        'English for Healthcare / Nursing (NHS)',
+        'English for IT / Engineering / Technology',
+        'English for Hospitality / Tourism',
+        'English for Retail / Customer Service',
+        'CV & Cover Letter Writing',
+      ],
+    },
+    general: {
+      label: '💬 General & Social Goals',
+      options: [
+        'Everyday English',
+        'Conversational Fluency',
+        'Grammar & Writing Skills',
+        'Pronunciation & Accent Reduction',
+        'Listening & Speaking Confidence',
+        'English for Travel',
+        'Cultural English (films, music, media)',
+        'Modern English Expressions and Fluency',
+      ],
+    },
+    personal: {
+      label: '🌍 Personal & Integration Goals',
+      options: [
+        'English for Immigration / Citizenship',
+        'English for Life in the UK',
+        'Parent Support English',
+        'Social English',
+        'Integration & Cultural Understanding',
+        'English for Hobbies',
+        'Other',
+      ],
+    },
+    teen: {
+      label: '🧒 Teen Learners / Young Learners (Ages 14–17)',
+      options: [
+        'School Projects & Presentations',
+        'Speaking Confidence for Teenagers',
+        'English for Exams (GCSE / A-Level)',
+        'Creative English (Storytelling, Drama, Games)',
+        'Homework & Academic Support',
+      ],
+    },
+    digital: {
+      label: '🌐 Digital & Modern English Goals',
+      options: [
+        'English for Social Media / Influencers',
+        'English for Content Creators',
+        'English for Remote Work & Freelancing',
+        'English for Online Meetings & Presentations',
+        'English for AI Tools & Digital Literacy',
+        'Email Etiquette & Online Communication',
+        'Networking & Collaboration in English',
+      ],
+    },
   };
 
   const calcAge = (dob) => {
@@ -84,6 +119,11 @@ export default function StudentRegister() {
     const m = today.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
     return age;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
   };
 
   const uploadFileViaApi = async (file) => {
@@ -100,13 +140,14 @@ export default function StudentRegister() {
     setError('');
     setSuccess(false);
 
-    if (!form.acceptTerms) return setError('You must accept the Terms of Use and Privacy Policy.');
-    if (form.password.length < 6) return setError('Password must be at least 6 characters.');
-    if (form.goals.length === 0 && !form.otherGoal.trim()) return setError('Please select at least one goal.');
-    if (!form.dob) return setError('Please enter your date of birth.');
-
     const age = calcAge(form.dob);
     if (age < 14) return setError('You must be at least 14 years old to use BridgeLang.');
+    if (!form.acceptTerms) return setError('You must accept the Terms of Use and Privacy Policy.');
+    if (!form.learning_goal_category) return setError('Please select a goal category.');
+    if (!form.learning_goal) return setError('Please select a learning goal.');
+
+    if (form.learning_goal === 'Other' && !form.otherGoal.trim())
+      return setError('Please specify your goal (max 250 characters).');
 
     setSubmitting(true);
     try {
@@ -126,7 +167,13 @@ export default function StudentRegister() {
       let profilePhotoUrl = '';
       if (form.profilePhoto) profilePhotoUrl = await uploadFileViaApi(form.profilePhoto);
 
-      // 🔹 Firestore: kayıtla birlikte free plan başlat
+      const selectedGoal =
+        form.learning_goal === 'Cambridge Exams' && form.cambridge_exam
+          ? `Cambridge ${form.cambridge_exam}`
+          : form.learning_goal === 'Other'
+          ? form.otherGoal.trim()
+          : form.learning_goal;
+
       await setDoc(doc(db, 'users', user.uid), {
         name: form.name.trim(),
         email,
@@ -136,15 +183,14 @@ export default function StudentRegister() {
         phone: form.phone.trim() || '',
         level: form.level || '',
         intro: form.intro.trim() || '',
-        goals: [...form.goals, ...(form.otherGoal ? [form.otherGoal.trim()] : [])],
+        learning_goal_category: form.learning_goal_category,
+        learning_goal: selectedGoal,
         profilePhotoUrl,
         role: 'student',
         emailVerified: !!user.emailVerified,
         createdAt: Date.now(),
         parentConsentRequired: age < 18,
         parentConsent: null,
-
-        // 🟢 Free plan başlangıç değerleri
         subscriptionPlan: 'free',
         viewLimit: 10,
         messagesLeft: 3,
@@ -157,9 +203,8 @@ export default function StudentRegister() {
       });
 
       if (age < 18) {
-        if (!form.parentEmail || !form.parentName) {
+        if (!form.parentEmail || !form.parentName)
           throw new Error('Parent information is required for students under 18.');
-        }
         await fetch('/api/parent-consent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -172,7 +217,6 @@ export default function StudentRegister() {
           }),
         });
         setSuccess(true);
-        setError('');
       } else {
         await fetch('/api/auth/send-verify', {
           method: 'POST',
@@ -182,15 +226,15 @@ export default function StudentRegister() {
         setSuccess(true);
       }
 
-      // 🔴 Kayıt sonrası otomatik login'i kapat
       await signOut(auth);
-
     } catch (err) {
       setError(err?.message || 'Registration failed.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  const age = calcAge(form.dob);
 
   return (
     <div className={styles.container}>
@@ -200,27 +244,20 @@ export default function StudentRegister() {
         <input className={styles.input} name="name" placeholder="Full Name" onChange={handleChange} required />
         <input className={styles.input} name="email" type="email" placeholder="Email Address" onChange={handleChange} required />
         <input className={styles.input} name="password" type="password" placeholder="Password (min 6 chars)" onChange={handleChange} required />
-        
-        <label>Date of Birth</label>
-        <input className={styles.input} name="dob" type="date" placeholder="dd.mm.yyyy" onChange={handleChange} required />
 
-        {(() => {
-          const age = calcAge(form.dob);
-          if (age !== null && age < 18 && age >= 14) {
-            return (
-              <>
-                <label>Parent/Guardian Name</label>
-                <input className={styles.input} name="parentName" onChange={handleChange} required />
-                <label>Parent/Guardian Email</label>
-                <input className={styles.input} type="email" name="parentEmail" onChange={handleChange} required />
-              </>
-            );
-          }
-          return null;
-        })()}
+        <label>Date of Birth</label>
+        <input className={styles.input} name="dob" type="date" onChange={handleChange} required />
+
+        {age !== null && age < 18 && age >= 14 && (
+          <>
+            <label>Parent/Guardian Name</label>
+            <input className={styles.input} name="parentName" onChange={handleChange} required />
+            <label>Parent/Guardian Email</label>
+            <input className={styles.input} type="email" name="parentEmail" onChange={handleChange} required />
+          </>
+        )}
 
         <input className={styles.input} name="city" placeholder="City" onChange={handleChange} required />
-        
         <select name="country" className={styles.input} onChange={handleChange} value={form.country}>
           <option>England</option>
           <option>Scotland</option>
@@ -229,6 +266,7 @@ export default function StudentRegister() {
         </select>
 
         <input className={styles.input} name="phone" placeholder="Phone (optional)" onChange={handleChange} />
+
         <select name="level" className={styles.input} onChange={handleChange}>
           <option value="">Select your level (optional)</option>
           <option>Beginner</option>
@@ -237,69 +275,95 @@ export default function StudentRegister() {
           <option>Upper-Intermediate</option>
           <option>Advanced</option>
         </select>
-        <textarea className={styles.textarea} name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} />
 
-        <div className={styles.files}>
-          <label className={styles.fileLabel}>
-            <span>Profile Photo (optional)</span>
-            <input
-              className={styles.hiddenFileInput}
-              type="file"
-              name="profilePhoto"
-              accept="image/*"
+        <textarea
+          className={styles.textarea}
+          name="intro"
+          placeholder="Tell us a bit about yourself (optional)"
+          onChange={handleChange}
+        />
+
+        {/* 🔹 Yeni Learning Goals Alanı */}
+        <p className={styles.sectionTitle}>🎯 Your English Learning Goals</p>
+
+        <select
+          name="learning_goal_category"
+          className={styles.input}
+          value={form.learning_goal_category}
+          onChange={(e) => setForm((p) => ({ ...p, learning_goal_category: e.target.value, learning_goal: '' }))}
+          required
+        >
+          <option value="">Select a Goal Category</option>
+          {Object.entries(goalOptions).map(([key, val]) => {
+            if (key === 'teen' && (age === null || age > 17)) return null;
+            return (
+              <option key={key} value={key}>
+                {val.label}
+              </option>
+            );
+          })}
+        </select>
+
+        {form.learning_goal_category && (
+          <>
+            <select
+              name="learning_goal"
+              className={styles.input}
+              value={form.learning_goal}
               onChange={handleChange}
-            />
-          </label>
-          <span className={styles.fileName}>
-            {form.profilePhoto ? form.profilePhoto.name : "No file chosen"}
-          </span>
-        </div>
-
-        <p className={styles.sectionTitle}>Your English Learning Goals (select at least one)</p>
-        {Object.entries(goalCategories).map(([category, goals]) => (
-          <div key={category} className={styles.goalCategory}>
-            <p className={styles.categoryTitle}>{category}</p>
-            <div className={styles.checks}>
-              {goals.map((goal) => (
-                <label key={goal} className={styles.checkItem}>
-                  <input
-                    type="checkbox"
-                    name="goals"
-                    value={goal}
-                    checked={form.goals.includes(goal)}
-                    onChange={handleChange}
-                  />{" "}
-                  {goal}
-                </label>
+              required
+            >
+              <option value="">Select a Specific Goal</option>
+              {goalOptions[form.learning_goal_category].options.map((g) => (
+                <option key={g}>{g}</option>
               ))}
-            </div>
-            {category === "Other" && form.goals.includes("Other") && (
-              <input
+            </select>
+
+            {form.learning_goal === 'Cambridge Exams' && (
+              <select
+                name="cambridge_exam"
                 className={styles.input}
-                type="text"
+                value={form.cambridge_exam}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Cambridge Exam</option>
+                {goalOptions.exam.cambridgeLevels.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {form.learning_goal === 'Other' && (
+              <textarea
                 name="otherGoal"
-                placeholder="Please specify"
+                className={styles.textarea}
+                placeholder="Please specify your goal (max 250 characters)"
+                maxLength={250}
                 value={form.otherGoal}
                 onChange={handleChange}
+                required
               />
             )}
-          </div>
-        ))}
+          </>
+        )}
 
         <label className={styles.checkItem}>
           <input
             type="checkbox"
             name="acceptTerms"
             checked={form.acceptTerms}
-            onChange={handleChange}
+            onChange={(e) => setForm((p) => ({ ...p, acceptTerms: e.target.checked }))}
           />
           <span>
-            I agree to the{" "}
-            <Link href="/legal/terms" target="_blank" rel="noopener noreferrer" className={styles.inlineLink}>
+            I agree to the{' '}
+            <Link href="/legal/terms" target="_blank" className={styles.inlineLink}>
               Terms of Use
-            </Link>{" "}
-            and{" "}
-            <Link href="/legal/privacy" target="_blank" rel="noopener noreferrer" className={styles.inlineLink}>
+            </Link>{' '}
+            and{' '}
+            <Link href="/legal/privacy" target="_blank" className={styles.inlineLink}>
               Privacy Policy
             </Link>
           </span>
@@ -317,7 +381,7 @@ export default function StudentRegister() {
         <div className={styles.successBox}>
           <p className={styles.successText}>✅ Registration successful!</p>
           <p className={styles.successHint}>
-            {calcAge(form.dob) < 18 
+            {age < 18
               ? `We’ve emailed a parental consent request to ${form.parentEmail}.`
               : `We’ve sent a verification email to ${form.email}. Please check Inbox/Spam.`}
           </p>
