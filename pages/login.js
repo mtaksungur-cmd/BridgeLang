@@ -24,7 +24,7 @@ export default function LoginPage() {
     setMessage('');
   };
 
-  // 🔹 1) Email & password ile giriş isteği
+  // 🔹 1) Email & password login
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -35,7 +35,7 @@ export default function LoginPage() {
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
       await reload(user);
 
-      // 🔸 Sunucuya OTP gönderimini tetikle
+      // 🔸 OTP gönderimi
       const res = await fetch('/api/auth/send-login-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,9 +45,7 @@ export default function LoginPage() {
 
       if (!res.ok) throw new Error(data.error || 'Failed to send code');
 
-      // 🔸 Login oturumunu geçici olarak kapat (OTP doğrulaması bekleniyor)
-      await signOut(auth);
-
+      await signOut(auth); // geçici logout
       setMessage('✅ A 6-digit code has been sent to your email.');
       setStage('verify');
     } catch (err) {
@@ -58,7 +56,7 @@ export default function LoginPage() {
     }
   };
 
-  // 🔹 2) OTP doğrulaması (Custom Token ile Firebase Auth login)
+  // 🔹 2) OTP doğrulaması (paused kontrolü dahil)
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -77,7 +75,20 @@ export default function LoginPage() {
 
       if (!res.ok) throw new Error(data.error || 'Invalid code');
 
-      // 🔸 Backend'ten gelen custom token ile oturum aç
+      // 🔸 Hesap paused mı kontrol et
+      if (data.status === 'paused') {
+        // Kullanıcıya e-posta ile yeniden etkinleştirme linki gönder
+        await fetch('/api/account/resend-unpause', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
+        });
+
+        setMessage('⏸️ Your account is paused. We sent a reactivation link to your email.');
+        return;
+      }
+
+      // 🔸 Backend'ten gelen token ile oturum aç
       await signInWithCustomToken(auth, data.token);
 
       // 🔸 Rol bazlı yönlendirme
