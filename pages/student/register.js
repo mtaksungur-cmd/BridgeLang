@@ -208,6 +208,30 @@ export default function StudentRegister() {
         messagesLeft: 3,
       });
 
+       // 🔹 Mail gönderimi
+      if (age < 18) {
+        if (!form.parentEmail || !form.parentName) {
+          throw new Error('Parent information is required for students under 18.');
+        }
+        await fetch('/api/parent-consent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId: user.uid,
+            studentName: form.name,
+            parentName: form.parentName,
+            parentEmail: form.parentEmail,
+            dob: form.dob,
+          }),
+        });
+      } else {
+        await fetch('/api/auth/send-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name: form.name }),
+        });
+      }
+
       await signOut(auth);
       setSuccess(true);
     } catch (err) {
