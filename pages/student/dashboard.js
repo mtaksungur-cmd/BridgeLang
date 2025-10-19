@@ -199,13 +199,13 @@ export default function StudentDashboard() {
           <p><strong>Full Name:</strong> {data.name}</p>
           <p><strong>Email:</strong> {data.email} {auth.currentUser?.emailVerified ? '✅' : '❌'}</p>
           <p><strong>Phone:</strong> {data.phone || '-'}</p>
-        </div>
-
-        <div className={styles['dashboard-info']}>
           <p><strong>City:</strong> {data.city || '-'}</p>
           <p><strong>Country:</strong> {data.country || '-'}</p>
           <p><strong>Level:</strong> {data.level || '-'}</p>
           <p><strong>Bio:</strong><br />{data.intro || '-'}</p>
+        </div>
+
+        <div className={styles['dashboard-info']}>
           <p><strong>Goals:</strong></p>
           {data.learning_goals && Object.keys(data.learning_goals).length > 0 ? (
             <ul>
