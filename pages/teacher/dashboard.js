@@ -1,4 +1,3 @@
-// pages/teacher/dashboard.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../lib/firebase';
@@ -20,7 +19,7 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState('');
-  const [reviews, setReviews] = useState([]); // 👈 yeni
+  const [reviews, setReviews] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -35,7 +34,6 @@ export default function TeacherDashboard() {
       if (userData.role !== 'teacher') return router.push('/student/dashboard');
       if (!userData?.stripeOnboarded) return router.push('/teacher/stripe-connect');
 
-      // --- Badges & stats ---
       const now = new Date();
       const createdAt = userData.createdAt?.toDate?.() || new Date(userData.createdAt);
       const diffDays = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -64,7 +62,7 @@ export default function TeacherDashboard() {
       const reviewQ = query(collection(db, 'reviews'), where('teacherId', '==', user.uid));
       const reviewSnap = await getDocs(reviewQ);
       const reviewsArr = reviewSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setReviews(reviewsArr); // 👈 yorumları state’e ata
+      setReviews(reviewsArr);
 
       const recent20Ids = recent20.map(l => l.id);
       const recent20Reviews = reviewsArr.filter(r => recent20Ids.includes(r.lessonId));
@@ -208,6 +206,55 @@ export default function TeacherDashboard() {
             <div className={styles.stat}>
               <div className={styles.stat__label}>Repeat Rate</div>
               <div className={styles.stat__value}>{Math.round((data.repeatRate || 0) * 100)}%</div>
+            </div>
+
+            {/* --- PRICE INPUTS --- */}
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>30 min Price (£)</div>
+              <input
+                type="number"
+                defaultValue={data.pricing30 || ''}
+                onBlur={async (e) => {
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val)) {
+                    await updateDoc(doc(db, 'users', data.uid), { pricing30: val });
+                    setData(prev => ({ ...prev, pricing30: val }));
+                  }
+                }}
+                className={styles.input}
+              />
+            </div>
+
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>45 min Price (£)</div>
+              <input
+                type="number"
+                defaultValue={data.pricing45 || ''}
+                onBlur={async (e) => {
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val)) {
+                    await updateDoc(doc(db, 'users', data.uid), { pricing45: val });
+                    setData(prev => ({ ...prev, pricing45: val }));
+                  }
+                }}
+                className={styles.input}
+              />
+            </div>
+
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>60 min Price (£)</div>
+              <input
+                type="number"
+                defaultValue={data.pricing60 || ''}
+                onBlur={async (e) => {
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val)) {
+                    await updateDoc(doc(db, 'users', data.uid), { pricing60: val });
+                    setData(prev => ({ ...prev, pricing60: val }));
+                  }
+                }}
+                className={styles.input}
+              />
             </div>
           </div>
 
