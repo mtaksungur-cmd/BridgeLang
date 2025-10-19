@@ -15,49 +15,39 @@
   }
 }
 
-.reviews {
-  margin-top: 32px;
-
-  &__list {
-    margin: 12px 0 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: 10px;
-  }
+.reviewList {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
 }
 
-.reviewItem {
+.reviewCard {
   background: #fff;
   border: 1px solid #eee;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 12px 14px;
-  color: #222;
   box-shadow: 0 2px 8px rgba(0,0,0,.03);
 
-  .reviewTop {
+  .reviewHeader {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 6px;
-    font-size: 0.9rem;
-    color: #555;
   }
 
-  .reviewStars {
-    color: #f59e0b; /* sarı yıldız tonu */
-    font-weight: 600;
+  .reviewAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #ddd;
   }
 
-  .reviewText {
+  p {
     margin: 0;
     color: #333;
-    line-height: 1.45;
+    line-height: 1.5;
   }
-}
-
-.muted {
-  color: #9ca3af;
-  font-style: italic;
 }
 
 .input {
