@@ -1,9 +1,8 @@
 // pages/api/auth/verify-email.js
 import { adminAuth, adminDb } from '../../../lib/firebaseAdmin';
-import { getAuth } from 'firebase-admin/auth';
 
 export default async function handler(req, res) {
-  const { oobCode } = req.query; // Firebase link içinden geliyor
+  const { oobCode } = req.query;
   if (!oobCode) return res.status(400).send('Invalid verification link.');
 
   try {
@@ -11,7 +10,7 @@ export default async function handler(req, res) {
     const email = info.data.email;
     await adminAuth.applyActionCode(oobCode);
 
-    // Firestore'da kullanıcı belgesini güncelle
+    // Firestore kullanıcı belgesi güncelle
     const users = await adminDb.collection('users').where('email', '==', email).get();
     if (!users.empty) {
       await adminDb.collection('users').doc(users.docs[0].id).update({
