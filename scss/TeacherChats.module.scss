@@ -1,4 +1,17 @@
+/* en alta sabitlemek için bunları ekle */
+html, body {
+  height: 100%;
+}
+
+#__next {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* mevcut container’ı güncelle */
 .container {
+  flex: 1; /* footer'ı alta iter */
   padding: 40px;
   max-width: 720px;
   margin: 0 auto;
