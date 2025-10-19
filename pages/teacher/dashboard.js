@@ -20,6 +20,7 @@ export default function TeacherDashboard() {
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState('');
   const [reviews, setReviews] = useState([]);
+  const [reviewUsers, setReviewUsers] = useState({});
   const router = useRouter();
 
   useEffect(() => {
@@ -63,6 +64,16 @@ export default function TeacherDashboard() {
       const reviewSnap = await getDocs(reviewQ);
       const reviewsArr = reviewSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       setReviews(reviewsArr);
+
+      // Öğrencileri çek
+      const userMap = {};
+      for (const r of reviewsArr) {
+        if (r.studentId && !userMap[r.studentId]) {
+          const snap = await getDoc(doc(db, 'users', r.studentId));
+          if (snap.exists()) userMap[r.studentId] = snap.data();
+        }
+      }
+      setReviewUsers(userMap);
 
       const recent20Ids = recent20.map(l => l.id);
       const recent20Reviews = reviewsArr.filter(r => recent20Ids.includes(r.lessonId));
@@ -293,21 +304,31 @@ export default function TeacherDashboard() {
         {reviews.length === 0 ? (
           <p className={styles.muted}>No reviews yet.</p>
         ) : (
-          <ul className={styles.reviews__list}>
-            {reviews.map((r) => (
-              <li key={r.id} className={styles.reviewItem}>
-                <div className={styles.reviewTop}>
-                  <span className={styles.reviewStars}>⭐ {r.rating?.toFixed?.(1) || r.rating}</span>
-                  <span className={styles.reviewDate}>
-                    {r.createdAt?.seconds
-                      ? new Date(r.createdAt.seconds * 1000).toLocaleDateString('en-GB')
-                      : ''}
-                  </span>
+          <div className={styles.reviewList}>
+            {reviews.map((r, i) => {
+              const student = r.studentId ? reviewUsers[r.studentId] : null;
+              return (
+                <div key={i} className={styles.reviewCard}>
+                  <div className={styles.reviewHeader}>
+                    {student?.profilePhotoUrl && (
+                      <Image
+                        src={student.profilePhotoUrl}
+                        alt={student.name}
+                        className={styles.reviewAvatar}
+                        width={40}
+                        height={40}
+                      />
+                    )}
+                    <div>
+                      <strong>{student?.name || 'Anonymous'}</strong>
+                      <div>⭐ {r.rating}</div>
+                    </div>
+                  </div>
+                  <p>{r.comment || '(no comment)'}</p>
                 </div>
-                <p className={styles.reviewText}>{r.comment || '(no comment)'}</p>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         )}
       </section>
     </div>
