@@ -15,10 +15,18 @@
   }
 }
 
+/* -------- REVIEWS -------- */
 .reviewList {
   display: flex;
   gap: 12px;
   margin-top: 14px;
+  flex-wrap: nowrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
 }
 
 .reviewCard {
@@ -28,6 +36,16 @@
   border-radius: 12px;
   padding: 12px 14px;
   box-shadow: 0 2px 8px rgba(0,0,0,.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0,0,0,.05);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 
   .reviewHeader {
     display: flex;
@@ -48,9 +66,11 @@
     margin: 0;
     color: #333;
     line-height: 1.5;
+    font-size: 0.95rem;
   }
 }
 
+/* -------- INPUTS / FORMS -------- */
 .input {
   width: 100%;
   padding: 4px 6px;
@@ -59,6 +79,7 @@
   font-size: 0.95rem;
 }
 
+/* -------- TOP BADGE -------- */
 .topBadge {
   background: #e6f7e7;
   border: 1px solid #c7e9ca;
@@ -73,6 +94,7 @@
   }
 }
 
+/* -------- PROFILE LAYOUT -------- */
 .profile {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -118,6 +140,7 @@
   }
 }
 
+/* -------- STATS -------- */
 .statGrid {
   display: grid;
   gap: 12px;
@@ -142,6 +165,7 @@
   }
 }
 
+/* -------- BUTTON -------- */
 .btnPrimary {
   margin-top: 6px;
   align-self: start;
@@ -152,16 +176,20 @@
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
 
   &:hover {
     filter: brightness(1.05);
+    transform: translateY(-1px);
   }
 }
 
+/* -------- FEEDBACK COLORS -------- */
 .info { color: #444; }
 .ok   { color: #1a8917; }
 .err  { color: #c0392b; }
 
+/* -------- BADGES -------- */
 .badges {
   margin-top: 28px;
 
