@@ -298,7 +298,7 @@ export default function StudentRegister() {
           </span>
         </div>
 
-        {/* 🔹 Çoklu Learning Goals */}
+        {/* 🔹 Learning Goals (kategoriler) */}
         <p className={styles.sectionTitle}>Your English Learning Goals</p>
         {Object.entries(goalCategories).map(([key, cat]) => {
           if (key === 'teen' && (age === null || age > 17)) return null;
@@ -317,11 +317,12 @@ export default function StudentRegister() {
                   </label>
                 ))}
               </div>
-
               {(form.learning_goals[key] || []).includes('Cambridge Exams') && (
                 <select
                   className={styles.input}
-                  onChange={(e) => handleGoalToggle(key, `Cambridge ${e.target.value}`)}
+                  onChange={(e) =>
+                    handleGoalToggle(key, `Cambridge ${e.target.value}`)
+                  }
                 >
                   <option value="">Select Cambridge Exam</option>
                   {cat.cambridgeLevels.map((lvl) => (
@@ -332,8 +333,10 @@ export default function StudentRegister() {
             </div>
           );
         })}
-
-        {Object.values(form.learning_goals).flat().includes('Other') && (
+        
+        {/* 🔹 “Other Goals” alanı en altta */}
+        <div className={styles.otherBox}>
+          <p className={styles.sectionTitle}>Other Goals (optional)</p>
           <textarea
             className={styles.textarea}
             name="otherGoal"
@@ -341,9 +344,8 @@ export default function StudentRegister() {
             maxLength={250}
             value={form.otherGoal}
             onChange={handleChange}
-            required
           />
-        )}
+        </div>
 
         <label className={styles.checkItem}>
           <input
