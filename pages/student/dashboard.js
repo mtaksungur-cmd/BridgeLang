@@ -207,11 +207,27 @@ export default function StudentDashboard() {
           <p><strong>Level:</strong> {data.level || '-'}</p>
           <p><strong>Bio:</strong><br />{data.intro || '-'}</p>
           <p><strong>Goals:</strong></p>
-          <ul>
-            {data.goals && data.goals.map((g, i) => (
-              <li key={i}>{g}</li>
-            ))}
-          </ul>
+          {data.learning_goals && Object.keys(data.learning_goals).length > 0 ? (
+            <ul>
+              {Object.entries(data.learning_goals).map(([category, goals]) => (
+                <li key={category}>
+                  <strong>{category.charAt(0).toUpperCase() + category.slice(1)}:</strong>
+                  <ul style={{ marginLeft: '16px', marginTop: '4px' }}>
+                    {goals.map((g, i) => (
+                      <li key={i}>{g}</li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+              {data.otherGoal && (
+                <li>
+                  <strong>Other:</strong> {data.otherGoal}
+                </li>
+              )}
+            </ul>
+          ) : (
+            <p>-</p>
+          )}
         </div>
       </div>
 
