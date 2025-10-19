@@ -198,18 +198,6 @@ export default function BookLessonPage() {
         </label>
       </div>
 
-      {/* ✅ Kupon alanı */}
-      <label className={styles.label}>
-        Coupon Code (optional)
-        <input
-          type="text"
-          placeholder="Enter coupon code"
-          value={couponCode}
-          onChange={(e) => setCouponCode(e.target.value)}
-          className={styles.input}
-        />
-      </label>
-
       <h3 className={styles.subtitle}>Available Time Slots</h3>
       {availableSlots.length === 0 ? (
         <p className={styles.empty}>No available time slots for selected day.</p>
