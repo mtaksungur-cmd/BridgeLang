@@ -43,17 +43,20 @@ export default function StudentProfileView() {
   if (loading) return <p className={styles.info}>Loading student profile...</p>;
   if (!student) return <p className={styles.info}>Student not found.</p>;
 
-  // 🔹 Öğrenim hedefleri formatı
+  // 🔹 Öğrenim hedeflerini liste formatında oluştur
   const goals = [];
   if (student.learning_goals && typeof student.learning_goals === 'object') {
     Object.entries(student.learning_goals).forEach(([cat, arr]) => {
-      if (arr?.length)
-        goals.push(
-          `🎯 ${cat.charAt(0).toUpperCase() + cat.slice(1)}: ${arr.join(', ')}`
-        );
+      if (arr?.length) {
+        goals.push({
+          title: `${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
+          items: arr,
+        });
+      }
     });
   }
-  if (student.otherGoal) goals.push(`✨ Other: ${student.otherGoal}`);
+  if (student.otherGoal)
+    goals.push({ title: 'Other', items: [student.otherGoal] });
 
   return (
     <main className={styles.page}>
@@ -95,11 +98,16 @@ export default function StudentProfileView() {
         {goals.length > 0 && (
           <div className={styles.goalsBox}>
             <h3>Learning Goals</h3>
-            <ul>
-              {goals.map((g, i) => (
-                <li key={i}>{g}</li>
-              ))}
-            </ul>
+            {goals.map((g, i) => (
+              <div key={i} className={styles.goalGroup}>
+                <p className={styles.goalTitle}>🎯 {g.title}</p>
+                <ul className={styles.goalList}>
+                  {g.items.map((item, j) => (
+                    <li key={j}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         )}
       </section>
