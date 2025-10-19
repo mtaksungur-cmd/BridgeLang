@@ -1,0 +1,107 @@
+.page {
+  min-height: calc(100vh - 64px);
+  display: grid;
+  place-items: center;
+  background: #f6f8fb;
+  padding: 32px 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.05),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: opacity 0.2s ease;
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.level {
+  font-size: 14px;
+  color: #475569;
+  margin-top: 4px;
+}
+
+.infoGrid {
+  display: grid;
+  gap: 8px;
+  font-size: 15px;
+  color: #334155;
+  margin-bottom: 16px;
+}
+
+.goalsBox {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.goalsBox h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.goalsBox ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.goalsBox li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.info {
+  text-align: center;
+  color: #475569;
+  font-size: 15px;
+}
