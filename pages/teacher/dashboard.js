@@ -1,3 +1,4 @@
+// pages/teacher/dashboard.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../lib/firebase';
@@ -19,6 +20,7 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [reviews, setReviews] = useState([]); // 👈 yeni
   const router = useRouter();
 
   useEffect(() => {
@@ -61,10 +63,11 @@ export default function TeacherDashboard() {
 
       const reviewQ = query(collection(db, 'reviews'), where('teacherId', '==', user.uid));
       const reviewSnap = await getDocs(reviewQ);
-      const reviews = reviewSnap.docs.map(d => d.data());
+      const reviewsArr = reviewSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setReviews(reviewsArr); // 👈 yorumları state’e ata
 
       const recent20Ids = recent20.map(l => l.id);
-      const recent20Reviews = reviews.filter(r => recent20Ids.includes(r.lessonId));
+      const recent20Reviews = reviewsArr.filter(r => recent20Ids.includes(r.lessonId));
       const recent20Avg = recent20Reviews.length
         ? recent20Reviews.reduce((a, b) => a + (b.rating || 0), 0) / recent20Reviews.length
         : 0;
@@ -80,8 +83,8 @@ export default function TeacherDashboard() {
       );
       const repeatRate = studentIds.length ? repeatStudentIds.length / studentIds.length : 0;
 
-      const avgRating = reviews.length
-        ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+      const avgRating = reviewsArr.length
+        ? reviewsArr.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewsArr.length
         : 0;
 
       const totalEarnings = typeof userData.totalEarnings === 'number' ? userData.totalEarnings : 0;
@@ -141,146 +144,125 @@ export default function TeacherDashboard() {
   }));
 
   return (
-      <div className={styles.wrap}>
-        <header className={styles.header}>
-          <h2>👨‍🏫 Teacher Dashboard</h2>
-          {topBadge && (
-            <div className={styles.topBadge}>
-              <strong>Your Top Badge: {topBadge}</strong>
-              <div className={styles.topBadge__desc}>
-                {BADGE_DEFS.find(b => b.key === topBadge)?.desc || ''}
-              </div>
+    <div className={styles.wrap}>
+      <header className={styles.header}>
+        <h2>👨‍🏫 Teacher Dashboard</h2>
+        {topBadge && (
+          <div className={styles.topBadge}>
+            <strong>Your Top Badge: {topBadge}</strong>
+            <div className={styles.topBadge__desc}>
+              {BADGE_DEFS.find(b => b.key === topBadge)?.desc || ''}
             </div>
+          </div>
+        )}
+      </header>
+
+      {/* --- PROFILE & STATS --- */}
+      <section className={styles.profile}>
+        <div className={styles.profile__left}>
+          {data.profilePhotoUrl && (
+            <Image
+              className={styles.profile__avatar}
+              src={data.profilePhotoUrl}
+              alt="Profile"
+              width={160}
+              height={160}
+            />
           )}
-        </header>
+          <label className={styles.profile__uploadLabel}>
+            <span>Change Profile Photo</span>
+            <input type="file" accept="image/*" onChange={handlePhotoChange} />
+          </label>
+          {uploading && <p className={styles.info}>Uploading…</p>}
+          {msg && (
+            <p className={msg.startsWith('✅') ? styles.ok : styles.err}>
+              {msg}
+            </p>
+          )}
+        </div>
 
-        <section className={styles.profile}>
-          <div className={styles.profile__left}>
-            {data.profilePhotoUrl && (
-              <Image
-                className={styles.profile__avatar}
-                src={data.profilePhotoUrl}
-                alt="Profile"
-                width={160}   // profil avatarı için uygun boyut
-                height={160}
-              />
-            )}
-            <label className={styles.profile__uploadLabel}>
-              <span>Change Profile Photo</span>
-              <input type="file" accept="image/*" onChange={handlePhotoChange} />
-            </label>
-            {uploading && <p className={styles.info}>Uploading…</p>}
-            {msg && (
-              <p className={msg.startsWith('✅') ? styles.ok : styles.err}>
-                {msg}
-              </p>
-            )}
-          </div>
-
-          <div className={styles.profile__right}>
-            <div className={styles.statGrid}>
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>Name</div>
-                <div className={styles.stat__value}>{data.name}</div>
-              </div>
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>Email</div>
-                <div className={styles.stat__value}>{data.email}</div>
-              </div>
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>Total Earnings</div>
-                <div className={styles.stat__value}>£{(data.totalEarnings || 0).toFixed(2)}</div>
-              </div>
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>Total Lessons</div>
-                <div className={styles.stat__value}>{data.totalLessons}</div>
-              </div>
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>Average Rating</div>
-                <div className={styles.stat__value}>
-                  {data.avgRating ? data.avgRating.toFixed(1) : '0.0'} ⭐
-                </div>
-              </div>
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>Repeat Rate</div>
-                <div className={styles.stat__value}>{Math.round((data.repeatRate || 0) * 100)}%</div>
-              </div>
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>30 min Price (£)</div>
-                <input
-                  type="number"
-                  defaultValue={data.pricing30 || ''}
-                  onBlur={async (e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) {
-                      await updateDoc(doc(db, 'users', data.uid), { pricing30: val });
-                      setData(prev => ({ ...prev, pricing30: val }));
-                    }
-                  }}
-                  className={styles.input}
-                />
-              </div>
-
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>45 min Price (£)</div>
-                <input
-                  type="number"
-                  defaultValue={data.pricing45 || ''}
-                  onBlur={async (e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) {
-                      await updateDoc(doc(db, 'users', data.uid), { pricing45: val });
-                      setData(prev => ({ ...prev, pricing45: val }));
-                    }
-                  }}
-                  className={styles.input}
-                />
-              </div>
-
-              <div className={styles.stat}>
-                <div className={styles.stat__label}>60 min Price (£)</div>
-                <input
-                  type="number"
-                  defaultValue={data.pricing60 || ''}
-                  onBlur={async (e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) {
-                      await updateDoc(doc(db, 'users', data.uid), { pricing60: val });
-                      setData(prev => ({ ...prev, pricing60: val }));
-                    }
-                  }}
-                  className={styles.input}
-                />
+        <div className={styles.profile__right}>
+          <div className={styles.statGrid}>
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>Name</div>
+              <div className={styles.stat__value}>{data.name}</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>Email</div>
+              <div className={styles.stat__value}>{data.email}</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>Total Earnings</div>
+              <div className={styles.stat__value}>£{(data.totalEarnings || 0).toFixed(2)}</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>Total Lessons</div>
+              <div className={styles.stat__value}>{data.totalLessons}</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>Average Rating</div>
+              <div className={styles.stat__value}>
+                {data.avgRating ? data.avgRating.toFixed(1) : '0.0'} ⭐
               </div>
             </div>
-
-            <button
-              className={styles.btnPrimary}
-              onClick={() => router.push('/teacher/calendar')}
-            >
-              🗓 Go to Calendar
-            </button>
+            <div className={styles.stat}>
+              <div className={styles.stat__label}>Repeat Rate</div>
+              <div className={styles.stat__value}>{Math.round((data.repeatRate || 0) * 100)}%</div>
+            </div>
           </div>
-        </section>
 
-        <section className={styles.badges}>
-          <h3>Your Badges & Progress</h3>
-          <ul className={styles.badges__list}>
-            {detailedBadgeList.map(b => (
-              <li
-                key={b.key}
-                className={`${styles.badges__item} ${b.earned ? styles['badges__item--on'] : ''}`}
-              >
-                <span className={styles.badges__name}>{b.key}</span>
-                <span className={styles.badges__sep}>—</span>
-                <span className={styles.badges__desc}>{b.desc}</span>
-                <span className={styles.badges__state}>
-                  ({b.earned ? 'Achieved' : 'Not yet'})
-                </span>
+          <button
+            className={styles.btnPrimary}
+            onClick={() => router.push('/teacher/calendar')}
+          >
+            🗓 Go to Calendar
+          </button>
+        </div>
+      </section>
+
+      {/* --- BADGES --- */}
+      <section className={styles.badges}>
+        <h3>Your Badges & Progress</h3>
+        <ul className={styles.badges__list}>
+          {detailedBadgeList.map(b => (
+            <li
+              key={b.key}
+              className={`${styles.badges__item} ${b.earned ? styles['badges__item--on'] : ''}`}
+            >
+              <span className={styles.badges__name}>{b.key}</span>
+              <span className={styles.badges__sep}>—</span>
+              <span className={styles.badges__desc}>{b.desc}</span>
+              <span className={styles.badges__state}>
+                ({b.earned ? 'Achieved' : 'Not yet'})
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* --- REVIEWS --- */}
+      <section className={styles.reviews}>
+        <h3>Student Reviews</h3>
+        {reviews.length === 0 ? (
+          <p className={styles.muted}>No reviews yet.</p>
+        ) : (
+          <ul className={styles.reviews__list}>
+            {reviews.map((r) => (
+              <li key={r.id} className={styles.reviewItem}>
+                <div className={styles.reviewTop}>
+                  <span className={styles.reviewStars}>⭐ {r.rating?.toFixed?.(1) || r.rating}</span>
+                  <span className={styles.reviewDate}>
+                    {r.createdAt?.seconds
+                      ? new Date(r.createdAt.seconds * 1000).toLocaleDateString('en-GB')
+                      : ''}
+                  </span>
+                </div>
+                <p className={styles.reviewText}>{r.comment || '(no comment)'}</p>
               </li>
             ))}
           </ul>
-        </section>
-      </div>
+        )}
+      </section>
+    </div>
   );
 }
