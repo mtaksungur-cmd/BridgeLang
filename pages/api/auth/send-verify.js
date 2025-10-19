@@ -9,8 +9,9 @@ export default async function handler(req, res) {
   if (!email) return res.status(400).json({ error: 'Missing email' });
 
   try {
+    // 🔹 kullanıcı doğrulama linki artık frontend sayfasına yönlendirilecek
     const verifyLink = await adminAuth.generateEmailVerificationLink(email, {
-      url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/verify-email`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email`, // ✅ frontend route
       handleCodeInApp: true,
     });
 
@@ -22,12 +23,16 @@ export default async function handler(req, res) {
         <p>Welcome to BridgeLang!</p>
         <p>Click the button below to verify your email address:</p>
         <p>
-          <a href="${verifyLink}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;">Verify Email</a>
+          <a href="${verifyLink}" 
+             style="display:inline-block;background:#2563eb;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;">
+             Verify Email
+          </a>
         </p>
         <p>If you didn’t create this account, please ignore this email.</p>
       `,
     });
 
+    console.log('[send-verify] link generated and mail sent to', email);
     res.json({ ok: true });
   } catch (e) {
     console.error('send-verify error:', e);
