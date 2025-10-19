@@ -1,4 +1,3 @@
-// pages/teacher/lessons.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
@@ -59,14 +58,16 @@ export default function TeacherLessons() {
       try {
         const q = query(collection(db, 'bookings'), where('teacherId', '==', user.uid));
         const snap = await getDocs(q);
-        let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        let data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-        const studentIds = [...new Set(data.map(b => b.studentId).filter(Boolean))];
+        const studentIds = [...new Set(data.map((b) => b.studentId).filter(Boolean))];
         const map = {};
-        await Promise.all(studentIds.map(async (id) => {
-          const s = await getDoc(doc(db, 'users', id));
-          if (s.exists()) map[id] = s.data();
-        }));
+        await Promise.all(
+          studentIds.map(async (id) => {
+            const s = await getDoc(doc(db, 'users', id));
+            if (s.exists()) map[id] = s.data();
+          })
+        );
         setStudents(map);
 
         const nowMs = Date.now();
@@ -75,11 +76,15 @@ export default function TeacherLessons() {
           const bEnd = getLessonEndMs(b) ?? 0;
 
           const aWaiting =
-            ['pending-approval','confirmed','student_approved','teacher_approved'].includes(a.status) &&
-            aEnd && nowMs > aEnd && !a.teacherApproved;
+            ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(a.status) &&
+            aEnd &&
+            nowMs > aEnd &&
+            !a.teacherApproved;
           const bWaiting =
-            ['pending-approval','confirmed','student_approved','teacher_approved'].includes(b.status) &&
-            bEnd && nowMs > bEnd && !b.teacherApproved;
+            ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(b.status) &&
+            bEnd &&
+            nowMs > bEnd &&
+            !b.teacherApproved;
 
           if (aWaiting && !bWaiting) return -1;
           if (!aWaiting && bWaiting) return 1;
@@ -88,7 +93,7 @@ export default function TeacherLessons() {
 
         setBookings(data);
       } catch (err) {
-        console.error("Firestore query failed:", err);
+        console.error('Firestore query failed:', err);
       }
     });
 
@@ -107,21 +112,19 @@ export default function TeacherLessons() {
       }
 
       await updateDoc(doc(db, 'bookings', booking.id), updates);
-      setBookings(prev => prev.map(r => (r.id === booking.id ? { ...r, ...updates } : r)));
+      setBookings((prev) => prev.map((r) => (r.id === booking.id ? { ...r, ...updates } : r)));
 
       alert('You confirmed the lesson.');
 
-      // 🔹 Mail ve server işlemleri
       await fetch('/api/booking/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookingId: booking.id,
-          role: 'teacher', // 👈 öğrencinin mail almasını sağlar
+          role: 'teacher',
         }),
       });
 
-      // 🔹 Eğer iki taraf da onayladıysa ödeme gönder
       if (updates.status === 'approved') {
         await fetch('/api/transfer-payout', {
           method: 'POST',
@@ -148,8 +151,9 @@ export default function TeacherLessons() {
 
             const endMs = getLessonEndMs(r);
             const showCompleteBtn =
-              ['pending-approval','confirmed','student_approved','teacher_approved'].includes(r.status) &&
-              endMs && Date.now() > endMs &&
+              ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(r.status) &&
+              endMs &&
+              Date.now() > endMs &&
               !r.teacherApproved;
 
             return (
@@ -165,7 +169,12 @@ export default function TeacherLessons() {
                     />
                   )}
                   <div className={styles.headerInfo}>
-                    <div className={styles.studentName}>
+                    {/* 🔹 Öğrenci adına tıklayınca profile gider */}
+                    <div
+                      className={styles.studentName}
+                      onClick={() => router.push(`/teacher/students/${r.studentId}`)}
+                      style={{ cursor: 'pointer', color: '#1464ff', textDecoration: 'underline' }}
+                    >
                       <strong>Student:</strong> {student.name || '-'}
                     </div>
                     {student.level && <div className={styles.studentLevel}>({student.level})</div>}
@@ -173,12 +182,18 @@ export default function TeacherLessons() {
                 </div>
 
                 <div className={styles.row}>
-                  <span><strong>Date:</strong> {r.date}</span>
-                  <span><strong>Time:</strong> {r.startTime} – {r.endTime}</span>
+                  <span>
+                    <strong>Date:</strong> {r.date}
+                  </span>
+                  <span>
+                    <strong>Time:</strong> {r.startTime} – {r.endTime}
+                  </span>
                 </div>
 
                 <div className={styles.row}>
-                  <span><strong>Location:</strong> {r.location || 'Not specified'}</span>
+                  <span>
+                    <strong>Location:</strong> {r.location || 'Not specified'}
+                  </span>
                 </div>
 
                 <div className={styles.statusRow}>
