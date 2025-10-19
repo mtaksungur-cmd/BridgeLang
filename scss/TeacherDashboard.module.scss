@@ -15,6 +15,51 @@
   }
 }
 
+.reviews {
+  margin-top: 32px;
+
+  &__list {
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+  }
+}
+
+.reviewItem {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #222;
+  box-shadow: 0 2px 8px rgba(0,0,0,.03);
+
+  .reviewTop {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  .reviewStars {
+    color: #f59e0b; /* sarı yıldız tonu */
+    font-weight: 600;
+  }
+
+  .reviewText {
+    margin: 0;
+    color: #333;
+    line-height: 1.45;
+  }
+}
+
+.muted {
+  color: #9ca3af;
+  font-style: italic;
+}
+
 .input {
   width: 100%;
   padding: 4px 6px;
