@@ -13,3 +13,5 @@ $spacer-sm:  0.5rem;
 $spacer:     1rem;
 $spacer-lg:  2rem;
 $font-stack: system-ui, sans-serif;
+
+@forward "self";
