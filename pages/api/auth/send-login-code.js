@@ -1,8 +1,3 @@
-// ✅ bu satır build hatalarını engeller (Node.js runtime kullan)
-export const config = {
-  runtime: 'nodejs',
-};
-
 import { adminDb } from '../../../lib/firebaseAdmin';
 import * as crypto from 'crypto';
 import { sendMail } from '../../../lib/mailer';
