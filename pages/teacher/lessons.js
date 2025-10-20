@@ -125,7 +125,11 @@ export default function TeacherLessons() {
         }),
       });
 
-      if (updates.status === 'approved') {
+      const latestSnap = await getDoc(doc(db, 'bookings', booking.id));
+      const latest = latestSnap.data();
+      
+      if (latest?.teacherApproved && latest?.studentConfirmed) {
+        await updateDoc(doc(db, 'bookings', booking.id), { status: 'approved', payoutSent: false });
         await fetch('/api/transfer-payout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
