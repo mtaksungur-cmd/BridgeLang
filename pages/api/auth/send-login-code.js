@@ -1,5 +1,6 @@
+// pages/api/auth/send-login-code.js
 import { adminDb } from '../../../lib/firebaseAdmin';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { sendMail } from '../../../lib/mailer';
 
 export default async function handler(req, res) {
@@ -18,7 +19,7 @@ export default async function handler(req, res) {
     const role = userData?.role || 'student';
 
     // ------------------------------------------------------
-    // 🟢 ADMIN ise OTP göndermeden direkt geç
+    // 🟢 ADMIN ise OTP göndermeden direkt geç (skipOtp döndür)
     // ------------------------------------------------------
     if (role === 'admin') {
       console.log(`[send-login-code] Admin login detected → skipping OTP for ${email}`);
