@@ -1,17 +1,34 @@
+// ✅ bu satır build hatalarını engeller (Node.js runtime kullan)
+export const config = {
+  runtime: 'nodejs',
+};
+
 import { adminDb } from '../../../lib/firebaseAdmin';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { sendMail } from '../../../lib/mailer';
 
 export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).end();
+
+  try {
     const { uid, email } = req.body;
     if (!uid || !email) return res.status(400).json({ error: 'Missing data' });
 
-    // 🔹 Önce kullanıcı durumunu kontrol et
+    // 🔹 Kullanıcı bilgisi çek
     const userSnap = await adminDb.collection('users').doc(uid).get();
     if (!userSnap.exists) return res.status(404).json({ error: 'User not found' });
 
     const userData = userSnap.data();
     const status = userData?.status || 'active';
+    const role = userData?.role || 'student';
+
+    // ------------------------------------------------------
+    // 🟢 ADMIN → OTP atlama (doğrudan geç)
+    // ------------------------------------------------------
+    if (role === 'admin') {
+      console.log(`[send-login-code] Admin login detected → skipping OTP for ${email}`);
+      return res.json({ ok: true, skipOtp: true, role });
+    }
 
     // ------------------------------------------------------
     // 🟡 Eğer hesap "paused" ise kod oluşturma, link gönder
@@ -48,7 +65,7 @@ export default async function handler(req, res) {
     }
 
     // ------------------------------------------------------
-    // 🟢 Hesap aktifse normal 6 haneli kod oluştur
+    // 🟢 Normal kullanıcı → OTP oluştur ve gönder
     // ------------------------------------------------------
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 dakika geçerli
