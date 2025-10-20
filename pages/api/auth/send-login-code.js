@@ -3,7 +3,6 @@ import crypto from 'crypto';
 import { sendMail } from '../../../lib/mailer';
 
 export default async function handler(req, res) {
-@@ -8,25 +9,74 @@
     const { uid, email } = req.body;
     if (!uid || !email) return res.status(400).json({ error: 'Missing data' });
 
