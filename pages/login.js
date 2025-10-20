@@ -42,6 +42,15 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send code');
 
+       // 🟢 Eğer admin için OTP atlanmışsa direkt login
+      if (data.skipOtp && data.role === 'admin') {
+        const token = await user.getIdToken(); // mevcut session token
+        await signInWithCustomToken(auth, token);
+        router.push('/admin/teachers');
+        setMessage('✅ Admin login successful.');
+        return;
+      }
+
       /* 🔹 Eğer hesap paused ise OTP ekranına geçmeden mail gönderildi demektir. */
       if (data.paused) {
         await signOut(auth);
