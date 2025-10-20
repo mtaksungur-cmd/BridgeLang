@@ -1,5 +1,5 @@
 import { adminDb } from '../../../lib/firebaseAdmin';
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import { sendMail } from '../../../lib/mailer';
 
 export default async function handler(req, res) {
@@ -9,21 +9,12 @@ export default async function handler(req, res) {
     const { uid, email } = req.body;
     if (!uid || !email) return res.status(400).json({ error: 'Missing data' });
 
-    // 🔹 Kullanıcı bilgisi çek
+    // 🔹 Önce kullanıcı durumunu kontrol et
     const userSnap = await adminDb.collection('users').doc(uid).get();
     if (!userSnap.exists) return res.status(404).json({ error: 'User not found' });
 
     const userData = userSnap.data();
     const status = userData?.status || 'active';
-    const role = userData?.role || 'student';
-
-    // ------------------------------------------------------
-    // 🟢 ADMIN → OTP atlama (doğrudan geç)
-    // ------------------------------------------------------
-    if (role === 'admin') {
-      console.log(`[send-login-code] Admin login detected → skipping OTP for ${email}`);
-      return res.json({ ok: true, skipOtp: true, role });
-    }
 
     // ------------------------------------------------------
     // 🟡 Eğer hesap "paused" ise kod oluşturma, link gönder
@@ -60,7 +51,7 @@ export default async function handler(req, res) {
     }
 
     // ------------------------------------------------------
-    // 🟢 Normal kullanıcı → OTP oluştur ve gönder
+    // 🟢 Hesap aktifse normal 6 haneli kod oluştur
     // ------------------------------------------------------
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 dakika geçerli
