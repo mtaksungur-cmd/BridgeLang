@@ -13,3 +13,6 @@ $spacer-sm:  0.5rem;
 $spacer:     1rem;
 $spacer-lg:  2rem;
 $font-stack: system-ui, sans-serif;
+
+// 🔹 Bu satır Sass’a “değişkenleri diğer dosyalara aç” der
+@forward "self";
