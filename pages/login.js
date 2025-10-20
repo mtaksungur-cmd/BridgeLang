@@ -1,4 +1,3 @@
-// pages/login.js
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
@@ -15,7 +14,7 @@ import styles from '../scss/LoginPage.module.scss';
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [otp, setOtp] = useState('');
-  const [stage, setStage] = useState('login'); // login | verify
+  const [stage, setStage] = useState('login');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -42,14 +41,6 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send code');
-
-      // 🟢 Eğer admin için OTP atlanmışsa: zaten email+password ile signed-in durumdasın → direkt yönlendir
-      if (data.skipOtp && data.role === 'admin') {
-        // session zaten açık (email+password ile), sadece yönlendir
-        router.push('/admin/teachers');
-        setMessage('✅ Admin login successful.');
-        return;
-      }
 
       /* 🔹 Eğer hesap paused ise OTP ekranına geçmeden mail gönderildi demektir. */
       if (data.paused) {
