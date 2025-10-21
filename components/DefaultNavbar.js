@@ -69,6 +69,13 @@ export default function DefaultNavbar() {
               <Link href="/how-it-works" className="nav-link text-light">How It Works</Link>
             </li>
 
+            {/* ✅ Teachers link — herkese açık */}
+            <li className="nav-item">
+              <Link href="/student/teachers" className="nav-link text-light">
+                Teachers
+              </Link>
+            </li>
+
             {/* ✅ FAQ Link */}
             <li className="nav-item">
               <Link href="/faq" className="nav-link text-light">FAQ</Link>
