@@ -1,5 +1,6 @@
+// pages/api/admin/approveTeacher.js
 import { adminDb } from '../../../lib/firebaseAdmin';
-import { sendMail } from '../../../lib/mailer'; // ✅ mail fonksiyonunu ekledik
+import { sendMail } from '../../../lib/mailer';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end('Method not allowed');
@@ -8,19 +9,43 @@ export default async function handler(req, res) {
   if (!teacher?.id) return res.status(400).json({ error: 'Missing teacher ID' });
 
   try {
+    const teacherRef = adminDb.collection('pendingTeachers').doc(teacher.id);
+    const teacherSnap = await teacherRef.get();
+    const pendingData = teacherSnap.exists ? teacherSnap.data() : {};
+
+    // 🔹 Rozet kontrolü
+    const existingBadges = Array.isArray(teacher.badges)
+      ? teacher.badges
+      : Array.isArray(pendingData.badges)
+      ? pendingData.badges
+      : [];
+
+    const badges = existingBadges.includes('🆕 New Teacher')
+      ? existingBadges
+      : [...existingBadges, '🆕 New Teacher'];
+
+    // 🔹 createdAt alanını koru veya oluştur
+    const createdAt =
+      pendingData.createdAt ||
+      teacher.createdAt ||
+      new Date();
+
     // ✅ Firestore: Teacher'ı users koleksiyonuna taşı
     await adminDb.collection('users').doc(teacher.id).set(
       {
         ...teacher,
+        ...pendingData, // pendingTeachers’taki verileri de koru
         role: 'teacher',
         status: 'approved',
         emailVerified: true,
+        createdAt,
+        badges,
       },
       { merge: true }
     );
 
-    // ✅ PendingTeachers'tan sil
-    await adminDb.collection('pendingTeachers').doc(teacher.id).delete();
+    // ✅ PendingTeachers’tan sil
+    await teacherRef.delete();
 
     // ✅ Mail gönderimi
     await sendMail({
