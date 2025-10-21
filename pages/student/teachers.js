@@ -10,6 +10,12 @@ import { useSubscriptionGuard } from '../../lib/subscriptionGuard';
 import { useRouter } from 'next/router';
 import styles from "../../scss/TeachersList.module.scss";
 
+const badgeDescriptions = {
+  '🆕 New Teacher': '(first 30 days)',
+  '💼 Active Teacher': '(8+ lessons in last 3 months)',
+  '🌟 5-Star Teacher': '(avg rating ≥ 4.8 in last 20 lessons)',
+};
+
 export default function TeachersList() {
   const [allTeachers, setAllTeachers] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -17,8 +23,8 @@ export default function TeachersList() {
   const [activePlan, setActivePlan] = useState("");
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
-  const [lessonsTaken, setLessonsTaken] = useState(0); // 🔹 eklendi
-  const [subscriptionCoupons, setSubscriptionCoupons] = useState([]); // 🔹 eklendi
+  const [lessonsTaken, setLessonsTaken] = useState(0);
+  const [subscriptionCoupons, setSubscriptionCoupons] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -45,7 +51,7 @@ export default function TeachersList() {
           : null;
         const badges = t.badges || [];
         const latestBadge = badges.length ? badges[badges.length - 1] : null;
-        return { ...t, avgRating: avg, reviewCount: ratings.length, latestBadge };
+        return { ...t, avgRating: avg, reviewCount: ratings.length, latestBadge, badges };
       });
   
       withRatings.sort((a, b) => {
@@ -114,6 +120,7 @@ export default function TeachersList() {
 
   return (
       <div className={styles.container}>
+      {/* Public görünüm */}
       <SubscriptionBanner />
         <LoyaltyBadge
           plan={activePlan}
@@ -189,7 +196,18 @@ export default function TeachersList() {
                     <p className={styles.rating}>⭐ No reviews yet</p>
                   )}
 
-                  {t.latestBadge && <p className={styles.badge}>{t.latestBadge}</p>}
+                  {/* 🔹 Rozetler (badge + açıklama) */}
+                  {Array.isArray(t.badges) && t.badges.length > 0 ? (
+                    <div className={styles.badgeWrap}>
+                      {t.badges.map((b, i) => (
+                        <span key={i} className={styles.badge}>
+                          {b} <small>{badgeDescriptions[b] || ''}</small>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className={styles.badge}>No badges yet</p>
+                  )}
 
                   {t.profilePhotoUrl && (
                     <Image
