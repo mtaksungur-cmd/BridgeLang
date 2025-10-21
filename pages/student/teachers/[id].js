@@ -6,9 +6,9 @@ import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp
 import styles from "../../../scss/TeacherProfile.module.scss";
 
 const badgeDescriptions = {
-  '🆕 New Teacher': '🆕 New Teacher – Granted automatically during the first 30 days after registration.',
-  '💼 Active Teacher': '💼 Active Teacher – Taught at least 8 approved lessons in the last 3 months.',
-  '🌟 5-Star Teacher': '🌟 5-Star Teacher – Average rating of 4.8 or higher in the last 20 lessons.'
+  '🆕 New Teacher': '(first 30 days)',
+  '💼 Active Teacher': '(8+ lessons in last 3 months)',
+  '🌟 5-Star Teacher': '(avg rating ≥ 4.8 in last 20 lessons)',
 };
 
 // 🔹 AM/PM stringini → 24 saatlik stringe çevir
@@ -108,11 +108,22 @@ export default function TeacherProfilePage() {
     fetchReviews();
   }, [id]);
 
+  // 🔹 Ders rezervasyonu → login kontrolü eklendi
   const handleBookLesson = () => {
+    if (!auth.currentUser) {
+      router.push('/login');
+      return;
+    }
     router.push(`/student/book/${id}`);
   };
 
+  // 🔹 Mesaj → login kontrolü eklendi
   const handleStartChat = async () => {
+    if (!auth.currentUser) {
+      router.push('/login');
+      return;
+    }
+
     try {
       if (chatsLeft === 0) {
         alert("You have no chat rights left for this month.");
@@ -173,16 +184,15 @@ export default function TeacherProfilePage() {
                 ⭐ {teacher.avgRating.toFixed(1)} ({teacher.reviewCount || 0} reviews)
               </p>
             )}
+
+            {/* 🔹 Tüm rozetleri açıklamalarıyla göster */}
             <div className={styles.badges}>
               {Array.isArray(teacher.badges) && teacher.badges.length > 0 ? (
-                (() => {
-                  const lastBadge = teacher.badges[teacher.badges.length - 1];
-                  return (
-                    <span className={styles.badge} title={badgeDescriptions[lastBadge]}>
-                      {lastBadge}
-                    </span>
-                  );
-                })()
+                teacher.badges.map((b, i) => (
+                  <span key={i} className={styles.badge}>
+                    {b} <small>{badgeDescriptions[b] || ''}</small>
+                  </span>
+                ))
               ) : (
                 <span className={styles.noBadge}>No badges yet</span>
               )}
