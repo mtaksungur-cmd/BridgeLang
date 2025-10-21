@@ -160,3 +160,16 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+.videoWrapper {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.introVideo {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
