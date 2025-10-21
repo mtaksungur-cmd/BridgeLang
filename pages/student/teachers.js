@@ -120,13 +120,6 @@ export default function TeachersList() {
 
   return (
       <div className={styles.container}>
-      {/* Public görünüm */}
-      <SubscriptionBanner />
-        <LoyaltyBadge
-          plan={activePlan}
-          lessonsTaken={lessonsTaken}
-          subscriptionCoupons={subscriptionCoupons}
-        />
         <h2>Browse Our Teachers</h2>
 
         <div className={styles.filters} role="region" aria-label="Filters">
