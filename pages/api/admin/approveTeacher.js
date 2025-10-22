@@ -1,4 +1,3 @@
-// pages/api/admin/approveTeacher.js
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { sendMail } from '../../../lib/mailer';
 
@@ -13,7 +12,6 @@ export default async function handler(req, res) {
     const teacherSnap = await teacherRef.get();
     const pendingData = teacherSnap.exists ? teacherSnap.data() : {};
 
-    // 🔹 Rozet kontrolü
     const existingBadges = Array.isArray(teacher.badges)
       ? teacher.badges
       : Array.isArray(pendingData.badges)
@@ -24,7 +22,6 @@ export default async function handler(req, res) {
       ? existingBadges
       : [...existingBadges, '🆕 New Teacher'];
 
-    // 🔹 createdAt alanını koru veya oluştur
     const createdAt =
       pendingData.createdAt ||
       teacher.createdAt ||
@@ -34,12 +31,14 @@ export default async function handler(req, res) {
     await adminDb.collection('users').doc(teacher.id).set(
       {
         ...teacher,
-        ...pendingData, // pendingTeachers’taki verileri de koru
+        ...pendingData,
         role: 'teacher',
         status: 'approved',
         emailVerified: true,
         createdAt,
         badges,
+        // 🔹 Varsayılan olarak açık:
+        emailNotifications: true,
       },
       { merge: true }
     );
