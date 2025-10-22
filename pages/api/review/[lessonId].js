@@ -1,4 +1,3 @@
-// pages/api/reviews/[lessonId].js
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import Stripe from 'stripe';
@@ -24,26 +23,22 @@ export default async function handler(req, res) {
   const { lessonId } = req.query;
   const { rating, comment } = req.body;
 
-  if (!lessonId || !rating || typeof rating !== 'number') {
+  if (!lessonId || !rating || typeof rating !== 'number')
     return res.status(400).json({ error: 'Invalid input' });
-  }
 
-  if (comment && isInappropriate(comment)) {
+  if (comment && isInappropriate(comment))
     return res.status(400).json({ error: 'Inappropriate comment content' });
-  }
 
   try {
     const bookingSnap = await adminDb.collection('bookings').doc(lessonId).get();
     if (!bookingSnap.exists) return res.status(404).end();
     const booking = bookingSnap.data();
-    if (booking.status !== 'approved') {
+    if (booking.status !== 'approved')
       return res.status(403).json({ error: 'Lesson not approved yet' });
-    }
 
     const teacherId = booking.teacherId;
     const studentId = booking.studentId;
 
-    // 🔹 Yorumu kaydet
     await adminDb.collection('reviews').doc(lessonId).set({
       lessonId,
       teacherId,
@@ -53,7 +48,6 @@ export default async function handler(req, res) {
       createdAt: new Date().toISOString(),
     });
 
-    // 🔹 Öğretmen ortalama puanını güncelle
     const rSnap = await adminDb.collection('reviews').where('teacherId', '==', teacherId).get();
     const all = rSnap.docs.map(d => d.data());
     const total = all.reduce((sum, r) => sum + (r.rating || 0), 0);
@@ -64,12 +58,8 @@ export default async function handler(req, res) {
       reviewCount: all.length,
     });
 
-    // 🔹 Rozet güncellemesi
     await updateBadgesForTeacher(teacherId);
 
-    /* -------------------------------------------------
-     * 🔹 ÖĞRENCİYE YORUM SONRASI KUPON (tek seferlik)
-     * ------------------------------------------------- */
     const studentRef = adminDb.collection('users').doc(studentId);
     const studentSnap = await studentRef.get();
     const studentData = studentSnap.exists ? studentSnap.data() : {};
@@ -78,7 +68,6 @@ export default async function handler(req, res) {
     const coupons = Array.isArray(studentData.lessonCoupons) ? [...studentData.lessonCoupons] : [];
     const alreadyHasReviewCoupon = coupons.some(c => c.type === 'lesson' && c.source === 'review-bonus');
 
-    // sadece ilk yorumda kupon üret
     if (!alreadyHasReviewCoupon && ['starter', 'pro', 'vip'].includes(plan)) {
       const discountPercent = plan === 'starter' ? 5 : plan === 'pro' ? 10 : 15;
 
@@ -107,21 +96,25 @@ export default async function handler(req, res) {
 
       await studentRef.update({ lessonCoupons: coupons });
 
-      try {
-        await sendMail({
-          to: studentData.email,
-          subject: `🎁 ${discountPercent}% Off — Thanks for your Review!`,
-          html: `
-            <p>Hi ${studentData.name || 'there'},</p>
-            <p>Thanks for leaving a review on your recent lesson!</p>
-            <p>You've earned a <b>${discountPercent}% discount</b> for your next booking.</p>
-            <p>Your reward has been automatically added to your account and will apply automatically to your next eligible lesson payment.</p>
-            <p>If you still have an active “first 6 lessons” discount, this loyalty reward will activate once that offer ends.</p>
-            <p>Keep learning with BridgeLang!</p>
-          `,
-        });
-      } catch (mailErr) {
-        console.warn('⚠️ Review coupon email failed:', mailErr.message);
+      if (studentData.emailNotifications !== false) {
+        try {
+          await sendMail({
+            to: studentData.email,
+            subject: `🎁 ${discountPercent}% Off — Thanks for your Review!`,
+            html: `
+              <p>Hi ${studentData.name || 'there'},</p>
+              <p>Thanks for leaving a review on your recent lesson!</p>
+              <p>You've earned a <b>${discountPercent}% discount</b> for your next booking.</p>
+              <p>Your reward has been automatically added to your account and will apply automatically to your next eligible lesson payment.</p>
+              <p>If you still have an active “first 6 lessons” discount, this loyalty reward will activate once that offer ends.</p>
+              <p>Keep learning with BridgeLang!</p>
+            `,
+          });
+        } catch (mailErr) {
+          console.warn('⚠️ Review coupon email failed:', mailErr.message);
+        }
+      } else {
+        console.log(`📭 Skipped review mail — ${studentData.email} disabled notifications`);
       }
 
       console.log(`🎁 Review coupon created for ${studentId}: ${promo.code} (${discountPercent}%)`);
