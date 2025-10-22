@@ -1,10 +1,9 @@
-// pages/account/security.js
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
-import { updatePassword, signOut } from 'firebase/auth'; // ⬅️ signOut eklendi
-import { doc, getDoc } from 'firebase/firestore';
+import { updatePassword, signOut } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import styles from '../../scss/SecuritySettings.module.scss';
 
 export default function SecuritySettings() {
@@ -15,17 +14,47 @@ export default function SecuritySettings() {
   const [loading, setLoading] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true);
   const router = useRouter();
 
+  /* ---------- FETCH USER ROLE + NOTIFICATION PREF ---------- */
   useEffect(() => {
-    const fetchRole = async () => {
+    const fetchUserData = async () => {
       const user = auth.currentUser;
       if (!user) return;
       const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) setRole(snap.data().role || '');
+      if (snap.exists()) {
+        const data = snap.data();
+        setRole(data.role || '');
+        setEmailNotifications(data.emailNotifications !== false);
+      }
     };
-    fetchRole();
+    fetchUserData();
   }, []);
+
+  /* ---------- TOGGLE EMAIL NOTIFICATIONS ---------- */
+  const handleToggleNotifications = async () => {
+    const user = auth.currentUser;
+    if (!user) return setMessage('Please log in again.');
+
+    const newValue = !emailNotifications;
+    setEmailNotifications(newValue);
+    setMessage(''); // reset
+
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        emailNotifications: newValue,
+      });
+      setMessage(
+        newValue
+          ? '✅ Email notifications enabled.'
+          : '🔕 Email notifications disabled.'
+      );
+    } catch (err) {
+      console.error('Failed to update emailNotifications:', err);
+      setMessage('❌ Could not update notification setting.');
+    }
+  };
 
   /* ---------- ŞİFRE DEĞİŞTİR ---------- */
   const handlePasswordChange = async (e) => {
@@ -56,7 +85,6 @@ export default function SecuritySettings() {
       setLoading(true);
       const user = auth.currentUser;
       if (!user) return setMessage('Please log in again.');
-
       const idToken = await user.getIdToken();
 
       const res = await fetch('/api/account/pause', {
@@ -69,13 +97,9 @@ export default function SecuritySettings() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
-
-      // ⬇️ kritik: pause'dan sonra hemen local oturumu kapatıp login'e yolla
       try { await signOut(auth); } catch {}
       setShowPauseModal(false);
-      // bilgi mesajı login ekranında bir banner vs ile verilmiyorsa burada kısa info bırakıyoruz:
       router.push('/login');
-      // Not: e-posta mailer tarafından gönderildi (API). Loglarda "[mailer] rejected: []" görürsün.
     } catch (err) {
       console.error(err);
       setMessage('❌ Failed to pause account.');
@@ -104,7 +128,6 @@ export default function SecuritySettings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
 
-      // ⬇️ güvenlik için local oturumu da kapat
       try { await signOut(auth); } catch {}
       setShowDeleteModal(false);
       router.push('/');
@@ -116,14 +139,31 @@ export default function SecuritySettings() {
     }
   };
 
-  /* ---------- ÖDEME GEÇMİŞİ ---------- */
-  const goToPayments = () => {
-    router.push('/student/payments');
-  };
+  const goToPayments = () => router.push('/student/payments');
 
   return (
     <div className={styles.wrapper}>
       <h2 className={styles.title}>Account & Security</h2>
+
+      {/* EMAIL NOTIFICATIONS TOGGLE */}
+      <section className={styles.section}>
+        <h3>Email Notifications</h3>
+        <p className={styles.note}>
+          Turning this off will disable lesson, reminder, and chat notifications.<br />
+          You’ll still receive login and payment emails.
+        </p>
+        <div
+          className={`${styles.toggleWrapper} ${
+            emailNotifications ? styles.on : styles.off
+          }`}
+          onClick={handleToggleNotifications}
+        >
+          <div className={styles.toggleCircle}></div>
+        </div>
+        <p className={styles.toggleLabel}>
+          {emailNotifications ? 'Enabled' : 'Disabled'}
+        </p>
+      </section>
 
       {/* ŞİFRE */}
       <section className={styles.section}>
@@ -156,16 +196,21 @@ export default function SecuritySettings() {
           You can temporarily pause your account or permanently delete it.
         </p>
         <div className={styles.actions}>
-          <button onClick={() => setShowPauseModal(true)} className={styles.pauseBtn}>
+          <button
+            onClick={() => setShowPauseModal(true)}
+            className={styles.pauseBtn}
+          >
             Pause Account
           </button>
-          <button onClick={() => setShowDeleteModal(true)} className={styles.deleteBtn}>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className={styles.deleteBtn}
+          >
             Delete Account
           </button>
         </div>
       </section>
 
-      {/* SADECE ÖĞRENCİLER İÇİN */}
       {role === 'student' && (
         <section className={styles.section}>
           <h3>Payment History</h3>
@@ -188,7 +233,10 @@ export default function SecuritySettings() {
               <button onClick={handlePauseAccount} className={styles.confirmBtn}>
                 Yes, Pause
               </button>
-              <button onClick={() => setShowPauseModal(false)} className={styles.cancelBtn}>
+              <button
+                onClick={() => setShowPauseModal(false)}
+                className={styles.cancelBtn}
+              >
                 No
               </button>
             </div>
@@ -200,12 +248,21 @@ export default function SecuritySettings() {
         <div className={styles.modal}>
           <div className={styles.modalBox}>
             <h4>Delete Account Permanently?</h4>
-            <p>This action cannot be undone. You won’t be able to re-register with the same email.</p>
+            <p>
+              This action cannot be undone. You won’t be able to re-register
+              with the same email.
+            </p>
             <div className={styles.modalActions}>
-              <button onClick={handleDeleteAccount} className={styles.deleteConfirm}>
+              <button
+                onClick={handleDeleteAccount}
+                className={styles.deleteConfirm}
+              >
                 Yes, Delete
               </button>
-              <button onClick={() => setShowDeleteModal(false)} className={styles.cancelBtn}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className={styles.cancelBtn}
+              >
                 No
               </button>
             </div>
