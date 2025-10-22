@@ -324,31 +324,35 @@ export default async function handler(req, res) {
           ${meetingLink ? `<p><b>Join Link:</b> <a href="${meetingLink}">${meetingLink}</a></p>` : ''}
         `;
 
-        await sendMail({
-          to: student.email,
-          subject: `✅ Lesson booked with ${teacher.name || 'your teacher'}`,
-          html: `
-            <p>Hi ${student.name || 'Student'},</p>
-            <p>Your lesson has been successfully booked.</p>
-            <p><b>Teacher:</b> ${teacher.name || 'Teacher'}</p>
-            ${baseInfo}
-            <p>We’ll notify you again 1 hour before the lesson.</p>
-            <p>Thank you for choosing BridgeLang!</p>
-          `,
-        });
-
-        await sendMail({
-          to: teacher.email,
-          subject: `📘 New lesson booked with ${student.name || 'a student'}`,
-          html: `
-            <p>Hi ${teacher.name || 'Teacher'},</p>
-            <p>You have a new lesson booking!</p>
-            <p><b>Student:</b> ${student.name || 'Student'}</p>
-            ${baseInfo}
-            <p>Please review your schedule and prepare for the session.</p>
-            <p>BridgeLang Teacher Portal</p>
-          `,
-        });
+        if (student.emailNotifications !== false) {
+          await sendMail({
+            to: student.email,
+            subject: `✅ Lesson booked with ${teacher.name || 'your teacher'}`,
+            html: `
+              <p>Hi ${student.name || 'Student'},</p>
+              <p>Your lesson has been successfully booked.</p>
+              <p><b>Teacher:</b> ${teacher.name || 'Teacher'}</p>
+              ${baseInfo}
+              <p>We’ll notify you again 1 hour before the lesson.</p>
+              <p>Thank you for choosing BridgeLang!</p>
+            `,
+          });
+        }
+      
+        if (teacher.emailNotifications !== false) {
+          await sendMail({
+            to: teacher.email,
+            subject: `📘 New lesson booked with ${student.name || 'a student'}`,
+            html: `
+              <p>Hi ${teacher.name || 'Teacher'},</p>
+              <p>You have a new lesson booking!</p>
+              <p><b>Student:</b> ${student.name || 'Student'}</p>
+              ${baseInfo}
+              <p>Please review your schedule and prepare for the session.</p>
+              <p>BridgeLang Teacher Portal</p>
+            `,
+          });
+        }
       } catch (mailErr) {
         console.warn('⚠️ Lesson booking mail failed:', mailErr.message);
       }
