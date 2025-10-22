@@ -223,12 +223,17 @@ export default function TeachersList() {
                     60 min: £{t.pricing60 ?? '—'}
                   </p>
 
-                  <button
-                    className={styles.reportBtn}
-                    onClick={() => router.push(`/student/report?target=${t.id}`)}
-                  >
-                    🛑 Report
-                  </button>
+                  {auth.currentUser && (
+                    <button
+                      className={styles.reportBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/student/report?target=${t.id}`);
+                      }}
+                    >
+                      🛑 Report
+                    </button>
+                  )}
                 </div>
               </div>
             );
