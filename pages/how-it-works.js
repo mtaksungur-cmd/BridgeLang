@@ -17,7 +17,6 @@ const SHOTS_TEACHER = [
   { src: "/screenshots/teacher/step-1.png", caption: "Step 1 – Apply to Teach" },
   { src: "/screenshots/teacher/step-2.png", caption: "Step 2 – Build Your Profile & Manage Teaching" },
   { src: "/screenshots/teacher/step-3.png", caption: "Step 3 – Connect Your Payments" },
-  { src: "/screenshots/teacher/step-4.png", caption: "Step 4 – Message, Book & Teach" },
 ];
 
 /* ------------------ COMPONENT ------------------ */
@@ -144,7 +143,6 @@ export default function HowItWorks() {
                 <li><strong>Step 1 – Apply to Teach:</strong> Submit your application with experience and qualifications.</li>
                 <li><strong>Step 2 – Build Your Profile & Manage Teaching:</strong> Upload your photo, bio, set your rates, and track your lessons and reviews easily.</li>
                 <li><strong>Step 3 – Connect Your Payments:</strong> Link Stripe once, and receive payouts automatically after completed lessons.</li>
-                <li><strong>Step 4 – Message, Book & Teach:</strong> Communicate with students, confirm bookings, and teach online or in person.</li>
               </ul>
             </section>
 
