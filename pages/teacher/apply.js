@@ -39,7 +39,7 @@ export default function TeacherApply() {
     pricing45: '',
     pricing60: '',
     platformExperience: '',
-    deliveryMethod: 'online',
+    deliveryMethod: '',
     willingToTravel: false,
     bio: '',
     confirmInfo: false,
