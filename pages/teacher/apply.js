@@ -361,7 +361,7 @@ export default function TeacherApply() {
         <h4 className={styles.sectionTitle}>Uploads</h4>
         <div className={styles.files}>
           <label className={styles.fileLabel}>
-            <span>Profile Photo</span>
+            <span>Profile Photo (JPEG, JPG, PNG)</span>
             <input
               className={styles.fileInput}
               type="file"
@@ -397,7 +397,7 @@ export default function TeacherApply() {
           </label>
 
           <label className={styles.fileLabel}>
-            <span>Intro Video (MP4)</span>
+            <span>Intro Video (MP4) <small>(optional)</small></span>
             <input
               className={styles.fileInput}
               type="file"
