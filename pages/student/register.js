@@ -206,6 +206,7 @@ export default function StudentRegister() {
         subscriptionPlan: 'free',
         viewLimit: 10,
         messagesLeft: 3,
+        emailNotifications: true,
       });
 
        // 🔹 Mail gönderimi
