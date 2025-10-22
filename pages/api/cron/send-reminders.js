@@ -45,8 +45,10 @@ export default async function handler(req, res) {
       });
 
       const tasks = [];
-      if (student.email) tasks.push(sendMail({ to: student.email, ...forStudent }));
-      if (teacher.email) tasks.push(sendMail({ to: teacher.email, ...forTeacher }));
+      if (student.email && student.emailNotifications !== false)
+        tasks.push(sendMail({ to: student.email, ...forStudent }));
+      if (teacher.email && teacher.emailNotifications !== false)
+        tasks.push(sendMail({ to: teacher.email, ...forTeacher }));
 
       const results = await Promise.allSettled(tasks);
       console.log('[force] mail results:', results);
@@ -64,7 +66,6 @@ export default async function handler(req, res) {
 
   // --- CRON PATH (60 dk kala otomatik) ---
   try {
-    // 🔹 UK saatine göre çalıştır
     const nowUk = DateTime.now().setZone('Europe/London').toMillis();
     const in60 = nowUk + 60 * 60 * 1000;
     const toleranceMs = 5 * 60 * 1000;
@@ -87,16 +88,12 @@ export default async function handler(req, res) {
     let sent = 0;
     for (const docSnap of qs.docs) {
       const b = docSnap.data();
-
       const [teacherSnap, studentSnap] = await Promise.all([
         adminDb.collection('users').doc(b.teacherId).get(),
         adminDb.collection('users').doc(b.studentId).get(),
       ]);
       const teacher = teacherSnap.exists ? teacherSnap.data() : null;
       const student = studentSnap.exists ? studentSnap.data() : null;
-
-      const teacherEmail = teacher?.email;
-      const studentEmail = student?.email;
 
       const forStudent = buildReminderEmail({
         who: 'student',
@@ -125,8 +122,10 @@ export default async function handler(req, res) {
       });
 
       const tasks = [];
-      if (studentEmail) tasks.push(sendMail({ to: studentEmail, ...forStudent }));
-      if (teacherEmail) tasks.push(sendMail({ to: teacherEmail, ...forTeacher }));
+      if (student?.email && student?.emailNotifications !== false)
+        tasks.push(sendMail({ to: student.email, ...forStudent }));
+      if (teacher?.email && teacher?.emailNotifications !== false)
+        tasks.push(sendMail({ to: teacher.email, ...forTeacher }));
 
       try {
         const results = await Promise.allSettled(tasks);
