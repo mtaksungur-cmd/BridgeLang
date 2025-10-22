@@ -96,10 +96,10 @@ export default function HowItWorks() {
               </p>
               <ul className={styles.list}>
                 <li><strong>Step 1 – Choose Your Plan:</strong> Free, Starter, Pro, or VIP.</li>
-                <li><strong>Step 2 – Find Your Tutor:</strong> Filter by English level, goals, and lesson type.</li>
+                <li><strong>Step 2 – Find Your Tutor:</strong>  Filter by English level, learning goals, and lesson format.</li>
                 <li><strong>Step 3 – Book & Pay Securely:</strong> Payments are processed safely via Stripe.</li>
                 <li><strong>Step 4 – Learn Confidently:</strong> Join online or meet in person.</li>
-                <li><strong>Step 5 – Earn Rewards:</strong> Discounts and loyalty coupons as you progress.</li>
+                <li><strong>Step 5 – Earn Rewards:</strong> Earn loyalty points, discounts, and special coupons as you keep learning.</li>
               </ul>
             </section>
 
