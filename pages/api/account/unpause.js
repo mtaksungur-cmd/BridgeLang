@@ -26,8 +26,11 @@ export default async function handler(req, res) {
       return res.status(400).send('Token expired.');
     }
 
+    // 🔹 Rol kontrolü: öğretmense "approved", değilse "active"
+    const newStatus = data.role === 'teacher' ? 'approved' : 'active';
+
     await docRef.update({
-      status: 'active',
+      status: newStatus,
       unpauseHash: null,
       unpauseExpires: null,
       reactivatedAt: Date.now(),
@@ -37,6 +40,7 @@ export default async function handler(req, res) {
       <html>
         <body style="font-family:sans-serif;text-align:center;margin-top:100px;">
           <h2>Your BridgeLang account has been reactivated ✅</h2>
+          <p>Status: <strong>${newStatus}</strong></p>
           <a href="/login" style="background:#2563eb;color:white;padding:10px 16px;border-radius:6px;text-decoration:none;">Go to Login</a>
         </body>
       </html>
