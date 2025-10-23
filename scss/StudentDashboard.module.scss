@@ -1,7 +1,7 @@
 @use '../styles/variables' as v;
 
 .dashboard {
-  padding: v.$spacer-lg;
+  padding: v.$spacer-sm 5px;
 
   h2 {
     text-align: center;
