@@ -7,7 +7,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   reload,
-  signInWithCustomToken
+  signInWithCustomToken,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import styles from '../scss/LoginPage.module.scss';
 
@@ -21,6 +22,24 @@ export default function LoginPage() {
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  /* ------------------ 🔹 Şifremi Unuttum ------------------ */
+  const handleForgotPassword = async () => {
+    setMessage('');
+    const email = form.email.trim().toLowerCase();
+    if (!email)
+      return setMessage('⚠️ Please enter your email before resetting password.');
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setMessage(
+        '📩 Password reset email sent. Please check your Inbox and Spam folder.'
+      );
+    } catch (err) {
+      console.error(err);
+      setMessage('❌ Failed to send password reset email.');
+    }
+  };
 
   /* ------------------ 1️⃣ LOGIN (email + password) ------------------ */
   const handleLogin = async (e) => {
@@ -42,16 +61,16 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send code');
 
-      /* 🔹 Eğer hesap paused ise OTP ekranına geçmeden mail gönderildi demektir. */
+      // Hesap duraklatılmışsa
       if (data.paused) {
         await signOut(auth);
-        setStage('login'); // geri dön
+        setStage('login');
         setMessage('⏸️ Your account is paused. We sent a reactivation link to your email.');
         return;
       }
 
-      /* 🔹 Normal durumda 6 haneli kod gönderilmiş olur */
-      await signOut(auth); // güvenlik için geçici logout
+      // Normal durumda OTP ekranına geç
+      await signOut(auth);
       setStage('verify');
       setMessage('✅ A 6-digit code has been sent to your email.');
     } catch (err) {
@@ -81,7 +100,6 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Invalid code');
 
-      /* 🔸 Eğer backend “paused” döndürürse giriş iptal edilir */
       if (data.status === 'paused') {
         await signOut(auth);
         setStage('login');
@@ -89,10 +107,9 @@ export default function LoginPage() {
         return;
       }
 
-      /* 🔸 Hesap aktif → custom token ile login */
       await signInWithCustomToken(auth, data.token);
 
-      /* 🔸 Rol bazlı yönlendirme */
+      // 🔹 Rol bazlı yönlendirme
       if (data.role === 'teacher') router.push('/teacher/dashboard');
       else if (data.role === 'student') router.push('/student/dashboard');
       else if (data.role === 'admin') router.push('/admin/teachers');
@@ -156,13 +173,23 @@ export default function LoginPage() {
               />
             </label>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`bg-danger ${styles.submit}`}
-            >
-              {loading ? 'Please wait…' : 'Login'}
-            </button>
+            <div className={styles.actionsRow}>
+              <button
+                type="submit"
+                disabled={loading}
+                className={`bg-danger ${styles.submit}`}
+              >
+                {loading ? 'Please wait…' : 'Login'}
+              </button>
+
+              <button
+                type="button"
+                className={styles.linkBtn}
+                onClick={handleForgotPassword}
+              >
+                Forgot password?
+              </button>
+            </div>
           </form>
         )}
 
@@ -187,6 +214,14 @@ export default function LoginPage() {
               disabled={loading || otp.length < 6}
             >
               {loading ? 'Verifying…' : 'Verify & Login'}
+            </button>
+
+            <button
+              type="button"
+              className={styles.linkBtn}
+              onClick={() => setStage('login')}
+            >
+              ← Back to login
             </button>
           </form>
         )}
