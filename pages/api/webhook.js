@@ -153,16 +153,18 @@ export default async function handler(req, res) {
         });
 
         try {
-          await sendMail({
-            to: udata.email,
-            subject: `🎁 ${plan.toUpperCase()} Loyalty Bonus — ${loyalty.percent}% Off`,
-            html: `
-              <p>Hi ${udata.name || 'there'},</p>
-              <p>Congratulations! You've unlocked a <b>${loyalty.percent}% loyalty discount</b> for your next lesson booking.</p>
-              <p>Your loyalty discount has been automatically applied and will appear during your next lesson payment.</p>
-              <p>Keep learning with BridgeLang!</p>
-            `,
-          });
+          if (student.emailNotifications !== false) {
+            await sendMail({
+              to: udata.email,
+              subject: `🎁 ${plan.toUpperCase()} Loyalty Bonus — ${loyalty.percent}% Off`,
+              html: `
+                <p>Hi ${udata.name || 'there'},</p>
+                <p>Congratulations! You've unlocked a <b>${loyalty.percent}% loyalty discount</b> for your next lesson booking.</p>
+                <p>Your loyalty discount has been automatically applied and will appear during your next lesson payment.</p>
+                <p>Keep learning with BridgeLang!</p>
+              `,
+            });
+          }
         } catch (e) {
           console.warn('⚠️ Loyalty email failed:', e.message);
         }
