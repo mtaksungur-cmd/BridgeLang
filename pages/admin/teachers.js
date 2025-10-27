@@ -45,7 +45,11 @@ export default function AdminTeachers() {
       const res = await fetch('/api/admin/rejectTeacher', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teacherId: id })
+         body: JSON.stringify({
+          teacherId: teacher.id,
+          teacherEmail: teacher.email,
+          teacherName: teacher.name,
+        }),
       });
       if (!res.ok) throw new Error('API error');
       setApplications(prev => prev.filter(a => a.id !== id));
