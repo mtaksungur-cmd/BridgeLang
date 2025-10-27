@@ -39,21 +39,24 @@ export default function AdminTeachers() {
     }
   };
 
-  const rejectTeacher = async (id) => {
+  const rejectTeacher = async (teacher) => {
     if (!confirm('Are you sure you want to reject this application?')) return;
+  
     try {
       const res = await fetch('/api/admin/rejectTeacher', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({
+        body: JSON.stringify({
           teacherId: teacher.id,
           teacherEmail: teacher.email,
           teacherName: teacher.name,
         }),
       });
+  
       if (!res.ok) throw new Error('API error');
-      setApplications(prev => prev.filter(a => a.id !== id));
-      alert('Application rejected.');
+  
+      setApplications(prev => prev.filter(a => a.id !== teacher.id));
+      alert(`❌ ${teacher.name || 'Teacher'} application rejected.`);
     } catch (err) {
       console.error('Rejection error:', err);
       alert('❌ Rejection failed.');
@@ -104,7 +107,7 @@ export default function AdminTeachers() {
                   <button className={styles.approve} onClick={() => approveTeacher(app)}>
                     ✅ Approve
                   </button>
-                  <button className={styles.reject} onClick={() => rejectTeacher(app.id)}>
+                  <button className={styles.reject} onClick={() => rejectTeacher(app)}>
                     ❌ Reject
                   </button>
                 </div>
