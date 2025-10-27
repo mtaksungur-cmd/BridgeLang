@@ -12,6 +12,13 @@ export default async function handler(req, res) {
     // ✅ PendingTeachers'tan sil
     await adminDb.collection('pendingTeachers').doc(teacherId).delete();
 
+    try {
+      await adminAuth.deleteUser(teacherId);
+      console.log(`🗑️ Auth user deleted: ${teacherId}`);
+    } catch (authErr) {
+      console.warn('⚠️ Auth deletion failed:', authErr.message);
+    }
+    
     // ✅ Mail gönderimi
     await sendMail({
       to: teacherEmail,
