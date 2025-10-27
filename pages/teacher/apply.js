@@ -355,7 +355,7 @@ export default function TeacherApply() {
           placeholder="Short Bio (max 300 words)"
           value={form.bio}
           onChange={handleChange}
-          maxLength={300}
+          maxLength={2000}
         />
 
         <h4 className={styles.sectionTitle}>Uploads</h4>
