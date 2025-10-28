@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   try {
     await sendMail({
       to: email,
-      subject: 'We’ve received your teacher application',
+      subject: 'We have received your teacher application',
       html: `
         <p>Hi ${name || 'there'},</p>
         <p>Thank you for applying to teach on <strong>BridgeLang.</p>
