@@ -12,8 +12,8 @@ export default async function handler(req, res) {
       subject: 'We’ve received your teacher application',
       html: `
         <p>Hi ${name || 'there'},</p>
-        <p>Thank you for applying to teach on <strong>BridgeLang</strong>.</p>
-        <p>Your application has been received and will be reviewed by our team shortly – usually within a couple of business days.</p>
+        <p>Thank you for applying to teach on <strong>BridgeLang.</p>
+        <p>Your application has been received and will be reviewed by our team shortly - usually within a couple of business days.</p>
         <p>We’ll email you once your profile is approved or if additional information is needed.</p>
         <p>Best regards,<br/>BridgeLang Team</p>
       `,
