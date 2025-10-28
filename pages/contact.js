@@ -67,7 +67,7 @@ export default function Contact() {
 
       setStatus({
         type: "ok",
-        msg: "Thank you! Your message has been sent. We will respond within 1–2 business days.",
+        msg: "Thank you! Your message has been sent. We will get back to you as soon as possible –  usually within a couple of business days.",
       });
       setForm({ name: "", email: "", subject: "", message: "", consent: false });
       setFile(null);
