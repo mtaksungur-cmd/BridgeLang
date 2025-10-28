@@ -157,7 +157,7 @@ export default function TeacherApply() {
       });
 
       setSuccess(
-        '✅ Your application has been submitted. You will be contacted within 3–5 business days.'
+        '✅ We've received your application and our team will review it soon – typically within a couple of business days. We'll email you once your profile has been approved or if any further information is needed.'
       );
     } catch (err) {
       alert('❌ Failed to submit application');
@@ -505,10 +505,8 @@ export default function TeacherApply() {
         <div className={styles.successBox}>
           <p className={styles.successText}>{success}</p>
           <p className={styles.successHint}>
-            Once your application is submitted, our team will review your details
-            and get back to you within 1–2 business days. If approved, you&apos;ll
-            receive a link to create your public teacher profile and get started on
-            the platform!
+            Once your application is submitted, our team will review it
+            and get back to you shortly – typically within a couple of business days. We&apos;ll email you once it's been approved or if any further information is needed.
           </p>
         </div>
       )}
