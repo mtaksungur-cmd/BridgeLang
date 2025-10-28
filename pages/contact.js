@@ -67,8 +67,8 @@ export default function Contact() {
 
       setStatus({
         type: "ok",
-        msg: "Thank you! Your message has been sent. We will get back to you in a couple of business days.",
-      });
+         msg: "Thank you for contacting BridgeLang! Your message has been sent successfully. Our team will get back to you as soon as possible - usually within a couple of business days.",
+    });
       setForm({ name: "", email: "", subject: "", message: "", consent: false });
       setFile(null);
     } catch {
