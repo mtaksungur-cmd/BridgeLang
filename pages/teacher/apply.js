@@ -505,8 +505,7 @@ export default function TeacherApply() {
         <div className={styles.successBox}>
           <p className={styles.successText}>{success}</p>
           <p className={styles.successHint}>
-            Once your application is submitted, our team will review it
-            and get back to you shortly – typically within a couple of business days. We&apos;ll email you once it's been approved or if any further information is needed.
+            Once your application is submitted, our team will review it and get back to you shortly – typically within a couple of business days.
           </p>
         </div>
       )}
