@@ -157,7 +157,7 @@ export default function TeacherApply() {
       });
 
       setSuccess(
-        '✅ We've received your application and our team will review it soon – typically within a couple of business days. We'll email you once your profile has been approved or if any further information is needed.'
+        "✅ We've received your application and our team will review it soon – typically within a couple of business days. We'll email you once your profile has been approved or if any further information is needed."
       );
     } catch (err) {
       alert('❌ Failed to submit application');
