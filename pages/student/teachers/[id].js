@@ -205,7 +205,7 @@ export default function TeacherProfilePage() {
           <p><strong>Bio:</strong> {teacher.bio || 'No bio provided.'}</p>
           <p><strong>Languages Taught:</strong> {teacher.languagesTaught}</p>
           <p><strong>Languages Spoken:</strong> {teacher.languagesSpoken}</p>
-          <p><strong>Education Level:</strong> {teacher.educationLevel}</p>
+          <p><strong>Level of Education:</strong> {teacher.educationLevel}</p>
           <p><strong>Experience:</strong> {teacher.experienceYears} years</p>
 
           {/* 🔹 Video bölümü */}
