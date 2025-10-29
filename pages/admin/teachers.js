@@ -136,7 +136,7 @@ export default function AdminTeachers() {
                     <dt>Experience (years)</dt>
                     <dd>{app.experienceYears ?? '—'}</dd>
 
-                    <dt>Education Level</dt>
+                    <dt>Level of Education</dt>
                     <dd>{app.educationLevel || '—'}</dd>
                   </dl>
                 </div>
