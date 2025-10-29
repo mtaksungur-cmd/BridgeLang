@@ -8,7 +8,7 @@ export default function CookiePolicy() {
         <title>Cookie Policy | BridgeLang</title>
         <meta
           name="description"
-          content="BridgeLang UK Ltd Cookie Policy: how we use cookies, categories (strictly necessary, functional, analytics, advertising), third-party cookies, control options, legal compliance, and contact details."
+          content="BridgeLang Ltd Cookie Policy: how we use cookies, categories (strictly necessary, functional, analytics, advertising), third-party cookies, control options, legal compliance, and contact details."
         />
         <meta name="robots" content="index,follow" />
       </Head>
