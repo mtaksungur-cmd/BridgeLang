@@ -38,7 +38,7 @@ export default function CookiePolicy() {
         <article className={styles.article}>
           <section id="intro">
             <h2>1. Introduction</h2>
-            <p>1.1. This Cookie Policy explains how BridgeLang UK Ltd. (“BridgeLang”, “we”, “our”, or “us”) uses cookies and similar technologies on our website and any future mobile applications.</p>
+            <p>1.1. This Cookie Policy explains how BridgeLang Ltd. (“BridgeLang”, “we”, “our”, or “us”) uses cookies and similar technologies on our website and any future mobile applications.</p>
             <p>1.2. By using our website, you agree to the use of cookies in accordance with this policy.</p>
             <p>1.3. We use non-essential cookies only with your prior consent collected via our Cookie Banner. You can accept, reject, or manage your preferences at any time through the Cookie Settings panel.</p>
             <p>1.4. Strictly necessary cookies that are essential to provide the service you request do not require consent. All other cookies are set only after you provide consent via the Cookie Banner.</p>
@@ -106,7 +106,7 @@ export default function CookiePolicy() {
             <h2>7. Contact Us</h2>
             <p>If you have any questions or concerns regarding this Cookie Policy, please contact us:</p>
             <address>
-              BridgeLang UK Ltd.<br />
+              BridgeLang Ltd.<br />
               The Apex, Derriford Business Park, Brest Road, Plymouth, PL6 5FL, United Kingdom<br />
               Email: <a href="mailto:contact@bridgelang.co.uk">contact@bridgelang.co.uk</a>
             </address>
