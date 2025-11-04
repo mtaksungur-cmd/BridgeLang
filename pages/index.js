@@ -10,7 +10,7 @@ export default function Home() {
         <title>BridgeLang – Learn English with verified tutors</title>
         <meta
           name="description"
-          content="Book online or in-person English lessons with verified tutors. Secure payments, safe messaging, flexible scheduling."
+          content="Book online or in-person English lessons with verified UK tutors. Secure payments, safe messaging, flexible scheduling and affordable prices."
         />
       </Head>
 
@@ -19,7 +19,7 @@ export default function Home() {
         <div className="row align-items-center g-4">
           <div className="col-lg-6">
             <h1 className={`display-5 fw-bold ${styles.heroTitle}`}>
-              Learn English faster with verified tutors
+              Learn English faster with verified UK tutors
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
               Book lessons online or in person. Secure payments, flexible scheduling, and friendly support.
@@ -60,7 +60,7 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>1) Search &amp; Message</h5>
                 <p className="mb-0">
-                  Browse verified tutors, check availability, and send a safe
+                  Browse verified UK tutors, check availability, and send a safe
                   in-app message to discuss your goals.
                 </p>
               </div>
@@ -77,7 +77,7 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>3) Learn &amp; Review</h5>
                 <p className="mb-0">
-                  Meet online via Daily or in person. After both confirm the lesson, the tutor is paid. Leave a review to help others.
+                  Meet online via Daily.co or in person. After both confirm the lesson, the tutor is paid. Leave a review to help others.
                 </p>
               </div>
             </div>
