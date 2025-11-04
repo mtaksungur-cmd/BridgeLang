@@ -10,7 +10,7 @@ export default function Home() {
         <title>BridgeLang – Learn English with verified tutors</title>
         <meta
           name="description"
-          content="Book online or in-person English lessons with verified tutors. Secure payments, safe messaging, automatic scheduling."
+          content="Book online or in-person English lessons with verified tutors. Secure payments, safe messaging, flexible scheduling."
         />
       </Head>
 
@@ -22,7 +22,7 @@ export default function Home() {
               Learn English faster with verified tutors
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Book lessons online or in person. Secure payments, automatic scheduling, and friendly support.
+              Book lessons online or in person. Secure payments, flexible scheduling, and friendly support.
             </p>
             <div>
               <Link
