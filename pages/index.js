@@ -10,7 +10,7 @@ export default function Home() {
         <title>BridgeLang – Learn English with verified tutors</title>
         <meta
           name="description"
-          content="Book online or in-person English lessons with verified UK tutors. Secure payments, safe messaging and flexible scheduling."
+          content="Book online or in-person English lessons with verified tutors. Secure payments, safe messaging and flexible scheduling."
         />
       </Head>
 
