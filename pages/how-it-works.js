@@ -91,12 +91,12 @@ export default function HowItWorks() {
             <section className={styles.card}>
               <h2 className={styles.h2}>For Students</h2>
               <p>
-                Create your free account, explore trusted English tutors, and choose how you want to learn.
+                Create your free account, explore verified English tutors, and choose how you want to learn.
                 If you don’t select a subscription, you’ll automatically start with the Free Plan.
               </p>
               <ul className={styles.list}>
                 <li><strong>Step 1 – Choose Your Plan:</strong> Free, Starter, Pro, or VIP.</li>
-                <li><strong>Step 2 – Find Your Tutor:</strong>  Filter by English level, learning goals, and lesson format.</li>
+                <li><strong>Step 2 – Find Your Tutor:</strong>  Filter by English level, learning goals, and method of delivery.</li>
                 <li><strong>Step 3 – Book & Pay Securely:</strong> Payments are processed safely via Stripe.</li>
                 <li><strong>Step 4 – Learn Confidently:</strong> Join online or meet in person.</li>
                 <li><strong>Step 5 – Earn Rewards:</strong> Earn loyalty points, discounts, and special coupons as you keep learning.</li>
