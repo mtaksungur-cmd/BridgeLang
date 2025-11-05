@@ -10,7 +10,7 @@ export default function Home() {
         <title>BridgeLang – Learn English with verified UK tutors</title>
         <meta
           name="description"
-          content="Book online or in-person English lessons with verified UK tutors. Secure payments, safe messaging and flexible scheduling."
+          content="Book online or in-person English lessons with verified UK tutors. Secure payments, safe messaging, flexible scheduling and affordable prices."
         />
       </Head>
 
@@ -35,7 +35,7 @@ export default function Home() {
                 href="/how-it-works"
                 className={`btn btn-outline-secondary ${styles.heroBtnSecondary}`}
               >
-                How it works
+                How It Works
               </Link>
             </div>
           </div>
