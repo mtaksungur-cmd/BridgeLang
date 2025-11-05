@@ -54,7 +54,7 @@ export default function Home() {
 
         {/* HOW IT WORKS */}
         <section className={`mt-5 ${styles.howItWorks}`}>
-          <h2 className="h3 fw-bold text-center mb-4">How it works</h2>
+          <h2 className="h3 fw-bold text-center mb-4">How It Works</h2>
           <div className="row g-4">
             <div className="col-md-4">
               <div className={styles.howCard}>
@@ -77,10 +77,7 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>3) Learn &amp; Review</h5>
                 <p className="mb-0">
-                  Meet your tutor online via Daily.co or in person — the choice is yours.
-(Daily is a secure, browser-based video tool — no downloads required.)
-
-Once the lesson is confirmed, your tutor is paid safely. Leave a quick review to help others start their English journey.
+                  Meet your tutor online via Daily.co, a secure and browser-based video tool, or in person — the choice is yours. Once the lesson is confirmed, your tutor is paid safely. Leave a quick review to help others start their English journey.
                 </p>
               </div>
             </div>
