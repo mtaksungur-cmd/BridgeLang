@@ -19,7 +19,7 @@ export default function Home() {
         <div className="row align-items-center g-4">
           <div className="col-lg-6">
             <h1 className={`display-5 fw-bold ${styles.heroTitle}`}>
-              Learn English faster with verified UK tutors
+              Improve Your English and Feel at Home in the UK
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
               Book lessons online or in person. Secure payments, flexible scheduling, and friendly support.
