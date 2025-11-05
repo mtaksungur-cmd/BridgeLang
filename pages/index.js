@@ -22,7 +22,7 @@ export default function Home() {
               Improve Your English and Feel at Home in the UK
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Book lessons online or in person. Secure payments, flexible scheduling, and friendly support.
+              Start learning English the smart way — online or in person. Secure payments, flexible lessons, and real progress with friendly UK-based tutors. Start learning today — your first step to fluent, confident English.
             </p>
             <div>
               <Link
