@@ -77,7 +77,10 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>3) Learn &amp; Review</h5>
                 <p className="mb-0">
-                  Meet online via Daily.co or in person. After both confirm the lesson, the tutor is paid. Leave a review to help others.
+                  Meet your tutor online via Daily.co or in person — the choice is yours. 
+(Daily is a secure, browser-based video platform — no downloads needed.) 
+
+Once the lesson is confirmed by both sides, your tutor is paid safely and instantly. After your session, share a quick review to help other learners find their ideal tutor — and inspire someone else to start learning too.
                 </p>
               </div>
             </div>
@@ -100,7 +103,7 @@ export default function Home() {
               <div className={styles.highlightBox}>
                 <h6 className="mb-2">Flexible lesson types</h6>
                 <p className="mb-0">
-                  Online or in person. IELTS/TOEFL prep, conversation practice, business English and more.
+                  Online or in person. IELTS/TOEFL prep, conversation practice, Business English and more.
                 </p>
               </div>
             </div>
