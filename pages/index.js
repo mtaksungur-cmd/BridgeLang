@@ -32,7 +32,7 @@ export default function Home() {
                 Start Learning Today
               </Link>
               <Link
-                href="/how-it-works"
+                href="/how-It-Works"
                 className={`btn btn-outline-secondary ${styles.heroBtnSecondary}`}
               >
                 How It Works
@@ -77,10 +77,10 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>3) Learn &amp; Review</h5>
                 <p className="mb-0">
-                  Meet your tutor online via Daily.co or in person — the choice is yours. 
-(Daily is a secure, browser-based video platform — no downloads needed.) 
+                  Meet your tutor online via Daily.co or in person — the choice is yours.
+(Daily is a secure, browser-based video tool — no downloads required.)
 
-Once the lesson is confirmed by both sides, your tutor is paid safely and instantly. After your session, share a quick review to help other learners find their ideal tutor — and inspire someone else to start learning too.
+Once the lesson is confirmed, your tutor is paid safely. Leave a quick review to help others start their English journey.
                 </p>
               </div>
             </div>
