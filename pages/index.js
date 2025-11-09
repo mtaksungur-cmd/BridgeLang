@@ -32,7 +32,7 @@ export default function Home() {
                 Start Learning Today
               </Link>
               <Link
-                href="/how-It-Works"
+                href="/how-it-works"
                 className={`btn btn-outline-secondary ${styles.heroBtnSecondary}`}
               >
                 How It Works
