@@ -77,7 +77,7 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>3) Learn &amp; Review</h5>
                 <p className="mb-0">
-                  Meet your tutor online via Daily.co, a secure and browser-based video tool, or in person — the choice is yours. Once the lesson is confirmed, your tutor is paid safely. Leave a quick review to help others start their English journey.
+                  Meet your tutor online via the BridgeLang Virtual Classroom, a secure, high-quality, browser-based learning space, or in person — the choice is yours. Once the lesson is confirmed, your tutor is paid safely. Leave a quick review to help others start their English journey.
                 </p>
               </div>
             </div>
