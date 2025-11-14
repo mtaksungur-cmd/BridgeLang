@@ -46,7 +46,7 @@ export default function HowItWorks() {
     <>
       <Head>
         <title>
-          How it works — {role === "teacher" ? "For Teachers" : "For Students"} | BridgeLang
+          How It Works — {role === "teacher" ? "For Teachers" : "For Students"} | BridgeLang
         </title>
         <meta
           name="description"
