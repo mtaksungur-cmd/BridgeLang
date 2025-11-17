@@ -72,7 +72,7 @@ export default function DefaultNavbar() {
             {/* ✅ Teachers link — herkese açık */}
             <li className="nav-item">
               <Link href="/student/teachers" className="nav-link text-light">
-                Our ESL Teachers
+                Our ESL Tutors
               </Link>
             </li>
 
