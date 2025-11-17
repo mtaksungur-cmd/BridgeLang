@@ -22,7 +22,7 @@ export default function Footer() {
             <h5 className={styles.heading}>Support</h5>
             <ul className={styles.list}>
               <li><Link href="/faq">FAQ</Link></li>
-              <li><Link href="/how-it-works">How it works</Link></li>
+              <li><Link href="/how-it-works">How It Works</Link></li>
             </ul>
           </div>
 
