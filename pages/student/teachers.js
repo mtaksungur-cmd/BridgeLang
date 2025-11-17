@@ -130,7 +130,7 @@ export default function TeachersList() {
 
   return (
     <div className={styles.container}>
-      <h2>Browse Our Teachers</h2>
+      <h2>Browse Our Tutors</h2>
 
       <div className={styles.filters} role="region" aria-label="Filters">
         <div className={styles.filterItem}>
