@@ -173,6 +173,9 @@ export default function TeachersList() {
       <div className={styles.grid}>
         {teachers.map(t => {
           const cityTxt = t.city || '—';
+          const specs = t.teachingSpecializations
+            ? t.teachingSpecializations.split(',').map(s => s.trim())
+            : [];
           const countryTxt = t.country || '—';
           const travel =
             typeof t.willingToTravel === 'boolean'
@@ -227,6 +230,18 @@ export default function TeachersList() {
                 <p><strong>Delivery method:</strong> {delivery}</p>
                 <p><strong>Languages:</strong> {t.languagesTaught || '—'}</p>
                 <p><strong>Experience:</strong> {t.experienceYears ? `${t.experienceYears} years` : '—'}</p>
+                {specs.length > 0 && (
+                  <div className={styles.tagsWrap}>
+                    <strong>Specializations:</strong>
+                    <div className={styles.tags}>
+                      {specs.map((tag, i) => (
+                        <span key={i} className={styles.tag}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <p><strong>Price:</strong><br />
                   30 min: £{t.pricing30 ?? '—'}<br />
                   45 min: £{t.pricing45 ?? '—'}<br />
