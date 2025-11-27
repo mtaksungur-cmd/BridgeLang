@@ -1,3 +1,6 @@
+// pages/student/review/[lessonId].js
+'use client';
+
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { auth, db } from '../../../lib/firebase';
@@ -16,6 +19,7 @@ export default function ReviewLesson() {
   const [teacher, setTeacher] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [hovered, setHovered] = useState(0);
+  const [userConsented, setUserConsented] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -34,7 +38,7 @@ export default function ReviewLesson() {
       if (teacherSnap.exists()) setTeacher(teacherSnap.data());
     });
     return () => unsub?.();
-  }, [lessonId]);
+  }, [lessonId, router]);
 
   const handleSubmit = async () => {
     if (isInappropriate(comment)) {
@@ -49,7 +53,7 @@ export default function ReviewLesson() {
       const res = await fetch(`/api/review/${lesson.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating, comment }),
+        body: JSON.stringify({ rating, comment, userConsented }),
       });
 
       if (!res.ok) throw new Error('Review save failed');
@@ -107,6 +111,20 @@ export default function ReviewLesson() {
           onChange={(e) => setComment(e.target.value)}
           className={styles.textarea}
         />
+
+        {/* 🔹 GDPR – Açık Rıza */}
+        <label className={styles.consentRow}>
+          <input
+            type="checkbox"
+            checked={userConsented}
+            onChange={(e) => setUserConsented(e.target.checked)}
+          />
+          <span>
+            I agree for my full name and profile photo to be publicly displayed with my review.
+            If you don’t tick this box, your review will appear with a hidden photo and an anonymised name
+            (e.g. <code>k**** g*****</code>).
+          </span>
+        </label>
 
         <button onClick={handleSubmit} disabled={submitting} className={styles.button}>
           {submitting ? 'Submitting...' : 'Submit Review'}
