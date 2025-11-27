@@ -1,3 +1,4 @@
+// pages/api/review/[lessonId].js
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import Stripe from 'stripe';
@@ -8,46 +9,97 @@ import { sendMail } from '../../../lib/mailer';
 if (!getApps().length) {
   initializeApp({
     credential: cert({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      privateKey: Buffer.from(
+        process.env.FIREBASE_PRIVATE_KEY_BASE64,
+        'base64'
+      ).toString('utf-8'),
     }),
   });
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
+function buildDisplayFields(userData, userConsented) {
+  const fullName = (userData?.name || 'Anonymous').trim();
+  const photo = userData?.profilePhotoUrl || null;
+
+  const mask = (s) => (s ? `${s[0]}****` : '');
+
+  if (userConsented) {
+    return {
+      user_consented: true,
+      display_name: fullName,
+      display_photo: photo,
+      consentGivenAt: new Date().toISOString(),
+    };
+  }
+
+  const parts = fullName.split(/\s+/);
+  const first = parts[0] || '';
+  const last = parts.length > 1 ? parts[parts.length - 1] : '';
+
+  const anon =
+    (first ? mask(first) : '') +
+    (last ? ` ${mask(last)}` : '');
+
+  return {
+    user_consented: false,
+    display_name: anon || 'Anonymous',
+    display_photo: null,
+    consentGivenAt: null,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { lessonId } = req.query;
-  const { rating, comment } = req.body;
+  const { rating, comment, userConsented } = req.body;
 
-  if (!lessonId || !rating || typeof rating !== 'number')
+  if (!lessonId || !rating || typeof rating !== 'number') {
     return res.status(400).json({ error: 'Invalid input' });
+  }
 
-  if (comment && isInappropriate(comment))
+  if (comment && isInappropriate(comment)) {
     return res.status(400).json({ error: 'Inappropriate comment content' });
+  }
 
   try {
     const bookingSnap = await adminDb.collection('bookings').doc(lessonId).get();
     if (!bookingSnap.exists) return res.status(404).end();
     const booking = bookingSnap.data();
-    if (booking.status !== 'approved')
+    if (booking.status !== 'approved') {
       return res.status(403).json({ error: 'Lesson not approved yet' });
+    }
 
     const teacherId = booking.teacherId;
     const studentId = booking.studentId;
+
+    const studentRef = adminDb.collection('users').doc(studentId);
+    const studentSnap = await studentRef.get();
+    const studentData = studentSnap.exists ? studentSnap.data() : {};
+
+    // 🔹 Görüntülenecek isim / foto rıza durumuna göre hesaplanıyor
+    const display = buildDisplayFields(studentData, !!userConsented);
 
     await adminDb.collection('reviews').doc(lessonId).set({
       lessonId,
       teacherId,
       studentId,
       rating,
-      comment,
+      comment: comment || '',
       createdAt: new Date().toISOString(),
+      review_type: 'teacher_review',
+      user_consented: display.user_consented,
+      display_name: display.display_name,
+      display_photo: display.display_photo,
+      consentGivenAt: display.consentGivenAt,
+      hidden: false,          // 🔹 kullanıcı “hide” ederse true yapılacak
     });
 
+    // 🔹 Öğretmenin ortalama puanı
     const rSnap = await adminDb.collection('reviews').where('teacherId', '==', teacherId).get();
     const all = rSnap.docs.map(d => d.data());
     const total = all.reduce((sum, r) => sum + (r.rating || 0), 0);
@@ -60,10 +112,7 @@ export default async function handler(req, res) {
 
     await updateBadgesForTeacher(teacherId);
 
-    const studentRef = adminDb.collection('users').doc(studentId);
-    const studentSnap = await studentRef.get();
-    const studentData = studentSnap.exists ? studentSnap.data() : {};
-
+    // 🔹 Öğrenci için review bonus (eski mantık olduğu gibi)
     const plan = studentData.subscriptionPlan || 'free';
     const coupons = Array.isArray(studentData.lessonCoupons) ? [...studentData.lessonCoupons] : [];
     const alreadyHasReviewCoupon = coupons.some(c => c.type === 'lesson' && c.source === 'review-bonus');
