@@ -4,7 +4,7 @@ import { auth, db } from '../../lib/firebase';
 import Link from 'next/link';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import ReCAPTCHA from 'react-google-recaptcha';
+// import ReCAPTCHA from 'react-google-recaptcha';
 import styles from '../../scss/StudentRegister.module.scss';
 
 export default function StudentRegister() {
@@ -28,7 +28,7 @@ export default function StudentRegister() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const recaptchaRef = useRef(null);
+  // const recaptchaRef = useRef(null);
 
   const goalCategories = {
     exam: {
@@ -173,8 +173,8 @@ export default function StudentRegister() {
 
     setSubmitting(true);
     try {
-      const token = await recaptchaRef.current.executeAsync();
-      recaptchaRef.current.reset();
+      // const token = await recaptchaRef.current.executeAsync();
+      // recaptchaRef.current.reset();
 
       const email = form.email.trim().toLowerCase();
       const { user } = await createUserWithEmailAndPassword(
@@ -232,6 +232,20 @@ export default function StudentRegister() {
           body: JSON.stringify({ email, name: form.name }),
         });
       }
+
+      // Yeni öğrenci → admin bildirimi
+      await fetch('/api/mail/admin-new-student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: form.name, email }),
+      });
+
+      // Yeni öğrenci → hoş geldin maili
+      await fetch('/api/mail/student-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: form.name, email }),
+      });
 
       await signOut(auth);
       setSuccess(true);
@@ -367,7 +381,7 @@ export default function StudentRegister() {
           </span>
         </label>
 
-        <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} size="invisible" ref={recaptchaRef} />
+        {/* <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} size="invisible" ref={recaptchaRef} /> */}
 
         <button type="submit" className={styles.submitBtn} disabled={submitting}>
           {submitting ? 'Creating your account…' : 'Register'}
