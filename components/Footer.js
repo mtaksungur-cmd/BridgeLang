@@ -51,6 +51,9 @@ export default function Footer() {
               <a href="https://www.facebook.com/share/17858srkmF/" target="_blank" rel="noopener noreferrer">
                 <i className="bi bi-facebook"></i>
               </a>
+              <a href="https://youtube.com/@bridgelang_uk?si=tA-V6RyZftqOvtRc" target="_blank" rel="noopener noreferrer">
+                <i className="bi bi-youtube"></i>
+              </a>
             </div>
           </div>
         </div>
