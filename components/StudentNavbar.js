@@ -67,6 +67,17 @@ export default function StudentNavbar() {
                 Security Settings
               </Link> 
             </li>
+            <li className='nav-item'>
+              <Link href="/review/platform" className="nav-link text-light">
+                Write Platform Review
+              </Link>
+            </li>
+
+            <li className='nav-item'>
+              <Link href="/account/reviews" className="nav-link text-light">
+                My Reviews
+              </Link>
+            </li>
             <li className="nav-item">
               <button
                 onClick={handleLogout}
