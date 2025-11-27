@@ -81,6 +81,14 @@ export default function DefaultNavbar() {
               <Link href="/faq" className="nav-link text-light">FAQ</Link>
             </li>
 
+            <li className="nav-item">
+              <Link href="/testimonials/student" className="nav-link text-light">Student Testimonials</Link>
+            </li>
+
+            <li className="nav-item">
+              <Link href="/testimonials/teacher" className="nav-link text-light">Tutor Testimonials</Link>
+            </li>
+
             {/* Sign Up (hover + click) */}
             <li
               className={`nav-item position-relative ${styles.dropdown}`}
