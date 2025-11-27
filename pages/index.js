@@ -2,6 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "../scss/Home.module.scss";
+import GeneralIntroVideo from "../components/videos/GeneralIntroVideo";
 
 export default function Home() {
   return (
@@ -15,6 +16,7 @@ export default function Home() {
       </Head>
 
       <div className={`container py-5 ${styles.homePage}`}>
+        
         {/* HERO */}
         <div className="row align-items-center g-4">
           <div className="col-lg-6">
@@ -22,7 +24,8 @@ export default function Home() {
               Improve Your English and Feel at Home in the UK
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Start learning English the smart way — online or in person. Secure payments, flexible lessons, and real progress with friendly UK-based tutors. Start learning today — your first step to fluent, confident English.
+              Start learning English the smart way — online or in person. Secure payments,
+              flexible lessons, and real progress with friendly UK-based tutors.
             </p>
             <div>
               <Link
@@ -52,6 +55,191 @@ export default function Home() {
           </div>
         </div>
 
+        {/* ===========================
+            WHY LEARNERS TRUST BRIDGELANG
+        =========================== */}
+        <section className={`mt-5 ${styles.trustSection}`}>
+          <h2 className="h3 fw-bold text-center mb-4">
+            Why Learners Trust BridgeLang
+          </h2>
+
+          <div className="row g-4">
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>1. Real, UK-Based Professional ESL Teachers</h6>
+                <p>
+                  Learn exclusively from independent, verified ESL teachers living in the United Kingdom. Every teacher undergoes identity and qualification checks, ensuring authentic UK English, accurate pronunciation and culturally relevant communication skills.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>2. Manually Reviewed & Approved Teachers</h6>
+                <p>
+                  BridgeLang personally reviews and approves each teacher application. Only trusted, qualified professionals become part of the community — no instant sign-ups, no unverified profiles.
+                </p>
+              </div>
+            </div>
+
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>3. A UK-Only Learning Environment</h6>
+                <p>
+                  BridgeLang is designed exclusively for learners and teachers based in the UK. This ensures cultural relevance, shared time zones, smoother communication and a safer space free from global spam or scams.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>4. Safe, professional space for adult learners</h6>
+                <p>
+                  The platform is primarily for adult learners in the UK. Learners aged 14–17 can join only with parental consent. This creates a mature, respectful and secure educational environment.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>5. Personalised 1-to-1 Lessons</h6>
+                <p>
+                  Each lesson is tailored to your personal goals — fluency, job interviews, workplace English, confidence in daily communication or accent improvement. No generic one-size-fits-all paths.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>6. Payments are processed securely via Stripe.</h6>
+                <p>
+                  Learners always pay the exact lesson price displayed on the platform — with no hidden fees, no additional charges and no unexpected costs.
+                  BridgeLang ensures a clear, simple and transparent payment experience for every learner.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>7. Flexible Scheduling for Busy UK Life</h6>
+                <p>
+                  Book lessons at times that fit your schedule — mornings, evenings or weekends. Reschedule easily and without stress. Ideal for UK professionals, parents, students and shift workers.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>8. Instant Booking — No Waiting Time</h6>
+                <p>
+                  Start learning immediately. Choose your teacher, book your lesson and begin. No approval delays, no complicated processes.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>9. ⁠Faster, Real-Life Results</h6>
+                <p>
+                  1-to-1 lessons accelerate progress significantly compared to group classes. Improve your English for real UK situations — workplace interactions, job interviews, NHS appointments, school communication and daily conversation.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>10. Fully GDPR-Compliant Data Protection</h6>
+                <p>
+                  Your personal information, learning history and payment data are protected with full GDPR compliance. Privacy and data security are core commitments.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>11. ⁠Registered UK Company</h6>
+                <p>
+                  BridgeLang UK Ltd is a legally registered company in the United Kingdom (Company No. 16555217). This provides learners with transparency, legal accountability and long-term trust.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>12. Real Business Presence in the UK</h6>
+                <p>
+                  BridgeLang operates from a verifiable UK business address:
+                  The Apex, Derriford Business Park, Brest Road, Plymouth, PL6 5FL.
+                  A real company with a real UK presence — not an anonymous online platform.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>13. ⁠Secure Payments with Stripe</h6>
+                <p>
+                  Stripe’s trusted global infrastructure ensures your transactions are protected, encrypted and compliant with UK financial standards.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>14. More Choice, More Value</h6>
+                <p>
+                  Independent freelance teachers offer a wider variety of teaching styles, experience levels and price points — giving learners more flexibility, more affordability and more control.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>15. ⁠Authentic UK Cultural Integration Support</h6>
+                <p>
+                  Lessons help learners become confident and culturally aware in real UK life. Perfect for newcomers, job seekers and long-term residents wanting to feel more connected.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>16. ⁠Real Human Support — Not Bots</h6>
+                <p>
+                  Receive fast, personal and human assistance whenever you need help. No automated responses, no scripted chatbot interactions.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>17. Consistent Mission & Educational Integrity</h6>
+                <p>
+                  Guided by the mission: “Bridging Cultures. Building Confidence. Belonging in the UK.”
+                  BridgeLang supports learners in feeling understood, confident and connected in their everyday UK life.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>18. Clear, Measurable Learning Outcomes</h6>
+                <p>
+                  BridgeLang focuses on helping learners build confidence, improve fluency and communicate more effectively in UK-specific situations.
+                  Outcomes include clearer communication, improved vocabulary, stronger pronunciation and increased confidence in workplace and daily interactions.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>19. ⁠Clear Terms, Policies and Teacher Guidelines</h6>
+                <p>
+                  Transparent terms of use, clear privacy information and professional teaching guidelines ensure predictable, safe and high-quality interactions for both learners and teachers.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-4">
+              <div className={styles.trustCard}>
+                <h6>20. Visible and Transparent Online Presence</h6>
+                <p>
+                  BridgeLang maintains a consistent and professional online presence through its website and social platforms — reinforcing trust, accountability and long-term commitment to learners across the UK.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ===========================
+            🎥 INTRO VIDEO (NEW)
+        ============================ */}
+        <GeneralIntroVideo videoId="IIVHGzE4Z1I" />
+
+
         {/* HOW IT WORKS */}
         <section className={`mt-5 ${styles.howItWorks}`}>
           <h2 className="h3 fw-bold text-center mb-4">How It Works</h2>
@@ -69,7 +257,7 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>2) Book &amp; Pay</h5>
                 <p className="mb-0">
-                  Pick a time that works. Pay with Stripe. You&apos;ll get instant booking confirmation and calendar invites.
+                  Pick a time that works. Pay with Stripe.
                 </p>
               </div>
             </div>
@@ -77,7 +265,8 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>3) Learn &amp; Review</h5>
                 <p className="mb-0">
-                  Meet your tutor online via BridgeLang Live — a secure, high-quality, browser-based learning space — or in person. The choice is yours. Once the lesson is confirmed, your tutor is paid safely. Leave a quick review to help others start their English journey.
+                  Meet your tutor online via BridgeLang Live — or in person.
+                  Leave a quick review to help others start their English journey.
                 </p>
               </div>
             </div>
@@ -92,7 +281,7 @@ export default function Home() {
               <div className={styles.highlightBox}>
                 <h6 className="mb-2">Verified &amp; supported</h6>
                 <p className="mb-0">
-                  Each tutor completes an onboarding check and profile review. We spotlight active, well-reviewed teachers.
+                  Each tutor completes an onboarding check and profile review.
                 </p>
               </div>
             </div>
@@ -100,14 +289,14 @@ export default function Home() {
               <div className={styles.highlightBox}>
                 <h6 className="mb-2">Flexible lesson types</h6>
                 <p className="mb-0">
-                  Online or in person. IELTS/TOEFL prep, conversation practice, Business English and more.
+                  Online or in person. IELTS/TOEFL prep, conversation practice, Business English.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* PRICING TEASER */}
+        {/* PRICING */}
         <section className={`mt-5 ${styles.pricing}`}>
           <div
             className={`p-4 rounded-3 border bg-light d-md-flex align-items-center justify-content-between ${styles.pricingBox}`}
@@ -124,31 +313,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* TESTIMONIALS */}
-{/*
-       <section className={`mt-5 ${styles.testimonials}`}>
-          <h2 className="h4 fw-bold mb-3">What learners say</h2>
-          <div className="row g-4">
-            <div className="col-md-4">
-              <div className={styles.testimonialCard}>
-                “Booking was effortless and my tutor adapted the lesson to my job interviews.” — Emma P.
-              </div>
-            </div>
-            <div className="col-md-4">
-              <div className={styles.testimonialCard}>
-                “I like that payments are safe and released only after we both confirm.” — Daniel C.
-              </div>
-            </div>
-            <div className="col-md-4">
-              <div className={styles.testimonialCard}>
-                “The video lessons work smoothly and messaging is super quick.” — Aisha R.
-              </div>
-            </div>
-          </div>
-        </section>
-        */}
-
-        {/* FAQ TEASER */}
+        {/* FAQ */}
         <section className={`mt-5 ${styles.faq}`}>
           <div className={styles.faqBox}>
             <h3 className="h5 fw-bold mb-2">Have questions?</h3>
@@ -161,7 +326,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FINAL CTA */}
+        {/* CTA */}
         <section className={styles.finalCta}>
           <h2 className="h3 fw-bold mb-2">Ready to start?</h2>
           <p className="mb-3">
