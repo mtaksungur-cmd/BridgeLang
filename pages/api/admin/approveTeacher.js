@@ -1,73 +1,77 @@
-import { adminDb } from '../../../lib/firebaseAdmin';
+// pages/api/admin/approveTeacher.js
+import { adminDb, adminAuth } from '../../../lib/firebaseAdmin';
 import { sendMail } from '../../../lib/mailer';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end('Method not allowed');
+  if (req.method !== 'POST') return res.status(405).end();
 
   const { teacher } = req.body;
   if (!teacher?.id) return res.status(400).json({ error: 'Missing teacher ID' });
 
   try {
-    const teacherRef = adminDb.collection('pendingTeachers').doc(teacher.id);
-    const teacherSnap = await teacherRef.get();
-    const pendingData = teacherSnap.exists ? teacherSnap.data() : {};
+    const ref = adminDb.collection('pendingTeachers').doc(teacher.id);
+    const snap = await ref.get();
+    const pending = snap.exists ? snap.data() : {};
+    const now = new Date();
 
-    const existingBadges = Array.isArray(teacher.badges)
-      ? teacher.badges
-      : Array.isArray(pendingData.badges)
-      ? pendingData.badges
-      : [];
+    const data = {
+      ...pending,
+      ...teacher,
+      role: 'teacher',
+      status: 'approved',
+      emailVerified: true,
+      createdAt: pending.createdAt || teacher.createdAt || now,
+      approvedAt: now,
+      emailNotifications: true,
+    };
 
-    const badges = existingBadges.includes('🆕 New Teacher')
-      ? existingBadges
-      : [...existingBadges, '🆕 New Teacher'];
+    await adminDb.collection('users').doc(teacher.id).set(data, { merge: true });
 
-    const createdAt =
-      pendingData.createdAt ||
-      teacher.createdAt ||
-      new Date();
+    await ref.delete();
 
-    // ✅ Firestore: Teacher'ı users koleksiyonuna taşı
-    await adminDb.collection('users').doc(teacher.id).set(
-      {
-        ...teacher,
-        ...pendingData,
-        role: 'teacher',
-        status: 'approved',
-        emailVerified: true,
-        createdAt,
-        badges,
-        // 🔹 Varsayılan olarak açık:
-        emailNotifications: true,
-      },
-      { merge: true }
-    );
+    const subject = `Your BridgeLang Profile Is Now Live! 🎉`;
 
-    // ✅ PendingTeachers’tan sil
-    await teacherRef.delete();
+    const html = `
+      <p>Hi ${teacher.name || 'Teacher'},</p>
+      <p>Great news — your BridgeLang teacher profile has been approved and is now live on our platform! 🎉</p>
+      <p>We're excited to welcome you to our growing community of UK-based tutors.</p>
 
-    // ✅ Mail gönderimi
+      <h3>⭐ What This Means for You</h3>
+      <p>You can now start connecting with learners who are looking for UK tutors just like you.</p>
+
+      <ul>
+        <li>Full flexibility — teach online or in person</li>
+        <li>Set your own rates</li>
+        <li>Keep 80% of your earnings</li>
+        <li>No minimum hours or quotas</li>
+        <li>Support whenever you need it</li>
+      </ul>
+
+      <h3>Keeping Your Profile Strong</h3>
+      <p>To help attract more students:</p>
+      <ul>
+        <li>Keep your photo & bio friendly and updated</li>
+        <li>Reply to student messages quickly</li>
+      </ul>
+
+      <h3>Need Help?</h3>
+      <p>
+        Email: contact@bridgelang.co.uk <br/>
+        WhatsApp Business: +44 20 7111 1638
+      </p>
+
+      <p>Warm regards,<br/>The BridgeLang Team</p>
+    `;
+
     await sendMail({
-      to: teacher.email,
-      subject: 'Your BridgeLang teacher application has been approved',
-      html: `
-        <p>Hi ${teacher.name || 'Teacher'},</p>
-        <p>Congratulations! 🎉</p>
-        <p>Your application to join <strong>BridgeLang UK Ltd.</strong> has been <strong>approved</strong>.</p>
-        <p>You can now log in to your teacher dashboard using your registered email and start teaching.</p>
-        <p>
-          <a href="https://www.bridgelang.co.uk/login" 
-             style="display:inline-block;background:#2563eb;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;">
-             Go to Login
-          </a>
-        </p>
-        <p>We’re excited to have you on board!<br/>— The BridgeLang Team</p>
-      `,
+      to: data.email,
+      subject,
+      html
     });
 
-    return res.status(200).json({ success: true });
+    res.json({ ok: true });
   } catch (err) {
-    console.error('approveTeacher API error:', err);
-    return res.status(500).json({ error: 'Approval failed' });
+    console.error('approveTeacher error:', err);
+    res.status(500).json({ error: 'Approval failed' });
   }
 }
