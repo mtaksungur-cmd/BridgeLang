@@ -279,35 +279,51 @@ export default function TeacherProfilePage() {
       </div>
 
       {/* YORUMLAR */}
+       {/* YORUMLAR */}
       <div className={styles.reviews}>
         <h3>Student Reviews</h3>
-        {reviews.length === 0 ? (
+        {reviews.filter(r => !r.hidden).length === 0 ? (
           <p>No reviews yet.</p>
         ) : (
           <div className={styles.reviewList}>
-            {reviews.map((r, i) => {
-              const student = r.studentId ? reviewUsers[r.studentId] : null;
-              return (
-                <div key={i} className={styles.reviewCard}>
-                  <div className={styles.reviewHeader}>
-                    {student?.profilePhotoUrl && (
-                      <Image
-                        src={student.profilePhotoUrl}
-                        alt={student.name}
-                        className={styles.reviewAvatar}
-                        width={40}
-                        height={40}
-                      />
-                    )}
-                    <div>
-                      <strong>{student?.name || 'Anonymous'}</strong>
-                      <div>⭐ {r.rating}</div>
+            {reviews
+              .filter(r => !r.hidden)
+              .map((r, i) => {
+                
+                // 🔥 GDPR sisteminde backend zaten doğru alanı hesaplamış geliyor:
+                const displayName = r.display_name || "Anonymous";
+                const avatarUrl = r.display_photo; // null ise foto yok
+                const stars = "⭐".repeat(r.rating || 0);
+
+                return (
+                  <div key={i} className={styles.reviewCard}>
+                    <div className={styles.reviewHeader}>
+                      
+                      {/* 🔵 Fotoğraf alanı her zaman olsun, ama fotoğraf yoksa boş daire */}
+                      <div className={styles.reviewAvatarWrapper}>
+                        {avatarUrl ? (
+                          <Image
+                            src={avatarUrl}
+                            alt={displayName}
+                            className={styles.reviewAvatar}
+                            width={40}
+                            height={40}
+                          />
+                        ) : (
+                          <div className={styles.emptyAvatar}></div>
+                        )}
+                      </div>
+
+                      <div>
+                        <strong>{displayName}</strong>
+                        <div className={styles.starRow}>{stars}</div>
+                      </div>
                     </div>
+
+                    <p>{r.comment}</p>
                   </div>
-                  <p>{r.comment}</p>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         )}
       </div>
