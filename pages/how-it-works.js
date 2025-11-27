@@ -4,6 +4,9 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import styles from "../scss/HowItWorks.module.scss";
 
+import StudentOnboardingVideo from "../components/videos/StudentOnboardingVideo";
+import TeacherOnboardingVideo from "../components/videos/TeacherOnboardingVideo";
+
 /* ------------------ SCREENSHOTS ------------------ */
 const SHOTS_STUDENT = [
   { src: "/screenshots/student/step-1.png", caption: "Step 1 – Choose Your Plan" },
@@ -85,9 +88,12 @@ export default function HowItWorks() {
           </p>
         </header>
 
-        {/* CONTENT */}
+        {/* STUDENT CONTENT */}
         {role === "student" ? (
           <>
+            {/* STUDENT VIDEO */}
+            <StudentOnboardingVideo videoId="P2y8ftutxX0" />
+
             <section className={styles.card}>
               <h2 className={styles.h2}>For Students</h2>
               <p>
@@ -96,14 +102,14 @@ export default function HowItWorks() {
               </p>
               <ul className={styles.list}>
                 <li><strong>Step 1 – Choose Your Plan:</strong> Free, Starter, Pro, or VIP.</li>
-                <li><strong>Step 2 – Find Your Tutor:</strong>  Filter by English level, learning goals, and method of delivery.</li>
-                <li><strong>Step 3 – Book & Pay Securely:</strong> Payments are processed safely via Stripe.</li>
-                <li><strong>Step 4 – Learn Confidently:</strong> Join online or meet in person.</li>
-                <li><strong>Step 5 – Earn Rewards:</strong> Earn loyalty points, discounts, and special coupons as you keep learning.</li>
+                <li><strong>Step 2 – Find Your Tutor:</strong> Filter by English level, goals, delivery method.</li>
+                <li><strong>Step 3 – Book & Pay Securely:</strong> Payments processed via Stripe.</li>
+                <li><strong>Step 4 – Learn Confidently:</strong> Online or face-to-face.</li>
+                <li><strong>Step 5 – Earn Rewards:</strong> Loyalty points & discounts.</li>
               </ul>
             </section>
 
-            {/* Carousel */}
+            {/* STUDENT CAROUSEL */}
             <section className="mt-4">
               <h3 className={`${styles.h3} text-center mb-3`}>Experience BridgeLang in Action!</h3>
               <div id="roleShots" className={`carousel slide ${styles.carouselWrap}`} data-bs-ride="carousel">
@@ -121,32 +127,33 @@ export default function HowItWorks() {
                 </div>
 
                 <button className="carousel-control-prev" type="button" data-bs-target="#roleShots" data-bs-slide="prev">
-                  <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                  <span className="visually-hidden">Previous</span>
+                  <span className="carousel-control-prev-icon"></span>
                 </button>
                 <button className="carousel-control-next" type="button" data-bs-target="#roleShots" data-bs-slide="next">
-                  <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                  <span className="visually-hidden">Next</span>
+                  <span className="carousel-control-next-icon"></span>
                 </button>
               </div>
             </section>
           </>
         ) : (
           <>
+            {/* TEACHER VIDEO */}
+            <TeacherOnboardingVideo videoId="opff15raLa4" />
+
+            {/* TEACHER CONTENT */}
             <section className={styles.card}>
               <h2 className={styles.h2}>For Teachers</h2>
               <p>
-                Share your expertise with motivated learners. BridgeLang simplifies scheduling, payments,
-                and communication — all in one place.
+                Share your expertise with motivated learners. BridgeLang makes scheduling, payments, and communication easy.
               </p>
               <ul className={styles.list}>
-                <li><strong>Step 1 – Apply to Teach:</strong> Submit your application with experience and qualifications.</li>
-                <li><strong>Step 2 – Build Your Profile & Manage Teaching:</strong> Upload your photo, bio, set your rates, and track your lessons and reviews easily.</li>
-                <li><strong>Step 3 – Connect Your Payments:</strong> Link Stripe once, and receive payouts automatically after completed lessons.</li>
+                <li><strong>Step 1 – Apply to Teach:</strong> Send your application with experience & qualifications.</li>
+                <li><strong>Step 2 – Build Your Profile:</strong> Upload photo, bio, set your rates, track lessons.</li>
+                <li><strong>Step 3 – Connect Payments:</strong> Stripe Connect handles secure payouts.</li>
               </ul>
             </section>
 
-            {/* Carousel */}
+            {/* TEACHER CAROUSEL */}
             <section className="mt-4">
               <h3 className={`${styles.h3} text-center mb-3`}>Experience BridgeLang in Action!</h3>
               <div id="roleShots" className={`carousel slide ${styles.carouselWrap}`} data-bs-ride="carousel">
@@ -164,12 +171,10 @@ export default function HowItWorks() {
                 </div>
 
                 <button className="carousel-control-prev" type="button" data-bs-target="#roleShots" data-bs-slide="prev">
-                  <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                  <span className="visually-hidden">Previous</span>
+                  <span className="carousel-control-prev-icon"></span>
                 </button>
                 <button className="carousel-control-next" type="button" data-bs-target="#roleShots" data-bs-slide="next">
-                  <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                  <span className="visually-hidden">Next</span>
+                  <span className="carousel-control-next-icon"></span>
                 </button>
               </div>
             </section>
