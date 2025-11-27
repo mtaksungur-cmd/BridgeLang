@@ -1,24 +1,38 @@
-/* components/AdminNavbar.module.scss */
+/* Sticky navbar */
 .bar {
   background: #102c57;
   color: #fff;
-  padding: .6rem 0;
+  padding: 0.6rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 999;
 }
+
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
 .brand {
   font-weight: 700;
   letter-spacing: .2px;
+  font-size: 1.2rem;
 }
-.nav {
+
+/* Desktop navigation */
+.navDesktop {
   display: flex;
   gap: 1rem;
 
-  a { color: #e8eefc; text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  a {
+    color: #e8eefc;
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
 
   .logout {
     border: 1px solid rgba(255,255,255,.25);
@@ -27,5 +41,93 @@
     padding: .35rem .7rem;
     border-radius: .5rem;
     cursor: pointer;
+  }
+}
+
+/* Hamburger button */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.line,
+.lineOpen {
+  width: 24px;
+  height: 3px;
+  background: #fff;
+  border-radius: 3px;
+  transition: 0.3s ease;
+}
+
+/* Mobile menu slide-in */
+.mobileMenu {
+  position: fixed;
+  top: 0;
+  right: -260px;
+  width: 240px;
+  height: 100vh;
+  background: #102c57;
+  padding: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  transition: right 0.3s ease;
+}
+
+.mobileMenu.open {
+  right: 0;
+}
+
+/* Mobile nav links */
+.mobileNav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+
+  a {
+    color: #e8eefc;
+    font-size: 1rem;
+    text-decoration: none;
+    padding: 8px 0;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+}
+
+.logoutMobile {
+  margin-top: 20px;
+  background: #e63946;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* Dark overlay behind slide-menu */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 900;
+}
+
+/* RESPONSIVE -------------------------------------------------- */
+@media (max-width: 900px) {
+  .navDesktop {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
   }
 }
