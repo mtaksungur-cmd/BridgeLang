@@ -50,6 +50,17 @@ export default function TeacherNavbar() {
           <li className='nav-item'><Link href="/teacher/lessons" className="nav-link text-light">My Lessons</Link></li>
           <li className='nav-item'><Link href="/teacher/chats" className="nav-link text-light">Chats</Link></li>
           <li className='nav-item'><Link href="/account/security" className="nav-link text-light">Security Settings</Link></li>
+          <li className='nav-item'>
+            <Link href="/review/platform" className="nav-link text-light">
+              Write Platform Review
+            </Link>
+          </li>
+
+          <li className='nav-item'>
+            <Link href="/account/reviews" className="nav-link text-light">
+              My Reviews
+            </Link>
+          </li>
           <li className="nav-item">
                 <button
                   onClick={handleLogout}
