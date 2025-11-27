@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
+import { db } from '../../../lib/firebase';
 import {
   collection,
   getDocs,
@@ -11,7 +11,7 @@ import {
   orderBy,
   query,
 } from 'firebase/firestore';
-import styles from '../../scss/AdminReviews.module.scss';
+import styles from '../../../scss/AdminReviews.module.scss';
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState([]);
