@@ -10,6 +10,7 @@ import {
   signInWithCustomToken,
   sendPasswordResetEmail,
 } from 'firebase/auth';
+import { setPersistence, browserLocalPersistence } from 'firebase/auth';
 import styles from '../scss/LoginPage.module.scss';
 
 export default function LoginPage() {
@@ -48,6 +49,7 @@ export default function LoginPage() {
     setMessage('');
 
     try {
+      await setPersistence(auth, browserLocalPersistence);
       const email = form.email.trim().toLowerCase();
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
       await reload(user);
