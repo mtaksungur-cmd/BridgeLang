@@ -44,9 +44,14 @@ export default function PlatformReviewPage() {
     return () => unsub();
   }, []);
 
+  if (!user || !profile) return <p>Loading…</p>;
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!profile) return;
+    if (!user || !user.uid) {
+      alert("Session expired. Please login again.");
+      return router.replace('/login');
+    }
 
     setSaving(true);
 
@@ -92,8 +97,6 @@ export default function PlatformReviewPage() {
       setSaving(false);
     }
   };
-
-  if (!profile) return <p>Loading…</p>;
 
   return (
     <div className={styles.container}>
