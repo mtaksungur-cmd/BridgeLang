@@ -86,7 +86,7 @@ export default function DefaultNavbar() {
             </li>
 
             <li className="nav-item">
-              <Link href="/testimonials/teacher" className="nav-link text-light">Tutor Testimonials</Link>
+              <Link href="/testimonials/teacher" className="nav-link text-light">Why Our Teachers Love BridgeLang</Link>
             </li>
 
             {/* Sign Up (hover + click) */}
