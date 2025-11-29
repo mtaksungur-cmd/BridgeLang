@@ -37,8 +37,8 @@ export default function StudentTestimonialsPage() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Student Testimonials</h1>
-      <p className={styles.subtitle}>Real feedback from students using BridgeLang.</p>
+      <h1 className={styles.title}>Learner Reviews</h1>
+      <p className={styles.subtitle}>Real experiences from learners across the UK.</p>
 
       {loading ? (
         <p>Loading...</p>
