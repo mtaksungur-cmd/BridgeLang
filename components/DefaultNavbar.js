@@ -82,7 +82,7 @@ export default function DefaultNavbar() {
             </li>
 
             <li className="nav-item">
-              <Link href="/testimonials/student" className="nav-link text-light">Student Testimonials</Link>
+              <Link href="/testimonials/student" className="nav-link text-light">What Our Learners Say</Link>
             </li>
 
             <li className="nav-item">
