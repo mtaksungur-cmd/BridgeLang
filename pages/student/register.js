@@ -210,10 +210,6 @@ export default function StudentRegister() {
         emailNotifications: true,
       });
 
-      <Script id="fb-lead" strategy="afterInteractive">
-        {`fbq('track', 'Lead');`}
-      </Script>
-
        // 🔹 Mail gönderimi
       if (age < 18) {
         if (!form.parentEmail || !form.parentName) {
@@ -254,6 +250,11 @@ export default function StudentRegister() {
 
       await signOut(auth);
       setSuccess(true);
+      {success && (
+        <Script id="fb-lead" strategy="afterInteractive">
+          {`fbq('track', 'Lead');`}
+        </Script>
+      )}
     } catch (err) {
       console.error(err);
       setError(err.message || 'Registration failed.');
