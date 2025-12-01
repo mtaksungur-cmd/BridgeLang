@@ -4,6 +4,7 @@ import { db, auth } from '../../../lib/firebase';
 import Image from 'next/image';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import styles from "../../../scss/TeacherProfile.module.scss";
+import Script from "next/script";
 
 const badgeDescriptions = {
   '🆕 New Teacher': '(first 30 days)',
@@ -95,10 +96,6 @@ export default function TeacherProfilePage() {
       try {
         const snap = await getDoc(doc(db, 'users', id));
         if (snap.exists()) setTeacher(snap.data());
-        fbq('track', 'ViewContent', {
-          content_type: 'teacher_profile',
-          content_ids: ['${id}']
-        });
       } catch (error) {
         console.error('Failed to load teacher:', error);
       } finally {
@@ -173,6 +170,16 @@ export default function TeacherProfilePage() {
 
   return (
     <div className={styles.container}>
+    {teacher && (
+      <Script id="fb-view-content" strategy="afterInteractive">
+        {`
+          fbq('track', 'ViewContent', {
+            content_type: 'teacher_profile',
+            content_ids: ['${id}']
+          });
+        `}
+      </Script>
+    )}
       <div className={styles.topSection}>
         {/* Sol panel */}
         <div className={styles.leftPanel}>
