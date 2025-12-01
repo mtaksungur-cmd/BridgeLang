@@ -138,7 +138,13 @@ export default function BookLessonPage() {
       });
 
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
+      if (data.url){
+        window.fbq('track', 'InitiateCheckout', {
+          content_type: 'lesson',
+          teacher_id: teacherId,
+          duration: duration
+        });
+      }
       else setMsg(data.error ? `❌ ${data.error}` : '❌ Payment failed.');
     } catch (err) {
       console.error(err);
