@@ -6,6 +6,7 @@ import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 // import ReCAPTCHA from 'react-google-recaptcha';
 import styles from '../../scss/StudentRegister.module.scss';
+import Script from "next/script";
 
 export default function StudentRegister() {
   const [form, setForm] = useState({
@@ -208,6 +209,10 @@ export default function StudentRegister() {
         messagesLeft: 3,
         emailNotifications: true,
       });
+
+      <Script id="fb-lead" strategy="afterInteractive">
+        {`fbq('track', 'Lead');`}
+      </Script>
 
        // 🔹 Mail gönderimi
       if (age < 18) {
