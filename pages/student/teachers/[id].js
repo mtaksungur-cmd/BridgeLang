@@ -95,6 +95,10 @@ export default function TeacherProfilePage() {
       try {
         const snap = await getDoc(doc(db, 'users', id));
         if (snap.exists()) setTeacher(snap.data());
+        fbq('track', 'ViewContent', {
+          content_type: 'teacher_profile',
+          content_ids: ['${id}']
+        });
       } catch (error) {
         console.error('Failed to load teacher:', error);
       } finally {
