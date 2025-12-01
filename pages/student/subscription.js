@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { auth, db } from "../../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import styles from "../../scss/SubscriptionPage.module.scss";
+import Script from "next/script";
 
 const PLANS = [
   {
@@ -95,6 +96,11 @@ export default function SubscriptionPage() {
       const data = await res.json();
 
       if (data.url) {
+        window.fbq('track', 'InitiateCheckout', {
+          content_type: 'subscription',
+          plan: planKey
+        });
+      
         window.location.href = data.url;
       } else if (data.message) {
         alert(data.message);
