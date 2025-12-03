@@ -21,11 +21,10 @@ export default function Home() {
         <div className="row align-items-center g-4">
           <div className="col-lg-6">
             <h1 className={`display-5 fw-bold ${styles.heroTitle}`}>
-              Improve Your English and Feel at Home in the UK
+              Enjoy Up to 20% Off Your First Lessons — Plus Review Rewards, Loyalty Bonuses and Long-Term VIP Discounts.
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Start learning English the smart way — online or in person. Secure payments,
-              flexible lessons, and real progress with friendly UK-based tutors.
+              Learn with real UK tutors and earn even more savings the longer you stay. No commitment, no contracts — you can cancel anytime.
             </p>
             <div>
               <Link
