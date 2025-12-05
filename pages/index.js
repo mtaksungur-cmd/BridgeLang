@@ -21,10 +21,10 @@ export default function Home() {
         <div className="row align-items-center g-4">
           <div className="col-lg-6">
             <h1 className={`display-5 fw-bold ${styles.heroTitle}`}>
-              Enjoy Up to 20% Off Your First Lessons — Plus Review Rewards, Loyalty Bonuses and Long-Term VIP Discounts.
+              Save Up to 20% on Your First Lessons — Plus Loyalty Rewards & Long-Term Discounts.
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Learn with real UK tutors and earn even more savings the longer you stay. No commitment, no contracts — you can cancel anytime.
+              Learn with real UK tutors and enjoy bigger savings the longer you stay. Start anytime and book lessons whenever you want — no commitments, full flexibility.
             </p>
             <div>
               <Link
