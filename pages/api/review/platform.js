@@ -4,7 +4,7 @@ import { isInappropriate } from '../../../lib/messageFilter';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const {
+  let {
     userId,
     review_type,
     rating,
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     display_name,
     display_photo,
 
-    // 🟩 ESKİ VERİYİ TUTAN ALANLAR (zorunlu)
+    // 🟩 Orijinal veriler (zorunlu)
     fullName,
     profilePhotoUrl,
   } = req.body;
@@ -23,8 +23,19 @@ export default async function handler(req, res) {
   if (!userId || !rating || !review_type)
     return res.status(400).json({ error: 'Missing fields' });
 
-  if (comment && isInappropriate(comment))
+  let cleanComment = (comment || "")
+    .normalize("NFKC")
+    .replace(/[\u200B\u200C\u200D\u2060\uFEFF]/g, "") 
+    .replace(/\u2028|\u2029/g, "")
+    .trim();
+
+  // Filtreyi temiz yorum üzerinde çalıştır
+  if (cleanComment && isInappropriate(cleanComment)) {
     return res.status(400).json({ error: 'Inappropriate content' });
+  }
+
+  // DB'ye temiz hali yazılacak
+  comment = cleanComment;
 
   try {
     const ref = adminDb.collection('reviews').doc();
@@ -36,24 +47,18 @@ export default async function handler(req, res) {
       rating,
       comment: comment || '',
 
-      // 📌 RIZA DURUMU
       user_consented: !!user_consented,
       display_name,
       display_photo: display_photo || null,
 
-      // 📌 ORİJİNAL VERİ (gerçek isim + foto)
       fullName: fullName || null,
       profilePhotoUrl: profilePhotoUrl || null,
 
-      // 📌 Gizlilik / görünürlük kontrolleri
       hidden: false,
-
-      // 📌 Tarih damgası
       createdAt: new Date().toISOString(),
     });
 
     return res.status(200).json({ ok: true, id: ref.id });
-
   } catch (err) {
     console.error('platform review error:', err);
     return res.status(500).json({ error: err.message });
