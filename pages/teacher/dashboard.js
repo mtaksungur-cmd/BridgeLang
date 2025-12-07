@@ -15,6 +15,14 @@ const BADGE_DEFS = [
   { key: '🌟 5-Star Teacher', desc: 'Average rating of 4.8 or higher in the last 20 lessons.' },
 ];
 
+function normalizeText(str) {
+  if (!str) return '';
+  return str
+    .normalize("NFKC")
+    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+    .trim();
+}
+
 export default function TeacherDashboard() {
   const [data, setData] = useState(null);
   const [form, setForm] = useState(null);
@@ -196,17 +204,16 @@ export default function TeacherDashboard() {
 
     try {
       const payload = {
-        bio: form.bio.trim(),
-        city: form.city.trim(),
-        postcode: form.postcode.trim(),
-        homeAddress: form.homeAddress.trim(),
-        educationLevel: form.educationLevel.trim(),
-        experienceYears: form.experienceYears,
-        languagesTaught: form.languagesTaught.trim(),
-        languagesSpoken: form.languagesSpoken.trim(),
-        teachingSpecializations: form.teachingSpecializations.trim(),
-        studentAges: form.studentAges.trim(),
-        deliveryMethod: form.deliveryMethod.trim(),
+        bio: normalizeText(form.bio),
+        city: normalizeText(form.city),
+        postcode: normalizeText(form.postcode),
+        homeAddress: normalizeText(form.homeAddress),
+        educationLevel: normalizeText(form.educationLevel),
+        languagesTaught: normalizeText(form.languagesTaught),
+        languagesSpoken: normalizeText(form.languagesSpoken),
+        teachingSpecializations: normalizeText(form.teachingSpecializations),
+        studentAges: normalizeText(form.studentAges),
+        deliveryMethod: normalizeText(form.deliveryMethod),
         willingToTravel: !!form.willingToTravel,
         pricing30: form.pricing30 === '' ? null : Number(form.pricing30),
         pricing45: form.pricing45 === '' ? null : Number(form.pricing45),
@@ -294,6 +301,7 @@ export default function TeacherDashboard() {
               <textarea
                 value={form.bio}
                 onChange={(e) => handleChange('bio', e.target.value)}
+                onInput={(e) => handleChange('bio', e.target.value)}
                 className={styles.input}
               />
             </div>
