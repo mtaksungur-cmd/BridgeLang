@@ -330,21 +330,20 @@ export default function AdminTeachers() {
                           'Not uploaded'
                         )}
                       </dd>
-
-                      <dt>Intro Video</dt>
-                      <dd>
-                        {app.introVideoUrl ? (
-                          <video className={styles.video} controls>
-                            <source src={app.introVideoUrl} type="video/mp4" />
-                            Your browser does not support the video tag.
-                          </video>
-                        ) : (
-                          'Not uploaded'
-                        )}
-                      </dd>
                     </dl>
                   </div>
                 </div>
+                {/* INTRO VIDEO (NEW, FULL-WIDTH SECTION) */}
+                {app.introVideoUrl && (
+                  <div className={styles.introVideoSection}>
+                    <h3>Intro Video</h3>
+                    <div className={styles.videoWrapper}>
+                      <video className={styles.video} controls preload="metadata">
+                        <source src={app.introVideoUrl} type="video/mp4" />
+                      </video>
+                    </div>
+                  </div>
+                )}
               </article>
             ))}
           </div>
