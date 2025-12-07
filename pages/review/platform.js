@@ -3,13 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '../../lib/firebase';
-import {
-  doc,
-  getDoc,
-  addDoc,
-  collection,
-  serverTimestamp,
-} from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import styles from '../../scss/PlatformReview.module.scss';
 
 function buildAnonName(full) {
@@ -44,30 +38,34 @@ export default function PlatformReviewPage() {
     return () => unsub();
   }, []);
 
-  if (!user || !profile) return <p>Loading…</p>;
-  
+  // ==============================================================  
+  // 🔥 HANDLE SUBMIT WITH COMMENT NORMALISATION  
+  // ==============================================================  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user || !user.uid) {
-      alert("Session expired. Please login again.");
-      return router.replace('/login');
-    }
+    if (!profile) return;
 
     setSaving(true);
 
     try {
       const fullName = profile.name || 'Anonymous';
-      const displayName = consented
-        ? fullName
-        : buildAnonName(fullName);
-      const displayPhoto = consented
-        ? profile.profilePhotoUrl || null
-        : null;
+
+      const displayName = consented ? fullName : buildAnonName(fullName);
+      const displayPhoto = consented ? profile.profilePhotoUrl || null : null;
 
       let review_type =
         profile.role === 'teacher'
           ? 'platform_teacher'
           : 'platform_student';
+
+      // ======================================================
+      // 🔥 FRONTEND COMMENT CLEANING
+      // ======================================================
+      let cleanedComment = (comment || "")
+        .normalize("NFKC")
+        .replace(/[\u200B\u200C\u200D\u2060\uFEFF]/g, "") // zero-width chars
+        .replace(/\u2028|\u2029/g, "") // line separators
+        .trim();
 
       const res = await fetch('/api/review/platform', {
         method: 'POST',
@@ -76,7 +74,7 @@ export default function PlatformReviewPage() {
           userId: user.uid,
           review_type,
           rating,
-          comment,
+          comment: cleanedComment,
           user_consented: consented,
           display_name: displayName,
           display_photo: displayPhoto,
@@ -97,6 +95,8 @@ export default function PlatformReviewPage() {
       setSaving(false);
     }
   };
+
+  if (!profile) return <p>Loading…</p>;
 
   return (
     <div className={styles.container}>
@@ -131,10 +131,7 @@ export default function PlatformReviewPage() {
           I agree for my full name and profile photo to be publicly displayed with my review
         </label>
 
-        <button
-          disabled={saving}
-          className={styles.submitBtn}
-        >
+        <button disabled={saving} className={styles.submitBtn}>
           {saving ? 'Saving...' : 'Submit Review'}
         </button>
       </form>
