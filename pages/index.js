@@ -150,7 +150,7 @@ export default function Home() {
               <div className={styles.trustCard}>
                 <h6>11. ⁠Registered UK Company</h6>
                 <p>
-                  BridgeLang UK Ltd is a legally registered company in the United Kingdom (Company No. 16555217). This provides learners with transparency, legal accountability and long-term trust.
+                  BridgeLang Ltd is a legally registered company in the United Kingdom (Company No. 16555217). This provides learners with transparency, legal accountability and long-term trust.
                 </p>
               </div>
             </div>
