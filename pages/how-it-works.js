@@ -97,8 +97,8 @@ export default function HowItWorks() {
             <section className={styles.card}>
               <h2 className={styles.h2}>For Students</h2>
               <p>
-                Create your free account, explore verified English tutors, and choose how you want to learn.
-                If you don’t select a subscription, you’ll automatically start with the Free Plan.
+                Create your free account to access  verified tutors with real UK expeeience. 
+                Whether you are preparing for a job interview, GP appointment, workplace communication or daily conversations, BridgeLang helps you learn the English you truly need for life in the UK.
               </p>
               <ul className={styles.list}>
                 <li><strong>Step 1 – Choose Your Plan:</strong> Free, Starter, Pro, or VIP.</li>
