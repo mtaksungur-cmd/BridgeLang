@@ -280,7 +280,7 @@ export default function Home() {
               <div className={styles.highlightBox}>
                 <h6 className="mb-2">Verified &amp; supported</h6>
                 <p className="mb-0">
-                  Each tutor completes an onboarding check and profile review.
+                  Every tutor is manually reviewed and vetted to ensure they have real experience living, studying or working in the UK — so you learn the English you actually need for real UK life.
                 </p>
               </div>
             </div>
