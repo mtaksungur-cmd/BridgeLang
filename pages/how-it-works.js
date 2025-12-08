@@ -97,11 +97,11 @@ export default function HowItWorks() {
             <section className={styles.card}>
               <h2 className={styles.h2}>For Students</h2>
               <p>
-                Create your free account to access  verified tutors with real UK experience. 
+                Create your free account to access  verified tutors with real UK experience.
                 Whether you are preparing for a job interview, GP appointment, workplace communication or daily conversations, BridgeLang helps you learn the English you truly need for life in the UK.
               </p>
               <ul className={styles.list}>
-                <li><strong>Step 1 – Choose Your Plan:</strong> Free, Starter, Pro, or VIP.</li>
+                <li><strong>Step 1 – Choose Your Plan:</strong> Select the Free, Starter, Pro, or VIP plan — designed to support different stages of your UK journey.</li>
                 <li><strong>Step 2 – Find Your Tutor:</strong> Filter by English level, goals, delivery method.</li>
                 <li><strong>Step 3 – Book & Pay Securely:</strong> Payments processed via Stripe.</li>
                 <li><strong>Step 4 – Learn Confidently:</strong> Online or face-to-face.</li>
