@@ -286,9 +286,9 @@ export default function Home() {
             </div>
             <div className="col-md-6">
               <div className={styles.highlightBox}>
-                <h6 className="mb-2">Flexible lesson types</h6>
+                <h6 className="mb-2">Lessons Designed for Real UK Life & UK Exams</h6>
                 <p className="mb-0">
-                  Online or in person. IELTS/TOEFL prep, conversation practice, Business English.
+                  Learn practical English for work, GP appointments, school meetings, job interviews and everyday communication — plus tailored preparation for UK-focused exams such as IELTS, SELT, PTE, Cambridge and Life in the UK.
                 </p>
               </div>
             </div>
