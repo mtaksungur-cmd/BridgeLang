@@ -84,7 +84,8 @@ export default function HowItWorks() {
           <p className="text-muted mb-0">
             {role === "teacher"
               ? "Teach English online or in person. Build your profile, manage lessons, and get paid securely via Stripe Connect."
-              : "Learn English your way — online or face-to-face. Choose your plan, find tutors, book lessons, and earn rewards as you learn."}
+              : "Learn real-life English for your life in the UK — with verified tutors who understand British workplaces, healthcare, education and everyday communication.
+Choose your plan, book lessons your way, and enjoy loyalty rewards as build lasting confidence."}
           </p>
         </header>
 
