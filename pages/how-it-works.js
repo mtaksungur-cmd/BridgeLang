@@ -104,7 +104,7 @@ export default function HowItWorks() {
                 <li><strong>Step 1 – Choose Your Plan:</strong> Select the Free, Starter, Pro, or VIP plan — designed to support different stages of your UK journey.</li>
                 <li><strong>Step 2 – Find Your Tutor:</strong> Discover verified UK-experienced tutors. Filter by your goals, such as job interviews, workplace English, healthcare English, daily communication or general skills.</li>
                 <li><strong>Step 3 – Book & Pay Securely:</strong> Choose a time that fits your UK schedule. All payments are handled safely via Stripe.</li>
-                <li><strong>Step 4 – Learn with  Confidence:</strong> Take lessons online or face-to-face and practise the real English you'll use in British workplaces, public services and everyday life.</li>
+                <li><strong>Step 4 – Learn with  Confidence:</strong> Take lessons online or face-to-face and practise the real English you will use in British workplaces, public services and everyday life.</li>
                 <li><strong>Step 5 – Earn Rewards:</strong> Earn loyalty points, first-lesson savings and ongoing learning rewards that help you progress with consistency.</li>
               </ul>
             </section>
