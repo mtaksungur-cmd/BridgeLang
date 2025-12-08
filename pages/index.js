@@ -278,7 +278,7 @@ export default function Home() {
           <div className="row g-4">
             <div className="col-md-6">
               <div className={styles.highlightBox}>
-                <h6 className="mb-2">Verified &amp; supported</h6>
+                <h6 className="mb-2">Verified &amp; Supported</h6>
                 <p className="mb-0">
                   Every tutor is manually reviewed and vetted to ensure they have real experience living, studying or working in the UK — so you learn the English you actually need for real UK life.
                 </p>
