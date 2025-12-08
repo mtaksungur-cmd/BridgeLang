@@ -19,13 +19,18 @@ export default async function handler(req, res) {
 
     const user = userSnap.data();
 
+    // 1) Email hash kaydet
     const emailHash = crypto.createHash('sha256').update(user.email).digest('hex');
     await adminDb.collection('deletedEmails').doc(emailHash).set({
       email: user.email,
       deletedAt: Date.now(),
     });
 
+    // 2) Firestore user kaydını sil
     await userRef.delete();
+
+    // 3) ❗ Authentication’dan da sil
+    await getAuth().deleteUser(uid);
 
     return res.json({ ok: true });
   } catch (err) {
