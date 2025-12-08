@@ -274,7 +274,7 @@ export default function Home() {
 
         {/* TUTOR HIGHLIGHTS */}
         <section className={`mt-5 ${styles.tutorHighlights}`}>
-          <h2 className="h4 fw-bold mb-3">Why our tutors?</h2>
+          <h2 className="h4 fw-bold mb-3">Why UK-Experienced Tutors Matter</h2>
           <div className="row g-4">
             <div className="col-md-6">
               <div className={styles.highlightBox}>
