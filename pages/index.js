@@ -21,10 +21,10 @@ export default function Home() {
         <div className="row align-items-center g-4">
           <div className="col-lg-6">
             <h1 className={`display-5 fw-bold ${styles.heroTitle}`}>
-              Save Up to 20% on Your First Lessons — Plus Loyalty Rewards & Long-Term Discounts.
+              Real-Life English for Life, Work and Belonging in the UK
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Learn with real UK tutors and enjoy bigger savings the longer you stay. Start anytime and book lessons whenever you want — no commitments, full flexibility.
+              Learn with verified UK-experienced tutors and build the confidence you need for work, healthcare, education and everyday communication in the UK. Begin your journey with exclusive first-lesson savings, and enjoy ongoing loyalty rewards designed to support your long-term learning goals.
             </p>
             <div>
               <Link
