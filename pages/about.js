@@ -39,23 +39,20 @@ export default function About() {
           <section>
             <h2>Our Vision</h2>
             <p>
-              Our vision is to become the UK’s most trusted and innovative language learning platform,
-              connecting diverse communities with highly skilled teachers. In the long term, we aspire
-              to expand globally, offering not only English but also other in-demand languages, making
-              professional language education accessible to everyone. We see a future where BridgeLang
-              serves as a bridge — uniting cultures, fostering understanding, and supporting learners
-              to thrive in both personal and professional life.
+              Our vision is to become the UK’s leading platform for real-life English — the place learners choose when they want practical, authentic and culture-aware language support.
+              We aim to build a modern learning ecosystem where expert tutors, smart technology and personalised pathways come together to help learners thrive in both personal and professional life in the UK.
+              In the future, as we grow, we aspire to expand our model globally while remaining rooted in our purpose: bridging languages, cultures, and opportunities.
             </p>
           </section>
 
           <section>
             <h2>Our Core Values</h2>
             <ul>
-              <li><strong>Integrity &amp; Transparency</strong> – We build trust through honesty and fairness.</li>
-              <li><strong>Excellence</strong> – We maintain the highest standards in teaching and technology.</li>
-              <li><strong>Community</strong> – We bring people together across cultures and backgrounds.</li>
-              <li><strong>Innovation</strong> – We embrace creativity and adapt to learners’ evolving needs.</li>
-              <li><strong>Accessibility</strong> – We strive to make language education available to everyone.</li>
+              <li><strong>Clarity &amp; Trust</strong> – We prioritise transparency, safety, and professional standards in everything we do.</li>
+              <li><strong>Excellence</strong> – We deliver premium teaching quality through verified, highly skilled tutors.</li>
+              <li><strong>Practicality</strong> – We focus on real-world English that learners can use immediately in UK life.</li>
+              <li><strong>Inclusivity</strong> – We support learners from every background with respect, patience and cultural understanding.</li>
+              <li><strong>Progress</strong> – We believe in steady, measurable growth supported by tools, guidance and long-term learning rewards.</li>
             </ul>
           </section>
 
