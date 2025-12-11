@@ -23,10 +23,8 @@ export default function About() {
           <section>
             <h2>Who We Are</h2>
             <p>
-              BridgeLang Ltd. is a language learning platform based in the United Kingdom,
-              dedicated to connecting learners and teachers in a safe, professional, and inclusive
-              environment. We help students improve their communication skills, integrate into UK
-              life, and build confidence in both personal and professional contexts.
+              BridgeLang Ltd. is a UK-based language learning platform designed to help learners build the real-life English they need to succeed in British workplaces, public services, and everyday communication.
+              We connect learners with verified UK-experienced tutors and provide a trusted, structured, and supportive environment where progress feels clear, practical, and achievable.
             </p>
           </section>
 
