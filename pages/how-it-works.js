@@ -144,7 +144,7 @@ export default function HowItWorks() {
             <section className={styles.card}>
               <h2 className={styles.h2}>For Teachers</h2>
               <p>
-                Share your expertise with motivated learners. BridgeLang makes scheduling, payments, and communication easy.
+                BridgeLang makes scheduling, communication and secure payments simple so you can focus on delivering high-quality, real-life English lessons.
               </p>
               <ul className={styles.list}>
                 <li><strong>Step 1 – Apply to Teach:</strong> Send your application with experience & qualifications.</li>
