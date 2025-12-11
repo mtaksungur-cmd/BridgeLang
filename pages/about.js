@@ -24,16 +24,15 @@ export default function About() {
             <h2>Who We Are</h2>
             <p>
               BridgeLang Ltd. is a UK-based language learning platform designed to help learners build the real-life English they need to succeed in British workplaces, public services and everyday communication.
-              We connect learners with verified UK-experienced tutors and provide a trusted, structured, and supportive environment where progress feels clear, practical, and achievable.
+              We connect learners with verified UK-experienced tutors and provide a trusted, structured and supportive environment where progress feels clear, practical and achievable.
             </p>
           </section>
 
           <section>
             <h2>Our Mission</h2>
             <p>
-              Our mission is to empower learners and educators by bridging cultures through language.
-              We are committed to providing a trusted, flexible, and inclusive platform where learners
-              can thrive, gain confidence, and truly feel a sense of belonging in the UK.
+             Our mission is to make life in the UK easier and more confident for every learner. We do this by offering high-quality, personalised English lessons focused on real situations — from job interviews and GP appointments 
+             to workplace communication and community integration. We are committed to delivering a premium learning experience that is flexible, reliable and genuinely life-changing.
             </p>
           </section>
 
