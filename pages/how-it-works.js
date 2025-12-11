@@ -83,7 +83,7 @@ export default function HowItWorks() {
           <h1 className="h3 fw-bold mb-2">How It Works – BridgeLang</h1>
           <p className="text-muted mb-0">
             {role === "teacher"
-              ? "Teach English online or in person. Build your profile, manage lessons, and get paid securely via Stripe Connect."
+              ? "Teach real-life English to learners in the UK — online or in person. Build your profile, manage your lessons, and receive secure payouts via Stripe Connect."
               : "Learn real-life English for your life in the UK — with verified tutors who understand British workplaces, healthcare, education and everyday communication. Choose your plan, book lessons your way, and enjoy loyalty rewards as you build lasting confidence."}
           </p>
         </header>
