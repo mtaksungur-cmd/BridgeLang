@@ -97,7 +97,7 @@ export default function HowItWorks() {
             <section className={styles.card}>
               <h2 className={styles.h2}>For Students</h2>
               <p>
-                Create your free account to access  verified tutors with real UK experience.
+                Create your free account to access verified tutors with real UK experience.
                 Whether you are preparing for a job interview, GP appointment, workplace communication or daily conversations, BridgeLang helps you learn the English you truly need for life in the UK.
               </p>
               <ul className={styles.list}>
