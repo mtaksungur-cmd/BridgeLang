@@ -147,9 +147,9 @@ export default function HowItWorks() {
                 BridgeLang makes scheduling, communication and secure payments simple so you can focus on delivering high-quality, real-life English lessons.
               </p>
               <ul className={styles.list}>
-                <li><strong>Step 1 – Apply to Teach:</strong> Send your application with experience & qualifications.</li>
-                <li><strong>Step 2 – Build Your Profile:</strong> Upload photo, bio, set your rates, track lessons.</li>
-                <li><strong>Step 3 – Connect Payments:</strong> Stripe Connect handles secure payouts.</li>
+                <li><strong>Step 1 – Apply to Teach:</strong> Submit your application with your experience and qualifications to join our verified tutor community.</li>
+                <li><strong>Step 2 – Build Your Profile:</strong> Upload your photo and bio, set your lesson rates, choose your lesson types, and start connecting with UK-based learners.</li>
+                <li><strong>Step 3 – Connect Payments:</strong> Stripe Connect securely manages payouts so you get paid on time, every time.</li>
               </ul>
             </section>
 
