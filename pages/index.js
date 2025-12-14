@@ -24,8 +24,7 @@ export default function Home() {
               Improve Your English and Feel at Home in the UK
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Start learning English the smart way — online or in person. Secure payments,
-              flexible lessons, and real progress with friendly UK-based tutors.
+              Start learning English for real life in the UK — online or in person. Build confidence, communicate naturally and progress with trusted UK-based tutors.
             </p>
             <div>
               <Link
