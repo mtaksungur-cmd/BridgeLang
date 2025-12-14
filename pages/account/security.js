@@ -283,6 +283,9 @@ export default function SecuritySettings() {
             <p className={styles.toggleDescription}>
               Allows BridgeLang to use your intro video in ads, social media, and marketing material.
             </p>
+            <p className={styles.toggleHint}>
+              You can withdraw this permission at any time. Your video will no longer be used in BridgeLang’s social media or promotional content.
+            </p>
           </div>
 
           {!hasIntroVideo && (
