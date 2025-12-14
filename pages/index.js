@@ -21,17 +21,18 @@ export default function Home() {
         <div className="row align-items-center g-4">
           <div className="col-lg-6">
             <h1 className={`display-5 fw-bold ${styles.heroTitle}`}>
-              Real-Life English for Life, Work and Belonging in the UK
+              Improve Your English and Feel at Home in the UK
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Learn with verified UK-experienced tutors and build the confidence you need for work, healthcare, education and everyday communication in the UK. Begin your journey with exclusive first-lesson savings, and enjoy ongoing loyalty rewards designed to support your long-term learning goals.
+              Start learning English the smart way — online or in person. Secure payments,
+              flexible lessons, and real progress with friendly UK-based tutors.
             </p>
             <div>
               <Link
                 href="/student/register"
                 className={`btn btn-primary me-2 ${styles.heroBtnPrimary}`}
               >
-                Create Your Free Account 
+                Start Learning For Free
               </Link>
               <Link
                 href="/how-it-works"
@@ -150,7 +151,7 @@ export default function Home() {
               <div className={styles.trustCard}>
                 <h6>11. ⁠Registered UK Company</h6>
                 <p>
-                  BridgeLang Ltd is a legally registered company in the United Kingdom (Company No. 16555217). This provides learners with transparency, legal accountability and long-term trust.
+                  BridgeLang UK Ltd is a legally registered company in the United Kingdom (Company No. 16555217). This provides learners with transparency, legal accountability and long-term trust.
                 </p>
               </div>
             </div>
@@ -238,6 +239,43 @@ export default function Home() {
         ============================ */}
         <GeneralIntroVideo videoId="IIVHGzE4Z1I" />
 
+        {/* ===========================
+            VERIFIED TUTORS SECTION (NEW)
+        =========================== */}
+        <section className={styles.verifySection}>
+          <h2>How We Verify Our Tutors</h2>
+
+          <p>
+            All tutors on BridgeLang are fully verified before their profiles go live.  
+            Every tutor goes through a manual review process carried out by the BridgeLang team.
+          </p>
+
+          <ul className={styles.verifyList}>
+            <li>
+              <span>✔</span>
+              <strong>Identity check </strong>&nbsp;We review each tutor’s ID document and profile photo to ensure authenticity.
+            </li>
+
+            <li>
+              <span>✔</span>
+              <strong>Qualification review </strong>&nbsp;We manually check teaching certificates, training documents, and relevant education.
+            </li>
+
+            <li>
+              <span>✔</span>
+              <strong>Experience confirmation </strong>&nbsp;We ensure tutors meet our teaching standards and have suitable background for the subjects they offer.
+            </li>
+
+            <li>
+              <span>✔</span>
+              <strong>Profile quality check </strong>&nbsp;We verify accuracy, clarity, and professionalism in every tutor profile.
+            </li>
+
+            <li>
+              We accept only verified tutors — no random sign-ups, no unverified accounts.
+            </li>
+          </ul>
+        </section>
 
         {/* HOW IT WORKS */}
         <section className={`mt-5 ${styles.howItWorks}`}>
@@ -274,21 +312,21 @@ export default function Home() {
 
         {/* TUTOR HIGHLIGHTS */}
         <section className={`mt-5 ${styles.tutorHighlights}`}>
-          <h2 className="h4 fw-bold mb-3">Why UK-Experienced Tutors Matter</h2>
+          <h2 className="h4 fw-bold mb-3">Why our tutors?</h2>
           <div className="row g-4">
             <div className="col-md-6">
               <div className={styles.highlightBox}>
-                <h6 className="mb-2">Verified &amp; Supported</h6>
+                <h6 className="mb-2">Verified &amp; supported</h6>
                 <p className="mb-0">
-                  Every tutor is manually reviewed and vetted to ensure they have real experience living, studying or working in the UK — so you learn the English you actually need for real UK life.
+                  Each tutor completes an onboarding check and profile review.
                 </p>
               </div>
             </div>
             <div className="col-md-6">
               <div className={styles.highlightBox}>
-                <h6 className="mb-2">Lessons Designed for Real UK Life & UK Exams</h6>
+                <h6 className="mb-2">Flexible lesson types</h6>
                 <p className="mb-0">
-                  Learn practical English for work, GP appointments, school meetings, job interviews and everyday communication — plus tailored preparation for UK-focused exams such as IELTS, SELT, PTE, Cambridge and Life in the UK.
+                  Online or in person. IELTS/TOEFL prep, conversation practice, Business English.
                 </p>
               </div>
             </div>
