@@ -194,3 +194,49 @@
   font-size: 14px;
   color: #f5c518;
 }
+
+/* ================================
+   🎥 INTRO VIDEO SABİT PENCERE
+================================ */
+
+.videoContainer {
+  margin-top: 1.5rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.videoFrame {
+  width: 100%;
+  max-width: 480px;       // sabit max genişlik
+  aspect-ratio: 16 / 9;   // sabit görüntü boyutu
+  background: #000;       // video yokken siyah pencere
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.videoElement {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;      // video penceresi dışına taşmadan doldurur
+  border-radius: 14px;
+}
+
+/* Mobil uyumluluk */
+@media (max-width: 480px) {
+  .videoFrame {
+    max-width: 100%;
+    border-radius: 10px;
+  }
+}
+
+.verifiedText {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e7b36;
+}
