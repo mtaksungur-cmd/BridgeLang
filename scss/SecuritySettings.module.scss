@@ -258,3 +258,45 @@
     min-width: 100px;
   }
 }
+
+.checkRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+
+  input {
+    margin-top: 3px;
+  }
+}
+
+.muted {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 6px;
+}
+
+/* 🟦 Intro Video Visibility — Title & layout */
+.toggleBlock {
+  margin-bottom: 20px;
+}
+
+.toggleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggleTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  max-width: 70%;
+}
+
+.toggleDescription {
+  font-size: 13px;
+  color: #666;
+  margin-top: 6px;
+  line-height: 1.4;
+}
