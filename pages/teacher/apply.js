@@ -47,6 +47,10 @@ export default function TeacherApply() {
     acceptResponsibility: false,
     cancellationAware: false,
     acceptPrivacy: false,
+
+    // 🔹 Intro video consent flags
+    introVideoConsentProfile: false,
+    introVideoConsentSocial: false,
   });
 
   const [files, setFiles] = useState({
@@ -60,12 +64,27 @@ export default function TeacherApply() {
 
   const handleChange = (e) => {
     const { name, value, type, checked, files: fileList } = e.target;
+
     if (type === 'file') {
+      // Sertifikalar
       if (name === 'certificateFiles') {
         setFiles((prev) => ({ ...prev, certificateFiles: Array.from(fileList) }));
-      } else {
-        setFiles((prev) => ({ ...prev, [name]: fileList[0] }));
+        return;
       }
+
+      // Intro video (50MB sınır)
+      if (name === 'introVideo') {
+        const file = fileList[0];
+        if (file && file.size > 50 * 1024 * 1024) {
+          alert('Intro video must not exceed 50MB.');
+          return;
+        }
+        setFiles((prev) => ({ ...prev, introVideo: file || null }));
+        return;
+      }
+
+      // Diğer tekli dosyalar
+      setFiles((prev) => ({ ...prev, [name]: fileList[0] || null }));
     } else if (type === 'checkbox') {
       setForm((prev) => ({ ...prev, [name]: checked }));
     } else {
@@ -75,24 +94,24 @@ export default function TeacherApply() {
 
   // ✅ Boş dosya varsa null döndürür
   const uploadFileViaApi = async (file) => {
-    if (!file) return null;  // ✅ dosya yoksa null
+    if (!file) return null;
     try {
       const formData = new FormData();
       formData.append('file', file);
-  
+
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       if (!res.ok) {
         console.error('upload failed, status:', res.status);
         return null;
       }
-  
+
       const data = await res.json();
       if (!data?.url) {
         console.error('upload returned no url:', data);
         return null;
       }
-  
-      return data.url;   // ✅ string garanti
+
+      return data.url;
     } catch (err) {
       console.error('uploadFileViaApi error:', err);
       return null;
@@ -113,9 +132,11 @@ export default function TeacherApply() {
     }
 
     try {
+      const email = form.email.trim().toLowerCase();
+
       const userCred = await createUserWithEmailAndPassword(
         auth,
-        form.email.trim().toLowerCase(),
+        email,
         form.password
       );
       const uid = userCred.user.uid;
@@ -131,17 +152,28 @@ export default function TeacherApply() {
         if (url) certificationUrls.push(url);
       }
 
+      // ✅ Consent alanları
+      const intro_video_consent_profile = !!form.introVideoConsentProfile;
+      const intro_video_consent_social = !!form.introVideoConsentSocial;
+
       await setDoc(doc(db, 'pendingTeachers', uid), {
         ...form,
-        email: form.email.trim().toLowerCase(),
+        email,
+        // Upload sonuçları
         ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
         ...(cvUrl ? { cvUrl } : {}),
         ...(introVideoUrl ? { introVideoUrl } : {}),
         certificationUrls: certificationUrls.filter(Boolean),
+
+        // Yeni intro video alanları
+        intro_video_path: introVideoUrl || null,
+        intro_video_consent_profile,
+        intro_video_consent_social,
+
         status: 'pending',
         createdAt: Timestamp.now(),
         role: 'teacher',
-        badges: ['🆕 New Teacher']
+        badges: ['🆕 New Teacher'],
       });
 
       await getBadgesForTeacher(uid); // istersen açabilirsin
@@ -152,7 +184,7 @@ export default function TeacherApply() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name,
-          email: form.email,
+          email,
         }),
       });
 
@@ -311,12 +343,13 @@ export default function TeacherApply() {
             required
           />
 
-          <input className={styles.input} 
-            name="deliveryMethod" 
-            placeholder="Delivery Method (e.g., Online or In-person)" 
-            value={form.deliveryMethod} 
-            onChange={handleChange} 
-            required 
+          <input
+            className={styles.input}
+            name="deliveryMethod"
+            placeholder="Delivery Method (e.g., Online or In-person)"
+            value={form.deliveryMethod}
+            onChange={handleChange}
+            required
           />
         </div>
 
@@ -397,7 +430,9 @@ export default function TeacherApply() {
           </label>
 
           <label className={styles.fileLabel}>
-            <span>Intro Video (MP4) <small>(optional)</small></span>
+            <span>
+              Intro Video (MP4) <small>(optional)</small>
+            </span>
             <input
               className={styles.fileInput}
               type="file"
@@ -406,7 +441,65 @@ export default function TeacherApply() {
               onChange={handleChange}
             />
           </label>
+
+
         </div>
+          {!files.introVideo && (
+            <div className={styles.videoGuidelines}>
+              <p className={styles.optionalNote}>
+                Uploading an intro video is optional. You may also upload one later from your dashboard.
+              </p>
+              <p>
+                Please upload a short introduction video (MP4, 30–60 seconds, landscape).
+                Your video will help students get to know you before booking their first lesson.
+              </p>
+              <ul>
+                <li>Format: MP4</li>
+                <li>Duration: 30–60 seconds</li>
+                <li>Orientation: Landscape (16:9)</li>
+                <li>Resolution: 720p recommended</li>
+                <li>Clear audio and good lighting</li>
+                <li>Suggested content:</li>
+                <ul>
+                  <li>Your name and teaching background</li>
+                  <li>Who you teach (Adults, university students, teens aged 14–17)</li>
+                  <li>Your teaching style and areas of focus</li>
+                </ul>
+              </ul>
+            </div>
+          )}
+
+          {/* 🔹 Intro video seçildiyse consent + guideline göster */}
+          {files.introVideo && (
+            <div className={styles.checks}>
+              <label className={styles.checkItem}>
+                <input
+                  type="checkbox"
+                  name="introVideoConsentProfile"
+                  checked={form.introVideoConsentProfile}
+                  onChange={handleChange}
+                />
+                <span>
+                  I give my consent for BridgeLang to store my introduction video and
+                  display it publicly on my tutor profile.
+                </span>
+              </label>
+
+              <label className={styles.checkItem}>
+                <input
+                  type="checkbox"
+                  name="introVideoConsentSocial"
+                  checked={form.introVideoConsentSocial}
+                  onChange={handleChange}
+                />
+                <span>
+                  I also give BridgeLang permission to use my introduction video on its
+                  official social media channels and in promotional materials, with the
+                  purpose of helping students discover my profile.
+                </span>
+              </label>
+            </div>
+          )}
 
         <h4 className={styles.sectionTitle}>Confirmations</h4>
         <div className={styles.checks}>
@@ -505,7 +598,8 @@ export default function TeacherApply() {
         <div className={styles.successBox}>
           <p className={styles.successText}>{success}</p>
           <p className={styles.successHint}>
-            Once your application is submitted, our team will review it and get back to you shortly – typically within a couple of business days.
+            Once your application is submitted, our team will review it and get back
+            to you shortly – typically within a couple of business days.
           </p>
         </div>
       )}
