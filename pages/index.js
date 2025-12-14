@@ -312,21 +312,21 @@ export default function Home() {
 
         {/* TUTOR HIGHLIGHTS */}
         <section className={`mt-5 ${styles.tutorHighlights}`}>
-          <h2 className="h4 fw-bold mb-3">Why our tutors?</h2>
+          <h2 className="h4 fw-bold mb-3">Why Our Tutors?</h2>
           <div className="row g-4">
             <div className="col-md-6">
               <div className={styles.highlightBox}>
-                <h6 className="mb-2">Verified &amp; supported</h6>
+                <h6 className="mb-2">Verified UK-focused professionals</h6>
                 <p className="mb-0">
-                  Each tutor completes an onboarding check and profile review.
+                  Every tutor is carefully reviewed and approved to teach practical, real-life English for living,working and integrating in the UK.
                 </p>
               </div>
             </div>
             <div className="col-md-6">
               <div className={styles.highlightBox}>
-                <h6 className="mb-2">Flexible lesson types</h6>
+                <h6 className="mb-2">Independent, experienced educators</h6>
                 <p className="mb-0">
-                  Online or in person. IELTS/TOEFL prep, conversation practice, Business English.
+                  Our tutors set their own rates, teaching style and focus — so you learn from confident professionals who truly own their expertise.
                 </p>
               </div>
             </div>
