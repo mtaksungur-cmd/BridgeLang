@@ -353,7 +353,7 @@ export default function Home() {
           <div className={styles.faqBox}>
             <h3 className="h5 fw-bold mb-2">Have questions?</h3>
             <p className="mb-3">
-              Read our quick FAQ to learn about refunds, rescheduling, and safety.
+              Read our quick FAQ to learn about refunds, rescheduling and safety.
             </p>
             <Link href="/faq" className="btn btn-outline-secondary">
               Read FAQ
@@ -365,7 +365,7 @@ export default function Home() {
         <section className={styles.finalCta}>
           <h2 className="h3 fw-bold mb-2">Ready to start?</h2>
           <p className="mb-3">
-            Create a free account and book your first lesson today.
+            Create your free account and book your first lesson today.
           </p>
           <Link href="/student/register" className="btn btn-primary">
             Create account
