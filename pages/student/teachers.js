@@ -222,6 +222,22 @@ export default function TeachersList() {
                   <p className={styles.badge}>No badges yet</p>
                 )}
 
+                {/* 🎥 Intro Video (profile consent only) */}
+                {t.introVideoUrl && t.intro_video_consent_profile === true && (
+                  <div className={styles.cardVideo}>
+                    <video
+                      className={styles.cardVideoPlayer}
+                      src={t.introVideoUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      controlsList="nodownload"
+                      onClick={(e) => e.stopPropagation()}
+                      onContextMenu={(e) => e.preventDefault()}
+                    />
+                  </div>
+                )}
+
                 {t.profilePhotoUrl && (
                   <Image
                     src={t.profilePhotoUrl}
