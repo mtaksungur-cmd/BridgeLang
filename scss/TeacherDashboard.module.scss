@@ -1,4 +1,4 @@
-@use '../styles/_variables' as v; // varsa; yoksa sabit renkleri kullan
+@use '../styles/_variables' as v;
 
 .wrap {
   padding: 40px;
@@ -16,89 +16,6 @@
 .header {
   h2 {
     margin: 0 0 12px;
-  }
-}
-
-/* -------- REVIEWS -------- */
-.reviewList {
-  display: flex;
-  gap: 12px;
-  margin-top: 14px;
-  flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-  }
-}
-
-.reviewCard {
-  background: #fff;
-  border: 1px solid #eee;
-  width: 25%;
-  border-radius: 12px;
-  padding: 12px 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.03);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 10px rgba(0,0,0,.05);
-  }
-
-  @media (max-width: 1024px) {
-    width: 48%;
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-
-  .reviewHeader {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
-  }
-
-  .reviewAvatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid #ddd;
-  }
-
-  p {
-    margin: 0;
-    color: #333;
-    line-height: 1.5;
-    font-size: 0.95rem;
-  }
-}
-
-/* -------- INPUTS / FORMS -------- */
-.input {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  resize: vertical;
-}
-
-/* -------- TOP BADGE -------- */
-.topBadge {
-  background: #e6f7e7;
-  border: 1px solid #c7e9ca;
-  border-radius: 12px;
-  padding: 12px 14px;
-  max-width: 720px;
-
-  &__desc {
-    font-size: 0.9rem;
-    color: #556;
-    margin-top: 4px;
   }
 }
 
@@ -148,6 +65,16 @@
   }
 }
 
+/* -------- INPUTS / FORMS -------- */
+.input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
 /* -------- STATS -------- */
 .statGrid {
   display: grid;
@@ -177,7 +104,7 @@
 .btnPrimary {
   margin-top: 8px;
   align-self: flex-start;
-  background: #1f3b70; // v.$primary-color;
+  background: #1f3b70;
   color: #fff;
   border: 0;
   padding: 10px 16px;
@@ -200,9 +127,18 @@
 }
 
 /* -------- FEEDBACK COLORS -------- */
-.info { color: #444; font-size: 0.9rem; }
-.ok   { color: #1a8917; font-size: 0.9rem; }
-.err  { color: #c0392b; font-size: 0.9rem; }
+.info {
+  color: #444;
+  font-size: 0.9rem;
+}
+.ok {
+  color: #1a8917;
+  font-size: 0.9rem;
+}
+.err {
+  color: #c0392b;
+  font-size: 0.9rem;
+}
 
 /* -------- BADGES -------- */
 .badges {
@@ -232,7 +168,221 @@
     }
   }
 
-  &__name { margin-right: 6px; }
-  &__sep  { margin: 0 8px; color: #c0c3cc; }
-  &__state { margin-left: 8px; font-style: italic; font-size: .9rem; color: #667085; }
+  &__name {
+    margin-right: 6px;
+  }
+  &__sep {
+    margin: 0 8px;
+    color: #c0c3cc;
+  }
+  &__state {
+    margin-left: 8px;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: #667085;
+  }
+}
+
+/* -------- REVIEWS -------- */
+.reviews {
+  margin-top: 28px;
+}
+
+.reviewList {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+.reviewCard {
+  background: #fff;
+  border: 1px solid #eee;
+  width: 25%;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 1024px) {
+    width: 48%;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+
+  .reviewHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .reviewAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #ddd;
+  }
+
+  p {
+    margin: 0;
+    color: #333;
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+}
+
+/* -------- COMMON -------- */
+.muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Checkbox satır stili (video consent + genel kullanım) */
+.checkItem {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+
+  input {
+    margin-top: 3px;
+  }
+}
+
+/* -------- INTRO VIDEO CARD -------- */
+.videoCard {
+  margin-top: 8px;
+  background: #ffffff;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.videoCardHeader {
+  h3 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #4b5563;
+  }
+}
+
+.videoPlayer {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 12px;
+  background: #000;
+  outline: none;
+}
+
+.videoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.uploadBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #1f3b70;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+
+  input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
+.deleteVideoBtn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #fecaca;
+  }
+}
+
+.videoConsents {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.videoNote {
+  margin: 0 0 2px;
+  font-size: 0.88rem;
+  color: #6b7280;
+}
+
+.videoLastUpdate {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.videoFrame {
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 16 / 9;
+  background: #0f172a;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.videoPlayer {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.videoPlaceholder {
+  color: #cbd5f5;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 16px;
 }
