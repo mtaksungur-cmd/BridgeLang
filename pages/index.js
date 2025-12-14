@@ -32,7 +32,7 @@ export default function Home() {
                 href="/student/register"
                 className={`btn btn-primary me-2 ${styles.heroBtnPrimary}`}
               >
-                Start Learning For Free
+                Create Your Free Account
               </Link>
               <Link
                 href="/how-it-works"
