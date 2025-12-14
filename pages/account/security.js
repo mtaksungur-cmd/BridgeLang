@@ -284,7 +284,7 @@ export default function SecuritySettings() {
 
           {!hasIntroVideo && (
             <p className={styles.muted}>
-              You don't have an intro video yet. You can upload one from your Teacher Dashboard.
+              You don&apos;t have an intro video yet. You can upload one from your Teacher Dashboard.
             </p>
           )}
         </section>
