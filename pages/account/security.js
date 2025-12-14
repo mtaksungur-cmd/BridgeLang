@@ -253,6 +253,9 @@ export default function SecuritySettings() {
             <p className={styles.toggleDescription}>
               Enables your intro video to be shown directly on your BridgeLang tutor profile.
             </p>
+            <p className={styles.toggleHint}>
+              You can turn this off at any time. Your intro video will immediately be removed from your public profile.
+            </p>
           </div>
 
           {/* SOCIAL CONSENT TOGGLE */}
