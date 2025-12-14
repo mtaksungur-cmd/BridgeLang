@@ -131,6 +131,9 @@ export default function TeachersList() {
   return (
     <div className={styles.container}>
       <h2>Browse Our Tutors</h2>
+      <p className={styles.verifiedInfo}>
+        All BridgeLang tutors are fully verified.
+      </p>
 
       <div className={styles.filters} role="region" aria-label="Filters">
         <div className={styles.filterItem}>
@@ -193,6 +196,10 @@ export default function TeachersList() {
                 <Link href={`/student/teachers/${t.id}`}>
                   <h3 className={styles.teacherName}>{t.name}</h3>
                 </Link>
+
+                {t.verified && (
+                  <p className={styles.verifiedText} title="Verified based on identity and qualification checks.">Verified BridgeLang Tutor</p>
+                )}
 
                 {t.avgRating ? (
                   <p className={styles.rating}>
