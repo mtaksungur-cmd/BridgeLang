@@ -177,7 +177,7 @@ export default function Home() {
               <div className={styles.trustCard}>
                 <h6>14. More Choice, More Value</h6>
                 <p>
-                  Independent freelance teachers offer a wider variety of teaching styles, experience levels and price points — giving learners more flexibility, more affordability and more control.
+                  Independent teachers offer a wider variety of teaching styles, experience levels and price points — giving learners more flexibility, more affordability and more control.
                 </p>
               </div>
             </div>
@@ -318,7 +318,7 @@ export default function Home() {
               <div className={styles.highlightBox}>
                 <h6 className="mb-2">Verified UK-focused professionals</h6>
                 <p className="mb-0">
-                  Every tutor is carefully reviewed and approved to teach practical, real-life English for living,working and integrating in the UK.
+                  Every tutor is carefully reviewed and approved to teach practical, real-life English for living, working and integrating in the UK.
                 </p>
               </div>
             </div>
@@ -339,9 +339,9 @@ export default function Home() {
             className={`p-4 rounded-3 border bg-light d-md-flex align-items-center justify-content-between ${styles.pricingBox}`}
           >
             <div>
-              <h3 className="h4 fw-bold mb-1">Simple plans for learners</h3>
+              <h3 className="h4 fw-bold mb-1">Simple plans, designed for learners</h3>
               <p className="mb-0">
-                Starter, Pro, and VIP — pick what fits your learning pace.
+                Choose from Starter, Pro or VIP — designed to support confident, natural English at your own pace.
               </p>
             </div>
             <Link href="/student/subscription" className="btn btn-primary mt-3 mt-md-0">
