@@ -18,6 +18,48 @@ function toDate(value) {
   return new Date(value);
 }
 
+function formatTimestamp(value) {
+  if (!value) return '—';
+  const d = new Date(value);
+  return isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+}
+
+function getHistoryLabel(h) {
+  if (!h?.type) return 'Unknown action';
+
+  if (h.type === 'upload') {
+    return 'Intro video uploaded';
+  }
+
+  if (h.type === 'delete') {
+    return 'Intro video deleted';
+  }
+
+  if (h.type === 'consent_change') {
+    const target =
+      h.consentKey === 'profile'
+        ? 'Profile visibility'
+        : h.consentKey === 'social'
+        ? 'Social media usage'
+        : 'Unknown consent';
+
+    const state = h.newValue ? 'ENABLED' : 'DISABLED';
+
+    return `${target} ${state}`;
+  }
+
+  return h.type;
+}
+
 export default function AdminTeachers() {
   const [pending, setPending] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -334,14 +376,63 @@ export default function AdminTeachers() {
                   </div>
                 </div>
                 {/* INTRO VIDEO (NEW, FULL-WIDTH SECTION) */}
+                {/* INTRO VIDEO + CONSENTS (ADMIN VIEW) */}
                 {app.introVideoUrl && (
                   <div className={styles.introVideoSection}>
                     <h3>Intro Video</h3>
+
+                    {/* CONSENT INFO */}
+                    <div className={styles.videoConsentMeta}>
+                      <div>
+                        Profile visibility:{' '}
+                        <strong
+                          className={
+                            app.intro_video_consent_profile
+                              ? styles.allowed
+                              : styles.notAllowed
+                          }
+                        >
+                          {app.intro_video_consent_profile ? 'Allowed' : 'Not allowed'}
+                        </strong>
+                      </div>
+
+                      <div>
+                        Social usage:{' '}
+                        <strong
+                          className={
+                            app.intro_video_consent_social
+                              ? styles.allowed
+                              : styles.notAllowed
+                          }
+                        >
+                          {app.intro_video_consent_social ? 'Allowed' : 'Not allowed'}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* VIDEO PLAYER */}
                     <div className={styles.videoWrapper}>
-                      <video className={styles.video} controls preload="metadata">
+                      <video
+                        className={styles.video}
+                        controls
+                        preload="metadata"
+                        controlsList="nodownload"
+                        onContextMenu={(e) => e.preventDefault()}
+                      >
                         <source src={app.introVideoUrl} type="video/mp4" />
                       </video>
                     </div>
+
+                    {/* DOWNLOAD ONLY IF SOCIAL CONSENT TRUE */}
+                    {app.intro_video_consent_social === true && (
+                      <a
+                        href={app.introVideoUrl}
+                        download
+                        className={styles.downloadBtn}
+                      >
+                        ⬇ Download video (social consent granted)
+                      </a>
+                    )}
                   </div>
                 )}
               </article>
@@ -481,6 +572,95 @@ export default function AdminTeachers() {
                       </dl>
                     </div>
                   </div>
+
+                  {/* =======================
+                      INTRO VIDEO PERMISSIONS
+                  ======================= */}
+                  {t.introVideoUrl && (
+                    <section className={styles.videoAdminBlock}>
+                      <header className={styles.videoAdminHeader}>
+                        <h4>Intro Video Management</h4>
+                      </header>
+
+                      {/* PERMISSIONS */}
+                      <div className={styles.videoAdminMeta}>
+                        <div>
+                          Profile visibility:{' '}
+                          <span
+                            className={
+                              t.intro_video_consent_profile
+                                ? styles.allowed
+                                : styles.notAllowed
+                            }
+                          >
+                            {t.intro_video_consent_profile ? 'Allowed' : 'Not allowed'}
+                          </span>
+                        </div>
+
+                        <div>
+                          Social usage:{' '}
+                          <span
+                            className={
+                              t.intro_video_consent_social
+                                ? styles.allowed
+                                : styles.notAllowed
+                            }
+                          >
+                            {t.intro_video_consent_social ? 'Allowed' : 'Not allowed'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* VIDEO PLAYER */}
+                      <div className={styles.videoAdminPlayer}>
+                        <video
+                          controls
+                          preload="metadata"
+                          controlsList="nodownload"
+                          onContextMenu={(e) => e.preventDefault()}
+                        >
+                          <source src={t.introVideoUrl} type="video/mp4" />
+                        </video>
+                      </div>
+
+                      {/* DOWNLOAD (ONLY IF SOCIAL CONSENT TRUE) */}
+                      {t.intro_video_consent_social === true && (
+                        <a
+                          href={t.introVideoUrl}
+                          download
+                          className={styles.downloadBtn}
+                        >
+                          ⬇ Download video (social consent granted)
+                        </a>
+                      )}
+
+                      {/* CONSENT HISTORY */}
+                      <div className={styles.historyBlock}>
+                        <h5>Consent history</h5>
+
+                        {Array.isArray(t.intro_video_history) &&
+                        t.intro_video_history.length > 0 ? (
+                          <ul className={styles.historyList}>
+                            {t.intro_video_history
+                              .slice()
+                              .reverse()
+                              .map((h, i) => (
+                                <li key={i} className={styles.historyItem}>
+                                  <div className={styles.historyAction}>
+                                    {getHistoryLabel(h)}
+                                  </div>
+                                  <div className={styles.historyMeta}>
+                                    {formatTimestamp(h.timestamp)}
+                                  </div>
+                                </li>
+                              ))}
+                          </ul>
+                        ) : (
+                          <p className={styles.muted}>No consent history recorded.</p>
+                        )}
+                      </div>
+                    </section>
+                  )}
 
                   <div className={styles.teacherFooter}>
                     <dl className={styles.dlInline}>
