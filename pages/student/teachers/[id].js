@@ -4,7 +4,6 @@ import { db, auth } from '../../../lib/firebase';
 import Image from 'next/image';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import styles from "../../../scss/TeacherProfile.module.scss";
-import Script from "next/script";
 
 const badgeDescriptions = {
   '🆕 New Teacher': '(first 30 days)',
@@ -170,16 +169,6 @@ export default function TeacherProfilePage() {
 
   return (
     <div className={styles.container}>
-    {teacher && (
-      <Script id="fb-view-content" strategy="afterInteractive">
-        {`
-          fbq('track', 'ViewContent', {
-            content_type: 'teacher_profile',
-            content_ids: ['${id}']
-          });
-        `}
-      </Script>
-    )}
       <div className={styles.topSection}>
         {/* Sol panel */}
         <div className={styles.leftPanel}>
@@ -193,6 +182,14 @@ export default function TeacherProfilePage() {
             />
           )}
           <h2 className={styles.name}>{teacher.name}</h2>
+          {teacher.verified && (
+            <p 
+              className={styles.verifiedText}
+              title="Verified based on identity and qualification checks."
+            >
+              Verified BridgeLang Tutor
+            </p>
+          )}
           {teacher.avgRating && (
             <p className={styles.rating}>
               ⭐ {teacher.avgRating.toFixed(1)} ({teacher.reviewCount || 0} reviews)
@@ -219,19 +216,6 @@ export default function TeacherProfilePage() {
           <p><strong>Level of Education:</strong> {teacher.educationLevel}</p>
           <p><strong>Experience:</strong> {teacher.experienceYears} years</p>
 
-          {/* 🔹 Video bölümü */}
-          {teacher.introVideoUrl && (
-            <div className={styles.videoWrapper}>
-              <video
-                className={styles.introVideo}
-                src={teacher.introVideoUrl}
-                controls
-                playsInline
-                preload="metadata"
-              />
-            </div>
-          )}
-
           <div className={styles.pricing}>
             <strong>Lesson Pricing:</strong>
             <table>
@@ -242,6 +226,27 @@ export default function TeacherProfilePage() {
               </tbody>
             </table>
           </div>
+
+          {/* 🔹 Intro Video – only show if teacher allows profile visibility */}
+          {teacher.intro_video_consent_profile === true && teacher.introVideoUrl ? (
+            <div className={styles.videoContainer}>
+              <div className={styles.videoFrame}>
+                <video
+                  className={styles.videoElement}
+                  src={teacher.introVideoUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  controlsList="nodownload"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              </div>
+            </div>
+          ) : (
+            <p className={styles.muted}>
+              This tutor has not made an introduction video available for public viewing.
+            </p>
+          )}
         </div>
 
         {/* Sağ panel */}
