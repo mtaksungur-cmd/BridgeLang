@@ -256,7 +256,7 @@ export default function Home() {
 
             <li>
               <span>✔</span>
-              <strong>Qualification review </strong>&nbsp;We manually check teaching certificates, training documents, and relevant education.
+              <strong>Qualification review </strong>&nbsp;We manually check teaching certificates, training documents and relevant education.
             </li>
 
             <li>
@@ -266,7 +266,7 @@ export default function Home() {
 
             <li>
               <span>✔</span>
-              <strong>Profile quality check </strong>&nbsp;We verify accuracy, clarity, and professionalism in every tutor profile.
+              <strong>Profile quality check </strong>&nbsp;We verify accuracy, clarity and professionalism in every tutor profile.
             </li>
 
             <li>
