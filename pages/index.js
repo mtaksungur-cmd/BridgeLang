@@ -244,9 +244,8 @@ export default function Home() {
         <section className={styles.verifySection}>
           <h2>How We Verify Our Tutors</h2>
 
-          <p>
-            All tutors on BridgeLang are fully verified before their profiles go live.  
-            Every tutor goes through a manual review process carried out by the BridgeLang team.
+           <p>
+            All tutors on BridgeLang are fully verified before their profiles go live. Every tutor goes through a manual review process carried out by the BridgeLang team.
           </p>
 
           <ul className={styles.verifyList}>
