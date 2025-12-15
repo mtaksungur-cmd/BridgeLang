@@ -65,3 +65,53 @@
     text-decoration: none;
   }
 }
+
+/* =========================
+   RESPONSIVE DROPDOWN
+========================= */
+
+/* Tablet ve altı */
+@media (max-width: 768px) {
+  .dropdownMenu {
+    min-width: 200px;
+    right: 0;
+    left: auto;
+  }
+
+  .dropdownItem {
+    padding: .75rem .85rem;
+    font-size: .95rem;
+  }
+}
+
+/* Mobil */
+@media (max-width: 480px) {
+  .dropdownMenu {
+    position: fixed;
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    min-width: unset;
+    max-width: unset;
+    margin-top: 0;
+    border-radius: 16px;
+    box-shadow: 0 14px 30px rgba(0,0,0,.18);
+    transform: translateY(12px);
+  }
+
+  .show {
+    transform: translateY(0);
+  }
+
+  .dropdownItem {
+    padding: 1rem;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .toggleBtn {
+    padding: .6rem;
+  }
+}
