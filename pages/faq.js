@@ -188,7 +188,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="rc3" className="accordion-collapse collapse" data-bs-parent="#accRefunds">
                 <div className="accordion-body">
-                  Late cancellations (within 24 hours) may be charged in full, according to the tutor’s cancellation policy.
+                  Late cancellations (within 24 hours) may be charged in full, according to the cancellation policy set by the tutor.
                 </div>
               </div>
             </div>
@@ -287,7 +287,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="coc3" className="accordion-collapse collapse" data-bs-parent="#accConduct">
                 <div className="accordion-body">
-                  Yes, but they are undertaken at your own risk. Students under 18 require parental consent, and tutors are encouraged to follow BridgeLang’s safety guidelines.
+                  Yes, but they are undertaken at your own risk. Students under 18 require parental consent and tutors are encouraged to follow BridgeLang’s safety guidelines.
                 </div>
               </div>
             </div>
