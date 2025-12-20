@@ -58,8 +58,7 @@ export default function FAQ() {
               </h2>
               <div id="gc2" className="accordion-collapse collapse" data-bs-parent="#accGeneral">
                 <div className="accordion-body">
-                  The platform is available to individuals aged 18 and above. Students aged 14–17 may also join,
-                  but only with verified parental/guardian consent.
+                  The platform is available to individuals aged 18 and above. Students aged 14–17 may also join, but only with verified parental/guardian consent.
                 </div>
               </div>
             </div>
@@ -276,8 +275,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="coc2" className="accordion-collapse collapse" data-bs-parent="#accConduct">
                 <div className="accordion-body">
-                  Students and tutors must behave respectfully and professionally.
-Harassment, discrimination or abusive conduct is not tolerated and may result in account suspension or termination.
+                  Students and tutors must behave respectfully and professionally. Harassment, discrimination or abusive conduct is not tolerated and may result in account suspension or termination.
                 </div>
               </div>
             </div>
