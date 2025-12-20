@@ -318,7 +318,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="pcc2" className="accordion-collapse collapse" data-bs-parent="#accConsent">
                 <div className="accordion-body">
-                  Both the student and parent/guardian receive confirmation emails. The student's account remains inactive until both confirm.
+                  Both the student and parent/guardian receive confirmation emails. The student account remains inactive until both confirm.
                 </div>
               </div>
             </div>
