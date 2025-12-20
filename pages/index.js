@@ -370,6 +370,12 @@ export default function Home() {
           <Link href="/student/register" className="btn btn-primary">
             Create account
           </Link>
+
+          <p style={{ marginTop: '10px', fontStyle: 'italic', fontSize: '0.9rem', opacity: 0.75 }}>
+  Free to join. No commitment. Cancel anytime.<br />
+  Automatic discounts and loyalty rewards apply.
+</p>
+
         </section>
       </div>
     </>
