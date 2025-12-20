@@ -244,7 +244,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="tc4" className="accordion-collapse collapse" data-bs-parent="#accTeachers">
                 <div className="accordion-body">
-                  Yes. Tutors may set their lesson rates within platform guidelines.
+                  Yes. Tutors can set their lesson rates within platform guidelines.
                 </div>
               </div>
             </div>
