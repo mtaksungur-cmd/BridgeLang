@@ -83,8 +83,8 @@ export default function HowItWorks() {
           <h1 className="h3 fw-bold mb-2">How It Works – BridgeLang</h1>
           <p className="text-muted mb-0">
             {role === "teacher"
-              ? "Teach real-life English to learners in the UK — online or in person. Build your profile, manage your lessons, and receive secure payouts via Stripe Connect."
-              : "Learn real-life English for your life in the UK — with verified tutors who understand British workplaces, healthcare, education and everyday communication. Choose your plan, book lessons your way, and enjoy loyalty rewards as you build lasting confidence."}
+              ? "Teach real-life English to learners in the UK — online or in person. Build your profile, manage your lessons and receive secure payouts via Stripe Connect."
+              : "Learn real-life English for your life in the UK — with verified tutors who understand British workplaces, healthcare, education and everyday communication. Choose your plan, book lessons your way and enjoy loyalty rewards as you build lasting confidence."}
           </p>
         </header>
 
@@ -101,7 +101,7 @@ export default function HowItWorks() {
                 Whether you are preparing for a job interview, GP appointment, workplace communication or daily conversations, BridgeLang helps you learn the English you truly need for life in the UK.
               </p>
               <ul className={styles.list}>
-                <li><strong>Step 1 – Choose Your Plan:</strong> Select the Free, Starter, Pro, or VIP plan — designed to support different stages of your UK journey.</li>
+                <li><strong>Step 1 – Choose Your Plan:</strong> Select the Free, Starter, Pro or VIP plan — designed to support different stages of your UK journey.</li>
                 <li><strong>Step 2 – Find Your Tutor:</strong> Discover verified UK-experienced tutors. Filter by your goals: job interviews, workplace English, healthcare English, daily communication or general skills.</li>
                 <li><strong>Step 3 – Book & Pay Securely:</strong> Choose a time that fits your UK schedule. All payments are handled safely via Stripe.</li>
                 <li><strong>Step 4 – Learn with  Confidence:</strong> Take lessons online or face-to-face and practise the real English you will use in British workplaces, public services and everyday life.</li>
