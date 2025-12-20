@@ -24,14 +24,14 @@ export default function Home() {
               Real UK English for Real Life in the UK
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
-              Start learning English for real life in the UK — online or in person. Build confidence, communicate naturally and progress with trusted UK-based tutors.
+              Learn practical English for everyday life in the UK with trusted, UK-based tutors.
             </p>
             <div>
               <Link
                 href="/student/register"
                 className={`btn btn-primary me-2 ${styles.heroBtnPrimary}`}
               >
-                Create Your Free Account
+                Start Learning Today
               </Link>
               <Link
                 href="/how-it-works"
