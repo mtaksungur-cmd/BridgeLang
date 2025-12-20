@@ -31,7 +31,7 @@ export default function FAQ() {
           <a className="btn btn-sm btn-outline-secondary m-1" href="#privacy">Privacy &amp; Data</a>
           <a className="btn btn-sm btn-outline-secondary m-1" href="#legal">Disputes &amp; Legal</a>
           <a className="btn btn-sm btn-outline-secondary m-1" href="#complaints">Support &amp; Complaints</a>
-          <a className="btn btn-sm btn-outline-secondary" href="#future">Future</a>
+          <a className="btn btn-sm btn-outline-secondary" href="#future">Platform Roadmap</a>
         </nav>
 
         {/* 1. General Information */}
