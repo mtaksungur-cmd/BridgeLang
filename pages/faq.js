@@ -8,7 +8,7 @@ export default function FAQ() {
         <title>Frequently Asked Questions (FAQ) | BridgeLang</title>
         <meta
           name="description"
-          content="Frequently Asked Questions for BridgeLang: accounts, booking & payments, cancellations & refunds, teachers & payments, conduct & safety, parental consent, technical support, privacy & data, disputes & legal, complaints."
+          content="Frequently Asked Questions for BridgeLang: accounts, booking & payments, cancellations & refunds, tutors & payments, conduct & safety, parental consent, technical support, privacy & data, disputes & legal, complaints."
         />
       </Head>
 
@@ -46,8 +46,7 @@ export default function FAQ() {
               </h2>
               <div id="gc1" className="accordion-collapse collapse show" data-bs-parent="#accGeneral">
                 <div className="accordion-body">
-                  BridgeLang is an online platform that connects Students and Teachers for language lessons.
-                  It operates in the UK and provides both online and in-person lessons.
+                  BridgeLang is an online platform that connects students and tutors for real-life English in the UK, providing both online and in-person lessons.
                 </div>
               </div>
             </div>
@@ -59,7 +58,7 @@ export default function FAQ() {
               </h2>
               <div id="gc2" className="accordion-collapse collapse" data-bs-parent="#accGeneral">
                 <div className="accordion-body">
-                  The Platform is available to individuals aged 18 and above. Students aged 14–17 may also join,
+                  The platform is available to individuals aged 18 and above. Students aged 14–17 may also join,
                   but only with verified parental/guardian consent.
                 </div>
               </div>
@@ -79,7 +78,7 @@ export default function FAQ() {
               </h2>
               <div id="ac1" className="accordion-collapse collapse show" data-bs-parent="#accAccounts">
                 <div className="accordion-body">
-                  Yes. Both Students and Teachers must register for an account and provide accurate information.
+                  Yes. Both students and tutors must register for an account and provide accurate information.
                 </div>
               </div>
             </div>
@@ -91,7 +90,7 @@ export default function FAQ() {
               </h2>
               <div id="ac2" className="accordion-collapse collapse" data-bs-parent="#accAccounts">
                 <div className="accordion-body">
-                  No. Accounts are personal and may not be shared.
+                  No. Accounts are personal and must not be shared.
                 </div>
               </div>
             </div>
@@ -105,7 +104,7 @@ export default function FAQ() {
             <div className="accordion-item">
               <h2 className="accordion-header" id="c1">
                 <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cc1">
-                  Q5: Do I need a subscription to book lessons?
+                  Q5: Do I need a paid subscription to book lessons?
                 </button>
               </h2>
               <div id="cc1" className="accordion-collapse collapse show" data-bs-parent="#accCredits">
@@ -191,26 +190,26 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="rc3" className="accordion-collapse collapse" data-bs-parent="#accRefunds">
                 <div className="accordion-body">
-                  If a lesson is cancelled less than 24 hours before the start time, the Teacher may decide whether the Credit is forfeited.
+                  If a lesson is cancelled less than 24 hours before the start time, the tutor may decide whether the Credit is forfeited.
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 5. Teachers and Payments */}
+        {/* 5. Tutors and Payments */}
         <section id="teachers" className="mb-5">
           <h2 className="h5 fw-bold mb-3">5. Teachers and Payments</h2>
           <div className="accordion" id="accTeachers">
             <div className="accordion-item">
               <h2 className="accordion-header" id="t1">
                 <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tc1">
-                  Q12: How are Teachers paid?
+                  Q12: How are tutors paid?
                 </button>
               </h2>
               <div id="tc1" className="accordion-collapse collapse show" data-bs-parent="#accTeachers">
                 <div className="accordion-body">
-                  Teachers receive 80% of the lesson fee. BridgeLang retains 20% as a service fee.
+                  Tutors receive 80% of the lesson fee. BridgeLang retains 20% as a service fee.
                 </div>
               </div>
             </div>
@@ -222,19 +221,19 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="tc2" className="accordion-collapse collapse" data-bs-parent="#accTeachers">
                 <div className="accordion-body">
-                  Payments are made securely via Stripe Connect. Teachers must maintain a valid payment account.
+                  Payments are made securely via Stripe Connect. Tutors must maintain a valid payment account.
                 </div>
               </div>
             </div>
             <div className="accordion-item">
               <h2 className="accordion-header" id="t3">
                 <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tc3">
-                  Q14: How are teachers verified before joining?
+                  Q14: How are tutors verified after they apply to teach?
                 </button>
               </h2>
               <div id="tc3" className="accordion-collapse collapse" data-bs-parent="#accTeachers">
                 <div className="accordion-body">
-                  All teachers must meet BridgeLang’s eligibility requirements and provide identity verification.
+                  All tutors must meet BridgeLang’s eligibility requirements and provide identity verification.
                   Additional background or qualification checks may be requested.
                 </div>
               </div>
@@ -242,12 +241,12 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
             <div className="accordion-item">
               <h2 className="accordion-header" id="t4">
                 <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tc4">
-                  Q15: Can teachers set their own lesson prices?
+                  Q15: Can tutors set their own lesson prices?
                 </button>
               </h2>
               <div id="tc4" className="accordion-collapse collapse" data-bs-parent="#accTeachers">
                 <div className="accordion-body">
-                  Yes. Teachers may set their lesson rates within platform guidelines.
+                  Yes. Tutors may set their lesson rates within platform guidelines.
                 </div>
               </div>
             </div>
@@ -261,7 +260,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
             <div className="accordion-item">
               <h2 className="accordion-header" id="co1">
                 <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#coc1">
-                  Q16: Can teachers arrange lessons outside the Platform?
+                  Q16: Can tutors arrange lessons outside the Platform?
                 </button>
               </h2>
               <div id="coc1" className="accordion-collapse collapse show" data-bs-parent="#accConduct">
@@ -273,13 +272,13 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
             <div className="accordion-item">
               <h2 className="accordion-header" id="co2">
                 <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#coc2">
-                  Q17: What are the rules for behaviour?
+                  Q17: What are the rules for behaviour on BridgeLang?
                 </button>
               </h2>
               <div id="coc2" className="accordion-collapse collapse" data-bs-parent="#accConduct">
                 <div className="accordion-body">
-                  Users must act respectfully and lawfully. Harassment, discrimination or abusive conduct may result
-                  in suspension or termination.
+                  Students and tutors must behave respectfully and professionally.
+Harassment, discrimination or abusive conduct is not tolerated and may result in account suspension or termination.
                 </div>
               </div>
             </div>
@@ -292,7 +291,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               <div id="coc3" className="accordion-collapse collapse" data-bs-parent="#accConduct">
                 <div className="accordion-body">
                   Yes, but they are undertaken at your own risk. Students under 18 require parental consent,
-                  and teachers are encouraged to follow BridgeLang’s safety guidelines.
+                  and tutors are encouraged to follow BridgeLang’s safety guidelines.
                 </div>
               </div>
             </div>
@@ -323,7 +322,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="pcc2" className="accordion-collapse collapse" data-bs-parent="#accConsent">
                 <div className="accordion-body">
-                  Both the student and parent/guardian receive confirmation emails. The account remains inactive
+                  Both the student and parent/guardian receive confirmation emails. The student's account remains inactive
                   until both confirm.
                 </div>
               </div>
@@ -343,7 +342,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="tic1" className="accordion-collapse collapse show" data-bs-parent="#accTech">
                 <div className="accordion-body">
-                  Both student and teacher should attempt to reconnect. If reconnection is not possible, BridgeLang may,
+                  Both student and tutor should attempt to reconnect. If reconnection is not possible, BridgeLang may,
                   at its discretion, arrange for the lesson to be rescheduled.
                 </div>
               </div>
@@ -495,7 +494,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               <div id="fc1" className="accordion-collapse collapse show" data-bs-parent="#accFuture">
                 <div className="accordion-body">
                   Yes. While the current focus is English, BridgeLang may expand to offer other in-demand languages
-                  depending on user needs and teacher availability.
+                  depending on student needs and tutor availability.
                 </div>
               </div>
             </div>
