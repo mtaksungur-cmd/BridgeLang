@@ -48,7 +48,7 @@ export default function Home() {
                maxWidth: '320px',
                marginLeft: 'auto',
                marginRight: 'auto',
-               textAlign: 'center'
+               textAlign: 'center',
               }}>
   Free to join. No commitment. Cancel anytime.<br />
   Automatic discounts and loyalty rewards included.
