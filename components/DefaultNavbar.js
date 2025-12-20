@@ -113,12 +113,12 @@ export default function DefaultNavbar() {
               >
                 <li>
                   <Link className={styles.dropdownItem} href="/student/register">
-                    Student Sign Up
+                    Join as a Student
                   </Link>
                 </li>
                 <li>
                   <Link className={styles.dropdownItem} href="/teacher/apply">
-                    Teacher Sign Up
+                    Apply as a Tutor
                   </Link>
                 </li>
               </ul>
