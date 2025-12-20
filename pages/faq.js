@@ -185,12 +185,12 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
             <div className="accordion-item">
               <h2 className="accordion-header" id="r3">
                 <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#rc3">
-                  Q11: What if I cancel a lesson late?
+                  Q11: What happens if I cancel a lesson late?
                 </button>
               </h2>
               <div id="rc3" className="accordion-collapse collapse" data-bs-parent="#accRefunds">
                 <div className="accordion-body">
-                  If a lesson is cancelled less than 24 hours before the start time, the tutor may decide whether the Credit is forfeited.
+                  Late cancellations (within 24 hours) may be charged in full, according to the tutor’s cancellation policy.
                 </div>
               </div>
             </div>
