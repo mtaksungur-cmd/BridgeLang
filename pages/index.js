@@ -21,7 +21,7 @@ export default function Home() {
         <div className="row align-items-center g-4">
           <div className="col-lg-6">
             <h1 className={`display-5 fw-bold ${styles.heroTitle}`}>
-              Improve Your English and Feel at Home in the UK
+              Real UK English for Real Life in the UK
             </h1>
             <p className={`lead mb-4 ${styles.heroLead}`}>
               Start learning English for real life in the UK — online or in person. Build confidence, communicate naturally and progress with trusted UK-based tutors.
