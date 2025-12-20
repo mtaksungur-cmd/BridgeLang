@@ -474,7 +474,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
           </div>
         </section>
 
-        {/* 12. Future Developments */}
+        {/* 12. Platform Roadmap */}
         <section id="future" className="mb-5">
           <h2 className="h5 fw-bold mb-3">12. Future Developments</h2>
           <div className="accordion" id="accFuture">
@@ -486,7 +486,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="fc1" className="accordion-collapse collapse show" data-bs-parent="#accFuture">
                 <div className="accordion-body">
-                  Yes. While the current focus is real-life English in the UK, BridgeLang may expand to offer other in-demand languages depending on student needs and tutor availability.
+                  BridgeLang focuses exclusively on real-life English for life in the UK, prioritising practical pathways such as work, healthcare and everyday integration rather than adding new languages. Any future expansion would only be considered if it strongly aligns with our UK integration mission.
                 </div>
               </div>
             </div>
