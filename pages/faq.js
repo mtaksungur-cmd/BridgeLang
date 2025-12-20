@@ -177,8 +177,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="rc2" className="accordion-collapse collapse" data-bs-parent="#accRefunds">
                 <div className="accordion-body">
-                  UK consumers have a statutory 14-day cooling-off period to cancel purchases and receive a refund,
-                  provided services have not been fully used.
+                  UK consumers have a statutory 14-day cooling-off period to cancel purchases and receive a refund provided that services have not been fully used.
                 </div>
               </div>
             </div>
