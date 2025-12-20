@@ -287,8 +287,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="coc3" className="accordion-collapse collapse" data-bs-parent="#accConduct">
                 <div className="accordion-body">
-                  Yes, but they are undertaken at your own risk. Students under 18 require parental consent,
-                  and tutors are encouraged to follow BridgeLang’s safety guidelines.
+                  Yes, but they are undertaken at your own risk. Students under 18 require parental consent, and tutors are encouraged to follow BridgeLang’s safety guidelines.
                 </div>
               </div>
             </div>
@@ -319,8 +318,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="pcc2" className="accordion-collapse collapse" data-bs-parent="#accConsent">
                 <div className="accordion-body">
-                  Both the student and parent/guardian receive confirmation emails. The student's account remains inactive
-                  until both confirm.
+                  Both the student and parent/guardian receive confirmation emails. The student's account remains inactive until both confirm.
                 </div>
               </div>
             </div>
@@ -339,8 +337,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="tic1" className="accordion-collapse collapse show" data-bs-parent="#accTech">
                 <div className="accordion-body">
-                  Both student and tutor should attempt to reconnect. If reconnection is not possible, BridgeLang may,
-                  at its discretion, arrange for the lesson to be rescheduled.
+                  If reconnection is not possible, BridgeLang will assess the circumstances and may offer a rescheduled lesson or a refund for the unused portion of the session.
                 </div>
               </div>
             </div>
@@ -470,8 +467,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="scc2" className="accordion-collapse collapse" data-bs-parent="#accComplaints">
                 <div className="accordion-body">
-                  BridgeLang reviews all reports promptly. Depending on the case, action may include warnings,
-                  suspension or permanent account removal.
+                  BridgeLang reviews all reports promptly. Depending on the case, action may include warnings, suspension or permanent account removal.
                 </div>
               </div>
             </div>
@@ -490,8 +486,7 @@ You can book lessons directly with tutors and pay per lesson, without any subscr
               </h2>
               <div id="fc1" className="accordion-collapse collapse show" data-bs-parent="#accFuture">
                 <div className="accordion-body">
-                  Yes. While the current focus is English, BridgeLang may expand to offer other in-demand languages
-                  depending on student needs and tutor availability.
+                  Yes. While the current focus is real-life English in the UK, BridgeLang may expand to offer other in-demand languages depending on student needs and tutor availability.
                 </div>
               </div>
             </div>
