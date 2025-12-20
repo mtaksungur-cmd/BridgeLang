@@ -8,7 +8,7 @@ export default function FAQ() {
         <title>Frequently Asked Questions (FAQ) | BridgeLang</title>
         <meta
           name="description"
-          content="Frequently Asked Questions for BridgeLang: accounts, lessons & credits, cancellations & refunds, teachers & payments, conduct & safety, parental consent, technical support, privacy & data, disputes & legal, complaints."
+          content="Frequently Asked Questions for BridgeLang: accounts, booking & payments, cancellations & refunds, teachers & payments, conduct & safety, parental consent, technical support, privacy & data, disputes & legal, complaints."
         />
       </Head>
 
@@ -22,7 +22,7 @@ export default function FAQ() {
         <nav className="mb-4 text-center">
           <a className="btn btn-sm btn-outline-secondary m-1" href="#general">General</a>
           <a className="btn btn-sm btn-outline-secondary m-1" href="#accounts">Accounts</a>
-          <a className="btn btn-sm btn-outline-secondary m-1" href="#credits">Lessons &amp; Credits</a>
+          <a className="btn btn-sm btn-outline-secondary m-1" href="#credits">Booking &amp; Payments</a>
           <a className="btn btn-sm btn-outline-secondary m-1" href="#refunds">Cancellations &amp; Refunds</a>
           <a className="btn btn-sm btn-outline-secondary m-1" href="#teachers">Teachers &amp; Payments</a>
           <a className="btn btn-sm btn-outline-secondary m-1" href="#conduct">Conduct &amp; Safety</a>
@@ -98,20 +98,20 @@ export default function FAQ() {
           </div>
         </section>
 
-        {/* 3. Lessons and Credits */}
+        {/* 3. Booking and Payments */}
         <section id="credits" className="mb-5">
-          <h2 className="h5 fw-bold mb-3">3. Lessons and Credits</h2>
+          <h2 className="h5 fw-bold mb-3">3. Booking and Payments</h2>
           <div className="accordion" id="accCredits">
             <div className="accordion-item">
               <h2 className="accordion-header" id="c1">
                 <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cc1">
-                  Q5: What are Lesson Credits?
+                  Q5: Do I need a subscription to book lessons?
                 </button>
               </h2>
               <div id="cc1" className="accordion-collapse collapse show" data-bs-parent="#accCredits">
                 <div className="accordion-body">
-                  Lesson Credits are prepaid units purchased by Students to book lessons with Teachers.
-                  They have no monetary value outside the Platform.
+                  No. You do not need to purchase a paid subscription to book lessons.
+Students can book lessons directly with tutors and pay per lesson, without any subscription plan.    
                 </div>
               </div>
             </div>
