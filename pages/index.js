@@ -39,21 +39,6 @@ export default function Home() {
               >
                 How It Works
               </Link>
-
-              <p style={{ 
-               marginTop: '10px', 
-               fontStyle: 'italic', 
-               fontSize: '0.9rem', 
-               opacity: '0.8',
-               maxWidth: '320px',
-               marginLeft: 'auto',
-               marginRight: 'auto',
-               textAlign: 'center',
-              }}>
-  Free to join. No commitment. Cancel anytime.<br />
-  Automatic discounts and loyalty rewards included.
-             </p>
-
             </div>
            </div>
 
