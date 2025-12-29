@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       <li>✔ Teaching style and availability</li>
     </ul>
 
-    <h3>Want Cheaper Lesson Costs Later?</h3>
+    <h3>Step 2: Send 1–2 short messages (free)</h3>
     <p>If you upgrade to a paid plan anytime, you’ll unlock:</p>
     <ul>
       <li>10–20% discounts on your first 6 lessons</li>
