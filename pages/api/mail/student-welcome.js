@@ -20,9 +20,6 @@ export default async function handler(req, res) {
     <ul>
       <li>✔ Tutors who match your goal (work, daily life, interviews)</li>
       <li>✔ Teaching style and availability</li>
-      <li>✔ Choose any UK-based teacher you like</li>
-      <li>✔ Book your first lesson whenever you’re ready</li>
-      <li>✔ Upgrade anytime for more views, more messages & exclusive discounts</li>
     </ul>
 
     <h3>Want Cheaper Lesson Costs Later?</h3>
