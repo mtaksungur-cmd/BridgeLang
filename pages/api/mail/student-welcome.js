@@ -28,8 +28,9 @@ export default async function handler(req, res) {
     <h3>Step 3: Start with one lesson</h3>
     <p>Once you’ve found the right tutor:</p>
     <ul>
-      <li>✔ Tutors who match your goal (work, daily life, interviews)</li>
-      <li>✔ Teaching style and availability</li>
+      <li>✔ Book one single lesson.</li>
+      <li>✔ Pay only for that lesson.</li>
+      <li>✔ Continue only if you’re happy.</li>
     </ul>
 
     <h3>📞 Contact Us Anytime</h3>
