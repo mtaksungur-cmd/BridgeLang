@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     <ul>
       <li>✔ Book one single lesson.</li>
       <li>✔ Pay only for that lesson.</li>
-      <li>✔ Continue only if you’re happy.</li>
+      <li>✔ Continue only if you’re happy - no subscription required.</li>
     </ul>
 
     <h3>📞 Contact Us Anytime</h3>
