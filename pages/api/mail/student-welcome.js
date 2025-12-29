@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   if (!email || !name)
     return res.status(400).json({ error: 'Missing name or email' });
 
-  const subject = `Welcome to BridgeLang — Let’s Start Your English Journey!`;
+  const subject = Welcome to BridgeLang — Let’s Start Your English Journey!;
 
   const html = `
     <p>Hi ${name},</p>
