@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       <li>✔ Continue only if you’re happy - no subscription required.</li>
     </ul>
 
-    <h3>📞 Contact Us Anytime</h3>
+    <h3>Feel free to reach out if you have any questions.</h3>
     <p>
       WhatsApp Business: +44 20 7111 1638 <br/>
       Email: contact@bridgelang.co.uk
@@ -88,7 +88,7 @@ export default async function handler(req, res) {
     </tr>
     </table>
 
-    <p>Warm regards,<br/>Your BridgeLang Support Team</p>
+    <p>Warm regards,<br/>The BridgeLang Team</p>
   `;
 
   try {
