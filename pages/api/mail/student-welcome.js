@@ -24,12 +24,6 @@ export default async function handler(req, res) {
 
     <h3>Step 2: Send 1–2 short messages (free)</h3>
     <p>You have 3 free messages — most learners use them to explore and get a feel for the platform.</p>
-    <ul>
-      <li>10–20% discounts on your first 6 lessons</li>
-      <li>Review-based bonus coupons</li>
-      <li>Loyalty coupons every 3 months</li>
-      <li>Long-term price reductions (VIP plan)</li>
-    </ul>
 
     <h3>💬 Need Help Choosing a Teacher?</h3>
     <p>We can help match you with the right tutor based on your goals.</p>
