@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     <p>Welcome to <strong>BridgeLang</strong> 👋 - we’re really happy to have you with us!</p>
     <p>Your free account is now active. To help you get the most value from it, here's the simple way most learners start.</p>
 
-    <h3>🌟 What You Can Do Right Away (Free Plan Included!)</h3>
+    <h3>Step 1: Explore tutors (free)</h3>
     <p>With your free plan, you can already start exploring:</p>
     <ul>
       <li>✔ View a limited number of teacher profiles every month</li>
