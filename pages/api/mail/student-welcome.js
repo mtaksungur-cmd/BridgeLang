@@ -26,7 +26,11 @@ export default async function handler(req, res) {
     <p>You have 3 free messages — most learners use them to explore and get a feel for the platform.</p>
 
     <h3>Step 3: Start with one lesson</h3>
-    <p>We can help match you with the right tutor based on your goals.</p>
+    <p>Once you’ve found the right tutor:</p>
+    <ul>
+      <li>✔ Tutors who match your goal (work, daily life, interviews)</li>
+      <li>✔ Teaching style and availability</li>
+    </ul>
 
     <h3>📞 Contact Us Anytime</h3>
     <p>
