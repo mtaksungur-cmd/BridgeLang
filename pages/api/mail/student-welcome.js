@@ -18,8 +18,8 @@ export default async function handler(req, res) {
     <h3>Step 1: Explore tutors (free)</h3>
     <p>You can view up to 10 tutor profiles this month. Focus on:</p>
     <ul>
-      <li>✔ View a limited number of teacher profiles every month</li>
-      <li>✔ Send a limited number of messages</li>
+      <li>✔ Tutors who match your goal (work, daily life, interviews)</li>
+      <li>✔ Teaching style and availability</li>
       <li>✔ Choose any UK-based teacher you like</li>
       <li>✔ Book your first lesson whenever you’re ready</li>
       <li>✔ Upgrade anytime for more views, more messages & exclusive discounts</li>
