@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     <h3>Step 2: Send 1–2 short messages (free)</h3>
     <p>You have 3 free messages — most learners use them to explore and get a feel for the platform.</p>
 
-    <h3>💬 Need Help Choosing a Teacher?</h3>
+    <h3>Step 3: Start with one lesson</h3>
     <p>We can help match you with the right tutor based on your goals.</p>
 
     <h3>📞 Contact Us Anytime</h3>
