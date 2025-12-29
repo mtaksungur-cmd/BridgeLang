@@ -76,11 +76,7 @@ export default async function handler(req, res) {
             LinkedIn
         </a>
         </td>
-    </tr>
-
-    <tr>
-       
-    </tr>
+        
     </table>
 
     <p>Warm regards,<br/>The BridgeLang Team</p>
