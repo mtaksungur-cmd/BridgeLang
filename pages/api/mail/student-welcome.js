@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const html = `
     <p>Hi ${name},</p>
     <p>Welcome to <strong>BridgeLang</strong> 👋 - we’re really happy to have you with us!</p>
-    <p>Your free account is now active. To help you get the most value from it, here's the simple way most learners start.</p>
+    <p>Your free account is now active. To help you get the most value from it, here's the simple way most learners start:</p>
 
     <h3>Step 1: Explore tutors (free)</h3>
     <p>You can view up to 10 tutor profiles this month. Focus on:</p>
