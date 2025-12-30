@@ -52,7 +52,7 @@ export default function TeacherNavbar() {
           <li className='nav-item'><Link href="/account/security" className="nav-link text-light">Security Settings</Link></li>
           <li className='nav-item'>
             <Link href="/review/platform" className="nav-link text-light">
-              Write Platform Review
+              Share Your Platformu Experience
             </Link>
           </li>
 
