@@ -125,12 +125,9 @@ export default function SubscriptionPage() {
       <h2 className={styles.title}>Choose Your Plan</h2>
 
   {/* Centered policy box */}
-    <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-      <div
-        className={styles.policyBox}
-        style={{ maxWidth: 800, width: "100%" }}
-      >
-        <h3>Plan Change Policy</h3>
+<div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+  <div className={styles.policyBox} style={{ maxWidth: 800, width: "100%" }}>
+    <h3>Plan Change Policy</h3>
 
         <ul>
           <li>
