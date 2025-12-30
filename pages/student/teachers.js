@@ -11,11 +11,10 @@ import { useRouter } from 'next/router';
 import styles from "../../scss/TeachersList.module.scss";
 
 const badgeDescriptions = {
+  '🆕 New Teacher': '(first 30 days)',
   '💼 Active Teacher': '(8+ lessons in last 3 months)',
   '🌟 5-Star Teacher': '(avg rating ≥ 4.8 in last 20 lessons)',
 };
-
-const ALLOWED_BADGES = ['💼 Active Teacher', '🌟 5-Star Teacher'];
 
 export default function TeachersList() {
   const [allTeachers, setAllTeachers] = useState([]);
@@ -55,34 +54,23 @@ export default function TeachersList() {
         reviewMap[t.id] = rs.docs.map(d => d.data().rating);
       }
   
-      const finalData = baseData.map((t) => {
+      const withRatings = data.map(t => {
         const ratings = reviewMap[t.id] || [];
-        const avgRating = ratings.length
-          ? (
-              ratings.reduce((s, r) => s + r, 0) / ratings.length
-            ).toFixed(1)
+        const avg = ratings.length
+          ? (ratings.reduce((s, r) => s + r, 0) / ratings.length).toFixed(1)
           : null;
-
-        const visibleBadges = Array.isArray(t.badges)
-          ? t.badges.filter((b) => ALLOWED_BADGES.includes(b))
-          : [];
-
-        return {
-          ...t,
-          avgRating,
-          reviewCount: ratings.length,
-          visibleBadges,
-        };
+        const badges = t.badges || [];
+        const latestBadge = badges.length ? badges[badges.length - 1] : null;
+        return { ...t, avgRating: avg, reviewCount: ratings.length, latestBadge, badges };
       });
-
-      finalData.sort((a, b) => {
-        if (b.reviewCount !== a.reviewCount)
-          return b.reviewCount - a.reviewCount;
+  
+      withRatings.sort((a, b) => {
+        if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount;
         return (b.avgRating || 0) - (a.avgRating || 0);
       });
   
-      setAllTeachers(finalData);
-      setTeachers(finalData);
+      setAllTeachers(withRatings);
+      setTeachers(withRatings);
       setLoading(false);
     };
   
@@ -187,11 +175,6 @@ export default function TeachersList() {
 
       <div className={styles.grid}>
         {teachers.map(t => {
-          const visibleBadges = Array.isArray(t.badges)
-            ? t.badges.filter(
-                (b) => b !== '🆕 New Teacher'
-              )
-            : [];
           const cityTxt = t.city || '—';
           const specs = t.teachingSpecializations
             ? t.teachingSpecializations.split(',').map(s => s.trim())
@@ -218,26 +201,25 @@ export default function TeachersList() {
                   <p className={styles.verifiedText} title="Verified based on identity and qualification checks.">Verified BridgeLang Tutor</p>
                 )}
 
-                {/* ⭐ Rating – only if exists */}
-                {t.avgRating && (
+                {t.avgRating ? (
                   <p className={styles.rating}>
-                    ⭐ {t.avgRating}{' '}
-                    <span className={styles.reviewCount}>
-                      ({t.reviewCount})
-                    </span>
+                    ⭐ {t.avgRating} <span className={styles.reviewCount}>({t.reviewCount})</span>
                   </p>
+                ) : (
+                  <p className={styles.rating}>⭐ No reviews yet</p>
                 )}
-  
-                {/* 🏅 Badges */}
-                {t.visibleBadges.length > 0 && (
+
+                {/* 🔹 Rozetler (badge + açıklama) */}
+                {Array.isArray(t.badges) && t.badges.length > 0 ? (
                   <div className={styles.badgeWrap}>
-                    {t.visibleBadges.map((b) => (
-                      <span key={b} className={styles.badge}>
-                        {b}{' '}
-                        <small>{badgeDescriptions[b]}</small>
+                    {t.badges.map((b, i) => (
+                      <span key={i} className={styles.badge}>
+                        {b} <small>{badgeDescriptions[b] || ''}</small>
                       </span>
                     ))}
                   </div>
+                ) : (
+                  <p className={styles.badge}>No badges yet</p>
                 )}
 
                 {/* 🎥 Intro Video (profile consent only) */}
