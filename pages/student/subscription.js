@@ -122,7 +122,7 @@ export default function SubscriptionPage() {
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>Choose Your Subscription Plan</h2>
+      <h2 className={styles.title}>Choose Your Plan</h2>
 
       <div className={styles.policyBox}>
         <h3>Subscription Change Policy</h3>
@@ -131,7 +131,7 @@ export default function SubscriptionPage() {
             <b>Upgrade:</b> Takes effect immediately. Remaining days are prorated.
           </li>
           <li>
-            <b>Downgrade:</b> Takes effect after your current billing cycle ends.
+            <b>Downgrade:</b> Takes effect after your current plan expires.
           </li>
         </ul>
 
