@@ -290,7 +290,7 @@ export default function TeacherProfilePage() {
         </button>
         {viewLimit !== null && (
           <span className={styles.viewInfo}>
-            Views left this month: <b>{viewLimit}</b>
+            Profile views left in your current plan: <b>{viewLimit}</b>
           </span>
         )}
       </div>
