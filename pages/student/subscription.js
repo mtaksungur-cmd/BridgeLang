@@ -128,7 +128,6 @@ export default function SubscriptionPage() {
 <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
   <div className={styles.policyBox} style={{ maxWidth: 800, width: "100%" }}>
     <h3>Plan Change Policy</h3>
-
         <ul>
           <li>
             <b>Upgrade:</b> Takes effect immediately. Remaining days are prorated.
