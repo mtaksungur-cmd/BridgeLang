@@ -190,20 +190,21 @@ export default function TeacherProfilePage() {
               Verified BridgeLang Tutor
             </p>
           )}
-          {teacher.avgRating && (
+          {teacher.reviewCount > 0 && (
             <p className={styles.rating}>
-              ⭐ {teacher.avgRating.toFixed(1)} ({teacher.reviewCount || 0} reviews)
+              ⭐ {teacher.avgRating.toFixed(1)} ({teacher.reviewCount} reviews)
             </p>
           )}
           <div className={styles.badges}>
-            {Array.isArray(teacher.badges) && teacher.badges.length > 0 ? (
-              teacher.badges.map((b, i) => (
-                <span key={i} className={styles.badge}>
-                  {b} <small>{badgeDescriptions[b] || ''}</small>
-                </span>
-              ))
-            ) : (
-              <span className={styles.noBadge}>No badges yet</span>
+            {Array.isArray(teacher.badges) &&
+            teacher.badges.filter(b => b !== '🆕 New Teacher').length > 0 && (
+              teacher.badges
+                .filter(b => b !== '🆕 New Teacher')
+                .map((b, i) => (
+                  <span key={i} className={styles.badge}>
+                    {b} <small>{badgeDescriptions[b] || ''}</small>
+                  </span>
+                ))
             )}
           </div>
         </div>
@@ -295,27 +296,20 @@ export default function TeacherProfilePage() {
       </div>
 
       {/* YORUMLAR */}
-       {/* YORUMLAR */}
       <div className={styles.reviews}>
-        <h3>Student Reviews</h3>
-        {reviews.filter(r => !r.hidden).length === 0 ? (
-          <p>No reviews yet.</p>
-        ) : (
+        {reviews.filter(r => !r.hidden).length > 0 && (
           <div className={styles.reviewList}>
+            <h3>Student Reviews</h3>
             {reviews
               .filter(r => !r.hidden)
               .map((r, i) => {
-                
-                // 🔥 GDPR sisteminde backend zaten doğru alanı hesaplamış geliyor:
                 const displayName = r.display_name || "Anonymous";
-                const avatarUrl = r.display_photo; // null ise foto yok
+                const avatarUrl = r.display_photo;
                 const stars = "⭐".repeat(r.rating || 0);
 
                 return (
                   <div key={i} className={styles.reviewCard}>
                     <div className={styles.reviewHeader}>
-                      
-                      {/* 🔵 Fotoğraf alanı her zaman olsun, ama fotoğraf yoksa boş daire */}
                       <div className={styles.reviewAvatarWrapper}>
                         {avatarUrl ? (
                           <Image
