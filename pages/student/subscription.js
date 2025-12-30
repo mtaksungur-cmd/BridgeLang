@@ -135,11 +135,11 @@ export default function SubscriptionPage() {
           </li>
         </ul>
 
-<p style={{ marginTop: 12, lineHeight: 1.5, fontSize: 14 }}>
-    <strong>All plans are one-time purchases.</strong><br />
-    Each plan is valid for <strong>1 month</strong> and <strong>does not auto-renew</strong>.<br />
-    You can switch plans anytime by purchasing a new one — <strong>the new plan starts immediately</strong>.
-  </p>
+<p style={{ marginTop: 8, lineHeight: 1.5, fontSize: '0.9rem' }}>
+  <strong>All plans are one-time purchases and valid for 1 month.</strong><br />
+  They do not auto-renew. You stay in control.<br />
+  <strong>You can switch plans anytime — the new plan starts immediately.</strong>
+</p>
 
       </div>
 
