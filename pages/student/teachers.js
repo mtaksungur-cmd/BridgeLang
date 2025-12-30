@@ -201,25 +201,24 @@ export default function TeachersList() {
                   <p className={styles.verifiedText} title="Verified based on identity and qualification checks.">Verified BridgeLang Tutor</p>
                 )}
 
-                {t.avgRating ? (
+                {t.avgRating && (
                   <p className={styles.rating}>
                     ⭐ {t.avgRating} <span className={styles.reviewCount}>({t.reviewCount})</span>
                   </p>
-                ) : (
-                  <p className={styles.rating}>⭐ No reviews yet</p>
                 )}
 
                 {/* 🔹 Rozetler (badge + açıklama) */}
-                {Array.isArray(t.badges) && t.badges.length > 0 ? (
+                {Array.isArray(t.badges) &&
+                t.badges.filter(b => b !== '🆕 New Teacher').length > 0 && (
                   <div className={styles.badgeWrap}>
-                    {t.badges.map((b, i) => (
-                      <span key={i} className={styles.badge}>
-                        {b} <small>{badgeDescriptions[b] || ''}</small>
-                      </span>
-                    ))}
+                    {t.badges
+                      .filter(b => b !== '🆕 New Teacher')
+                      .map((b, i) => (
+                        <span key={i} className={styles.badge}>
+                          {b} <small>{badgeDescriptions[b] || ''}</small>
+                        </span>
+                      ))}
                   </div>
-                ) : (
-                  <p className={styles.badge}>No badges yet</p>
                 )}
 
                 {/* 🎥 Intro Video (profile consent only) */}
