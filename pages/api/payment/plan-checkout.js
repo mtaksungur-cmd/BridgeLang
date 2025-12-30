@@ -80,7 +80,7 @@ export default async function handler(req, res) {
       // aktif dönem devam ediyorsa işlem yapma
       if (activeUntilMillis && activeUntilMillis > now) {
         return res.status(400).json({
-          error: 'You can change your plan after your current subscription period ends.',
+          error: 'You can change your plan after your current plan expires.',
           code: 'PERIOD_NOT_FINISHED',
         });
       }
