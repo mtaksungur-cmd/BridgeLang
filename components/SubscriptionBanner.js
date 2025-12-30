@@ -61,7 +61,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
       {!plan ? (
         <>
           <span style={{ color: "#b22", fontWeight: 600 }}>
-            You don’t have an active subscription.
+            You don’t have an active plan.
           </span>
           <Link href="/student/subscription">
             <button
@@ -103,7 +103,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
               marginRight: 12,
             }}
           >
-            10 profiles / 3 messages this month
+            10 profile views / 3 messages
           </span>
           <Link href="/student/subscription">
             <button
