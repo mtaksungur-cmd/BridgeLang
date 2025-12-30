@@ -134,6 +134,13 @@ export default function SubscriptionPage() {
             <b>Downgrade:</b> Takes effect after your current billing cycle ends.
           </li>
         </ul>
+
+<p style={{ marginTop: 12, lineHeight: 1.5 }}>
+    <strong>All plans are one-time purchases.</strong><br />
+    Each plan is valid for <strong>1 month</strong> and <strong>does not auto-renew</strong>.<br />
+    You can switch plans anytime by purchasing a new one — <strong>the new plan starts immediately</strong>.
+  </p>
+
       </div>
 
       <div className={styles.planList}>
