@@ -213,7 +213,7 @@ export default function StudentRegister() {
        // 🔹 Mail gönderimi
       if (age < 18) {
         if (!form.parentEmail || !form.parentName) {
-          throw new Error('Parent information is required for students under 18.');
+          throw new Error('Parental information is required for learners under 18.');
         }
         await fetch('/api/parent-consent', {
           method: 'POST',
