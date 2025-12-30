@@ -69,7 +69,7 @@ export default function StudentNavbar() {
             </li>
             <li className='nav-item'>
               <Link href="/review/platform" className="nav-link text-light">
-                Write Platform Review
+                Share Your Platform Experience
               </Link>
             </li>
 
