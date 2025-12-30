@@ -22,8 +22,8 @@ const PLANS = [
     name: "Starter",
     price: "£4.99 • 1-month access",
     features: [
-      "View up to 30 teacher profiles per month",
-      "Send up to 8 messages per month",
+      "View up to 30 teacher profiles",
+      "Send up to 8 messages",
       "10% discount on your first 6 lessons",
       "5% review coupon (usable after your first 6-lesson period)"
     ],
@@ -35,8 +35,8 @@ const PLANS = [
     name: "Pro",
     price: "£9.99 • 1-month access",
     features: [
-      "View up to 60 teacher profiles per month",
-      "Send up to 20 messages per month",
+      "View up to 60 teacher profiles",
+      "Send up to 20 messages",
       "15% discount on your first 6 lessons",
       "10% review coupon (usable after your first 6-lesson period)",
       "Loyalty: 10% coupon every 3 months"
