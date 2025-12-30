@@ -129,7 +129,7 @@ export default function SubscriptionPage() {
    style={{ maxWidth: 800, margin: "0 auto",      alignSelf: "center" }}
 >
 
-  <h3>Plan Change Policy</h3>
+  <h3>Plan Changes & Access Period</h3>
  
         <ul>
           <li>
