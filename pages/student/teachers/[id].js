@@ -132,7 +132,7 @@ export default function TeacherProfilePage() {
 
     try {
       if (chatsLeft === 0) {
-        alert("You have no chat rights left for this month.");
+        alert("You have used all your available chat credits.");
         return;
       }
 
