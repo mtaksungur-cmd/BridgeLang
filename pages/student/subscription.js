@@ -20,7 +20,7 @@ const PLANS = [
   {
     key: "starter",
     name: "Starter",
-    price: "£4.99/month",
+    price: "£4.99 • 1-month access",
     features: [
       "View up to 30 teacher profiles per month",
       "Send up to 8 messages per month",
@@ -33,7 +33,7 @@ const PLANS = [
   {
     key: "pro",
     name: "Pro",
-    price: "£9.99/month",
+    price: "£9.99 • 1-month access",
     features: [
       "View up to 60 teacher profiles per month",
       "Send up to 20 messages per month",
@@ -47,7 +47,7 @@ const PLANS = [
   {
     key: "vip",
     name: "VIP",
-    price: "£14.99/month",
+    price: "£14.99 • 1-month access",
     features: [
       "Unlimited teacher profile views",
       "Unlimited messages",
