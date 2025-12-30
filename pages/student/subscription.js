@@ -125,7 +125,7 @@ export default function SubscriptionPage() {
       <h2 className={styles.title}>Choose Your Plan</h2>
 
       <div className={styles.policyBox}>
-        <h3>Subscription Change Policy</h3>
+        <h3>Plan Change Policy</h3>
         <ul>
           <li>
             <b>Upgrade:</b> Takes effect immediately. Remaining days are prorated.
