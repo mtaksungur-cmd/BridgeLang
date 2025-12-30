@@ -153,7 +153,7 @@ export default function SubscriptionPage() {
             </ul>
             <p className={styles.planDescription}>{plan.description}</p>
             <button onClick={() => handleSelect(plan.key)} disabled={saving}>
-              {activePlan === plan.key ? "Selected" : "Change Plan"}
+              {activePlan === plan.key ? "Selected" : "Buy Plan"}
             </button>
           </div>
         ))}
