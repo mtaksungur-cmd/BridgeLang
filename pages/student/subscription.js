@@ -124,15 +124,12 @@ export default function SubscriptionPage() {
     <div className={styles.container}>
       <h2 className={styles.title}>Choose Your Plan</h2>
 
-   <div
-   className={styles.policyBox}
-   style={{ maxWidth: 800, margin: "0 auto",      alignSelf: "center" }}
->
-
-  <h3>Plan Changes & Access Period</h3>
- 
-        <ul>
-          <li>
+   <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+  <div className={styles.policyBox} style={{ maxWidth: 800, width: "100%" }}>
+    <h3>Plan Change Policy</h3>
+    <ul>
+      <li>
+          
             <b>Upgrade:</b> Takes effect immediately. Remaining days are prorated.
           </li>
           <li>
