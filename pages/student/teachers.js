@@ -11,10 +11,11 @@ import { useRouter } from 'next/router';
 import styles from "../../scss/TeachersList.module.scss";
 
 const badgeDescriptions = {
-  '🆕 New Teacher': '(first 30 days)',
   '💼 Active Teacher': '(8+ lessons in last 3 months)',
   '🌟 5-Star Teacher': '(avg rating ≥ 4.8 in last 20 lessons)',
 };
+
+const ALLOWED_BADGES = ['💼 Active Teacher', '🌟 5-Star Teacher'];
 
 export default function TeachersList() {
   const [allTeachers, setAllTeachers] = useState([]);
@@ -54,23 +55,34 @@ export default function TeachersList() {
         reviewMap[t.id] = rs.docs.map(d => d.data().rating);
       }
   
-      const withRatings = data.map(t => {
+      const finalData = baseData.map((t) => {
         const ratings = reviewMap[t.id] || [];
-        const avg = ratings.length
-          ? (ratings.reduce((s, r) => s + r, 0) / ratings.length).toFixed(1)
+        const avgRating = ratings.length
+          ? (
+              ratings.reduce((s, r) => s + r, 0) / ratings.length
+            ).toFixed(1)
           : null;
-        const badges = t.badges || [];
-        const latestBadge = badges.length ? badges[badges.length - 1] : null;
-        return { ...t, avgRating: avg, reviewCount: ratings.length, latestBadge, badges };
+
+        const visibleBadges = Array.isArray(t.badges)
+          ? t.badges.filter((b) => ALLOWED_BADGES.includes(b))
+          : [];
+
+        return {
+          ...t,
+          avgRating,
+          reviewCount: ratings.length,
+          visibleBadges,
+        };
       });
-  
-      withRatings.sort((a, b) => {
-        if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount;
+
+      finalData.sort((a, b) => {
+        if (b.reviewCount !== a.reviewCount)
+          return b.reviewCount - a.reviewCount;
         return (b.avgRating || 0) - (a.avgRating || 0);
       });
   
-      setAllTeachers(withRatings);
-      setTeachers(withRatings);
+      setAllTeachers(finalData);
+      setTeachers(finalData);
       setLoading(false);
     };
   
@@ -206,20 +218,23 @@ export default function TeachersList() {
                   <p className={styles.verifiedText} title="Verified based on identity and qualification checks.">Verified BridgeLang Tutor</p>
                 )}
 
+                {/* ⭐ Rating – only if exists */}
                 {t.avgRating && (
                   <p className={styles.rating}>
                     ⭐ {t.avgRating}{' '}
-                    <span className={styles.reviewCount}>({t.reviewCount})</span>
+                    <span className={styles.reviewCount}>
+                      ({t.reviewCount})
+                    </span>
                   </p>
                 )}
-
-                {/* 🔹 Rozetler (badge + açıklama) */}
-                {visibleBadges.length > 0 && (
+  
+                {/* 🏅 Badges */}
+                {t.visibleBadges.length > 0 && (
                   <div className={styles.badgeWrap}>
-                    {visibleBadges.map((b, i) => (
-                      <span key={i} className={styles.badge}>
+                    {t.visibleBadges.map((b) => (
+                      <span key={b} className={styles.badge}>
                         {b}{' '}
-                        <small>{badgeDescriptions[b] || ''}</small>
+                        <small>{badgeDescriptions[b]}</small>
                       </span>
                     ))}
                   </div>
