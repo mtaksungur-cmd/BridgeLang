@@ -8,10 +8,10 @@ const PLANS = [
   {
     key: "free",
     name: "Free",
-    price: "£0.00/month",
+    price: "£0.00/one-time",
     features: [
-      "View up to 10 teacher profiles per month",
-      "Send up to 3 messages per month",
+      "View up to 10 teacher profiles per month (one-time)",
+      "Send up to 3 messages per month (one-time)",
       "No discounts or coupons"
     ],
     description:
