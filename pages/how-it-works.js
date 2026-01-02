@@ -103,7 +103,7 @@ export default function HowItWorks() {
               <ul className={styles.list}>
                 <li><strong>Step 1 – Start with Free Access:</strong> You begin on a free plan. Explore tutors and book your first lesson without uograding.</li>
                 <li><strong>Step 2 – Find Your Tutor:</strong> Browse verified UK-based tutors and choose one that fits your goals, level and schedule.</li>
-                <li><strong>Step 3 – Book & Pay Securely:</strong> Choose a time that fits your UK schedule. All payments are handled safely via Stripe.</li>
+                <li><strong>Step 3 – Book Your First Lesson:</strong> Schedule a lesson at a time  that works for you. Secure payments are handled safely via Stripe.</li>
                 <li><strong>Step 4 – Learn with  Confidence:</strong> Take lessons online or face-to-face and practise the real English you will use in British workplaces, public services and everyday life.</li>
                 <li><strong>Step 5 – Earn Rewards:</strong> Earn loyalty points, first-lesson savings and ongoing learning rewards that help you progress with consistency.</li>
               </ul>
