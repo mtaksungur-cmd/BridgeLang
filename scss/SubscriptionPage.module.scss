@@ -49,7 +49,7 @@
   }
 
   .planPrice {
-    font-size: 1.5rem;
+    font-size: .8rem;
     font-weight: 700;
     color: #111;
     margin-bottom: 1rem;
@@ -130,8 +130,7 @@
   }
 
   ul {
-    margin: 0;
-    padding-left: 1rem;
+    padding-left: .4rem;
     list-style: disc;
 
     li {
@@ -157,5 +156,17 @@
   .planCard {
     width: 90%;
     padding: 1.5rem;
+  }
+
+  .policyBox {
+    h3 {
+      text-align: center;
+    }
+    li{
+      text-align: left;
+      font-size: 800;
+      align-items: left;
+      list-style: none;
+    }
   }
 }
