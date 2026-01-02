@@ -125,25 +125,25 @@ export default function SubscriptionPage() {
       <h2 className={styles.title}>Choose Your Plan</h2>
 
   {/* Centered policy box */}
-<div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-  <div className={styles.policyBox} style={{ maxWidth: 800, width: "100%" }}>
-    <h3>Plan Change Policy</h3>
-        <ul>
-          <li>
-            <b>Upgrade:</b> Takes effect immediately. Remaining days are prorated.
-          </li>
-          <li>
-            <b>Downgrade:</b> Takes effect after your current plan expires.
-          </li>
-        </ul>
-
-<p style={{ marginTop: 8, lineHeight: 1.5, fontSize: '0.9rem' }}>
-  <strong>All plans are one-time purchases and valid for 1 month.</strong><br />
-  They do not auto-renew. You stay in control.<br />
-  <strong>You can switch plans anytime — the new plan starts immediately.</strong>
-</p>
-
-      </div>
+  <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+    <div className={styles.policyBox} style={{ maxWidth: 800, width: "100%" }}>
+      <h3>Plan Change Policy</h3>
+      <ul>
+        <li>
+          <b>Upgrade:</b> Takes effect immediately. Remaining days are prorated.
+        </li>
+        <li>
+          <b>Downgrade:</b> Takes effect after your current plan expires.
+        </li>
+      </ul>
+  
+      <p style={{ marginTop: 8, lineHeight: 1.5, fontSize: "0.9rem" }}>
+        <strong>All plans are one-time purchases and valid for 1 month.</strong><br />
+        They do not auto-renew. You stay in control.<br />
+        <strong>You can switch plans anytime — the new plan starts immediately.</strong>
+      </p>
+    </div>
+  </div>
 
       <div className={styles.planList}>
         {PLANS.map((plan) => (
