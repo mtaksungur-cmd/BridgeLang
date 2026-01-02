@@ -145,7 +145,10 @@ export default function BookLessonPage() {
           duration: duration
         });
       }
-      else setMsg(data.error ? `❌ ${data.error}` : '❌ Payment failed.');
+      window.location.assign(data.url); // 🔥 GUARANTEED REDIRECT
+      else {
+        setMsg(data.error ? `❌ ${data.error}` : '❌ Payment failed.');
+      }
     } catch (err) {
       console.error(err);
       setMsg('❌ Booking failed.');
