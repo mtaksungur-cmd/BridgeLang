@@ -9,11 +9,11 @@ import TeacherOnboardingVideo from "../components/videos/TeacherOnboardingVideo"
 
 /* ------------------ SCREENSHOTS ------------------ */
 const SHOTS_STUDENT = [
-  { src: "/screenshots/student/step-1.png", caption: "Step 1 – Choose Your Plan" },
+  { src: "/screenshots/student/step-1.png", caption: "Step 1 – Start with Free Access" },
   { src: "/screenshots/student/step-2.png", caption: "Step 2 – Find Your Tutor" },
-  { src: "/screenshots/student/step-3.png", caption: "Step 3 – Book & Pay Securely" },
-  { src: "/screenshots/student/step-4.png", caption: "Step 4 – Learn Confidently" },
-  { src: "/screenshots/student/step-5.png", caption: "Step 5 – Earn Rewards as You Learn" },
+  { src: "/screenshots/student/step-3.png", caption: "Step 3 – Book Your First Lesson" },
+  { src: "/screenshots/student/step-4.png", caption: "Step 4 – Start Learning with Confidence" },
+  { src: "/screenshots/student/step-5.png", caption: "Step 5 – Progress and Get Rewarded" },
 ];
 
 const SHOTS_TEACHER = [
