@@ -94,6 +94,12 @@ export default async function handler(req, res) {
       },
     });
 
+    console.log('STRIPE SESSION:', {
+      id: session.id,
+      url: session.url,
+      checkout_url: session.checkout_url,
+    });
+
     // 🔹 Kuponu "used" işaretle (yalnız ders-kuponları)
     if (usedCoupon) {
       await adminDb.collection('users').doc(studentId).update({
@@ -105,7 +111,9 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ url: session.url });
+    return res.status(200).json({
+      url: session.url || session.checkout_url
+    });
   } catch (err) {
     console.error('checkout error:', err);
     return res.status(500).json({ error: 'Checkout init failed' });
