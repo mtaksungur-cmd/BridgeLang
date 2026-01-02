@@ -16,92 +16,88 @@ export default function BookLessonPage() {
   const [location, setLocation] = useState('');
   const [availableSlots, setAvailableSlots] = useState([]);
   const [bookedSlots, setBookedSlots] = useState([]);
-  const [couponCode, setCouponCode] = useState(''); // ✅ Kupon alanı
   const [msg, setMsg] = useState('');
+
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  // 🔹 Öğrenci oturumu
+  /* ---------------- AUTH ---------------- */
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
       if (user) setStudentId(user.uid);
+      else router.replace('/login');
     });
-    return () => unsubscribe();
-  }, []);
+    return () => unsub();
+  }, [router]);
 
-  // 🔹 Öğretmen bilgisi
+  /* ---------------- TEACHER ---------------- */
   useEffect(() => {
     if (!teacherId) return;
-    const fetchTeacher = async () => {
+    (async () => {
       const snap = await getDoc(doc(db, 'users', teacherId));
       if (snap.exists()) setTeacher(snap.data());
-    };
-    fetchTeacher();
+    })();
   }, [teacherId]);
 
-  // 🔹 Rezervasyonlar
+  /* ---------------- BOOKINGS ---------------- */
   useEffect(() => {
     if (!teacherId || !selectedDate) return;
-    const fetchBookings = async () => {
+    (async () => {
       const q = query(
         collection(db, 'bookings'),
         where('teacherId', '==', teacherId),
         where('date', '==', selectedDate)
       );
       const snap = await getDocs(q);
-      setBookedSlots(snap.docs.map((doc) => doc.data()));
-    };
-    fetchBookings();
-  }, [selectedDate, teacherId]);
+      setBookedSlots(snap.docs.map(d => d.data()));
+    })();
+  }, [teacherId, selectedDate]);
 
-  // 🔹 Zaman yardımcıları
-  const convertToMinutes = (time) => {
-    if (!time) return 0;
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
+  /* ---------------- TIME HELPERS ---------------- */
+  const toMinutes = (t) => {
+    if (!t) return 0;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
   };
 
-  const formatTo24Hour = (minutes) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+  const toTime = (m) => {
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   };
 
-  // 🔹 Slot üretimi
+  /* ---------------- SLOT GENERATION ---------------- */
   const generateSlots = useCallback(() => {
-    if (!teacher || !selectedDate) return [];
+    if (!teacher || !selectedDate) return;
 
     const day = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
-    const daySlots = Array.isArray(teacher.availability?.[day])
+    const slots = Array.isArray(teacher.availability?.[day])
       ? teacher.availability[day]
       : [];
 
-    const result = [];
     const today = new Date();
     const selected = new Date(selectedDate);
+    const result = [];
 
-    daySlots.forEach(({ start, end }) => {
-      let startMinutes = convertToMinutes(start);
-      let endMinutes = convertToMinutes(end);
-      if (end === '00:00') endMinutes = 24 * 60;
+    slots.forEach(({ start, end }) => {
+      let s = toMinutes(start);
+      let e = end === '00:00' ? 1440 : toMinutes(end);
 
-      for (let t = startMinutes; t + duration <= endMinutes; t += 15) {
-        const slotStart = t;
-        const slotEnd = t + duration;
-        const isTaken = bookedSlots.some((b) => {
-          const bookedStart = convertToMinutes(b.startTime);
-          const bookedEnd = convertToMinutes(b.endTime);
-          return slotStart < bookedEnd && slotEnd > bookedStart;
+      for (let t = s; t + duration <= e; t += 15) {
+        const taken = bookedSlots.some(b => {
+          const bs = toMinutes(b.startTime);
+          const be = toMinutes(b.endTime);
+          return t < be && t + duration > bs;
         });
 
         if (selected.toDateString() === today.toDateString()) {
-          const nowMinutes = today.getHours() * 60 + today.getMinutes();
-          if (slotStart <= nowMinutes) continue;
+          const now = today.getHours() * 60 + today.getMinutes();
+          if (t <= now) continue;
         }
 
         result.push({
-          start: formatTo24Hour(slotStart),
-          end: formatTo24Hour(slotEnd),
-          taken: isTaken,
+          start: toTime(t),
+          end: toTime(t + duration),
+          taken,
         });
       }
     });
@@ -113,7 +109,7 @@ export default function BookLessonPage() {
     generateSlots();
   }, [generateSlots]);
 
-  // 🔹 Rezervasyon oluşturma
+  /* ---------------- BOOKING ---------------- */
   const handleBooking = async (slot) => {
     setMsg('');
     if (!location) return setMsg('❌ Please select a lesson location.');
@@ -131,34 +127,36 @@ export default function BookLessonPage() {
           duration,
           location,
           price: teacher[`pricing${duration}`],
-          studentEmail: auth.currentUser.email,
+          studentEmail: auth.currentUser?.email,
           timezone: userTimezone,
-          couponCode: couponCode.trim() || null
         }),
       });
 
       const data = await res.json();
-      if (data.url){
-        window.fbq('track', 'InitiateCheckout', {
-          content_type: 'lesson',
-          teacher_id: teacherId,
-          duration: duration
-        });
-      }
-      window.location.assign(data.url); // 🔥 GUARANTEED REDIRECT
-      else {
-        setMsg(data.error ? `❌ ${data.error}` : '❌ Payment failed.');
+
+      if (data?.url) {
+        if (window.fbq) {
+          window.fbq('track', 'InitiateCheckout', {
+            content_type: 'lesson',
+            teacher_id: teacherId,
+            duration,
+          });
+        }
+        window.location.assign(data.url); // 🔥 GUARANTEED REDIRECT
+      } else {
+        setMsg(data?.error || '❌ Payment could not be initiated.');
       }
     } catch (err) {
-      console.error(err);
+      console.error('booking error:', err);
       setMsg('❌ Booking failed.');
     }
   };
 
-  // 🔹 UI
+  /* ---------------- UI ---------------- */
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>Book a Lesson</h2>
+
       {teacher && (
         <p className={styles.teacher}>
           <span>Teacher:</span> <strong>{teacher.name}</strong>
@@ -195,7 +193,6 @@ export default function BookLessonPage() {
           <select
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            required
             className={styles.select}
           >
             <option value="">-- Select --</option>
@@ -208,6 +205,7 @@ export default function BookLessonPage() {
       </div>
 
       <h3 className={styles.subtitle}>Available Time Slots</h3>
+
       {availableSlots.length === 0 ? (
         <p className={styles.empty}>No available time slots for selected day.</p>
       ) : (
