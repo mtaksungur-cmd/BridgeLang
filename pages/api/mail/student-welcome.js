@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     <p>Your free account is now active. To help you get the most value from it, here's the simple way most learners start:</p>
 
     <h3>Step 1: Explore tutors (free)</h3>
-    <p>You can view up to 10 tutor profiles this month. Focus on:</p>
+    <p>You can view up to 10 tutor profiles. Focus on:</p>
     <ul>
       <li>✔ Tutors who match your goal (work, daily life, interviews)</li>
       <li>✔ Teaching style and availability</li>
