@@ -101,7 +101,7 @@ export default function HowItWorks() {
                 Whether you are preparing for a job interview, GP appointment, workplace communication or daily conversations, BridgeLang helps you learn the English you truly need for life in the UK.
               </p>
               <ul className={styles.list}>
-                <li><strong>Step 1 – Start with Free Access:</strong> You begin on a free plan. Explore tutors and book your first lesson without uograding.</li>
+                <li><strong>Step 1 – Start with Free Access:</strong> You begin on a free plan. Explore tutors and book your first lesson without upgrading.</li>
                 <li><strong>Step 2 – Find Your Tutor:</strong> Browse verified UK-based tutors and choose one that fits your goals, level and schedule.</li>
                 <li><strong>Step 3 – Book Your First Lesson:</strong> Schedule a lesson at a time  that works for you. Secure payments are handled safely via Stripe.</li>
                 <li><strong>Step 4 – Start Learning with Confidence:</strong> Practise real English you will use in everyday UK life, work and public services — online or face-to-face.</li>
