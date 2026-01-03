@@ -122,7 +122,7 @@ export default function SubscriptionPage() {
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>Choose Your Plan</h2>
+      <h2 className={styles.title}>Explore Your Options</h2>
 
   {/* Centered policy box */}
   <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
