@@ -134,7 +134,11 @@ export default function TeachersList() {
       <p className={styles.verifiedInfo}>
         All BridgeLang tutors are fully verified.
       </p>
-
+    
+      <p className={styles.firstLessonCta}>
+      New to BridgeLang? Start with a <strong>30-minute</strong> first lesson.
+     </p>
+    
       <div className={styles.filters} role="region" aria-label="Filters">
         <div className={styles.filterItem}>
           <label htmlFor="country">Country</label>
