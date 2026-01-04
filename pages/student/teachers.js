@@ -152,9 +152,8 @@ export default function TeachersList() {
     marginBottom: '26px'
   }}
 >
-  New to BridgeLang? Start with a <strong>30-minute</strong> first lesson,
-  even on the <strong>Free Plan</strong> — no pressure, no commitment,
-  just get started.
+  New to BridgeLang? Start with a <strong>30-minute</strong> lesson,
+  even on the <strong>Free Plan</strong> — no pressure, no commitment.
 </p>
     
       <div className={styles.filters} role="region" aria-label="Filters">
