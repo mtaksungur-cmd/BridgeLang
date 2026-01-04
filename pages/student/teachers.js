@@ -291,10 +291,6 @@ export default function TeachersList() {
                     🛑 Report
                   </button>
                 )}
-                  
-                <p>
-               You can book again with the <strong>same tutor anytime</strong> — even on the
-            <strong> Free Plan</strong>.
               </p>
                   
             </div>
