@@ -290,9 +290,8 @@ export default function TeachersList() {
                   >
                     🛑 Report
                   </button>
-                )}
-              </p>
-                  
+                
+              )}    
             </div>
           </div>
           );
