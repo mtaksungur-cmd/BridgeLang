@@ -283,7 +283,7 @@ export default function Home() {
               <div className={styles.howCard}>
                 <h5>1) Search &amp; Message</h5>
                 <p className="mb-0">
-                  Browse verified UK tutors, check availability, and send a safe
+                  Browse verified UK tutors, check availability and send a safe
                   in-app message to discuss your goals.
                 </p>
               </div>
