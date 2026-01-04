@@ -131,13 +131,31 @@ export default function TeachersList() {
   return (
     <div className={styles.container}>
       <h2>Browse Our Tutors</h2>
-      <p className={styles.verifiedInfo}>
-        All BridgeLang tutors are fully verified and approved for quality and professionalism.
-      </p>
-    
-      <p className={styles.firstLessonCta}>
-      New to BridgeLang? Start with a <strong>30-minute</strong> first lesson, even on the Free Plan – no pressure, no commitment, just get started.
-     </p> 
+      <p
+  style={{
+    fontSize: '0.9rem',
+    fontWeight: 500,
+    color: '#2e7d32',
+    marginTop: '6px',
+    marginBottom: '14px'
+  }}
+>
+  All BridgeLang tutors are fully verified and approved for quality and professionalism.
+</p>
+
+<p
+  style={{
+    fontSize: '1.05rem',
+    fontWeight: 600,
+    lineHeight: '1.6',
+    color: '#1a1a1a',
+    marginBottom: '26px'
+  }}
+>
+  New to BridgeLang? Start with a <strong>30-minute</strong> first lesson,
+  even on the <strong>Free Plan</strong> — no pressure, no commitment,
+  just get started.
+</p>
     
       <div className={styles.filters} role="region" aria-label="Filters">
         <div className={styles.filterItem}>
