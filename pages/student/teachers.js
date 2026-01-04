@@ -136,7 +136,7 @@ export default function TeachersList() {
       </p>
     
       <p className={styles.firstLessonCta}>
-      New to BridgeLang? Start with a <strong>30-minute</strong> first lesson.
+      New to BridgeLang? Start with a <strong>30-minute</strong> first lesson – no pressure, just get started.
      </p> 
     
       <div className={styles.filters} role="region" aria-label="Filters">
