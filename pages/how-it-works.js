@@ -111,7 +111,7 @@ export default function HowItWorks() {
 
             {/* STUDENT CAROUSEL */}
             <section className="mt-4">
-              <h3 className={`${styles.h3} text-center mb-3`}>See How Learning Works at BridgeLang</h3>
+              <h3 className={`${styles.h3} text-center mb-3`}>See How Learning Works on BridgeLang</h3>
               <div id="roleShots" className={`carousel slide ${styles.carouselWrap}`} data-bs-ride="carousel">
                 <div className={`carousel-inner rounded shadow-sm ${styles.carouselInner}`}>
                   {SHOTS.map((s, i) => (
