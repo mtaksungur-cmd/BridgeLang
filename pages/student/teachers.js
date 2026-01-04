@@ -132,7 +132,7 @@ export default function TeachersList() {
     <div className={styles.container}>
       <h2>Browse Our Tutors</h2>
       <p className={styles.verifiedInfo}>
-        All BridgeLang tutors are fully verified.
+        All BridgeLang tutors are fully verified and approved for quality and professionalism.
       </p>
     
       <p className={styles.firstLessonCta}>
