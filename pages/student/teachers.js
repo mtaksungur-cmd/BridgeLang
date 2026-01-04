@@ -176,11 +176,6 @@ export default function TeachersList() {
           </div>  
         </div>
       </div>
-            
-        <p className={styles.freePlanCta}>
-        You can book lessons on the <strong>Free Plan</strong> — and keep learning with the same tutor 
-        or switch to a different one anytime. <strong>No commitment</strong> required.
-        </p>
 
       <div className={styles.grid}>
         {teachers.map(t => {
