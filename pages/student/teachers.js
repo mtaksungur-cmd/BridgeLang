@@ -293,12 +293,11 @@ export default function TeachersList() {
                 )}
             <div className={styles.freePlanCta}>
                  <p>
-               You can book again with the <strong>same  tutor anytime</strong> — even on the
+               You can book again with the <strong>same tutor anytime</strong> — even on the
             <strong> Free Plan</strong>.
               </p>
             </div>
-
-            </div>
+          </div>
           );
         })}
       </div>
