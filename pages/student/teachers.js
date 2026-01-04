@@ -137,7 +137,7 @@ export default function TeachersList() {
     
       <p className={styles.firstLessonCta}>
       New to BridgeLang? Start with a <strong>30-minute</strong> first lesson.
-     </p>
+     </p> 
     
       <div className={styles.filters} role="region" aria-label="Filters">
         <div className={styles.filterItem}>
@@ -173,9 +173,14 @@ export default function TeachersList() {
           </button>
           <div className={styles.resultCount}>
             {teachers.length} result{teachers.length === 1 ? '' : 's'}
-          </div>
+          </div>  
         </div>
       </div>
+            
+        <p className={styles.freePlanCta}>
+        You can even book lessons on the <strong>Free Plan</strong>.{" "}
+        <strong>No commitment</strong> required.
+        </p>
 
       <div className={styles.grid}>
         {teachers.map(t => {
