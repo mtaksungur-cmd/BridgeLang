@@ -178,8 +178,8 @@ export default function TeachersList() {
       </div>
             
         <p className={styles.freePlanCta}>
-        You can book lessons on the <strong>Free Plan</strong> — and you can keep learning with the{" "}
-        <strong>same tutor</strong> or switch to a <strong>different tutor</strong> anytime.{" "}
+        You can book lessons on the <strong>Free Plan</strong> — and keep learning with the same tutor 
+        or switch to a different one anytime.
         <strong>No commitment</strong> required.
         </p>
 
