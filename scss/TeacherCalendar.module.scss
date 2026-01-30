@@ -1,0 +1,72 @@
+@use '../styles/_variables' as v;
+
+.wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 6px 0 20px;
+  color: #666;
+}
+
+.controls {
+  margin-bottom: 16px;
+
+  :global(.form-select) {
+    min-width: 82px;
+  }
+}
+
+.tableCard {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 8px 12px;
+}
+
+.table {
+  margin: 0;
+
+  thead th {
+    font-weight: 600;
+    color: #48505e;
+    background: #fafbff;
+    border-bottom: 1px solid #e6e8ef;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.dayCell {
+  font-weight: 600;
+  width: 140px;
+}
+
+.slotList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot {
+  background: #f4f7ff;
+  border: 1px solid #e0e7ff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 500;
+}
+
+.msgOk { color: #1a7f37; }
+.msgErr { color: #c62828; }

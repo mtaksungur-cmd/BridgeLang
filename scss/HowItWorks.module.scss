@@ -1,0 +1,116 @@
+.page {
+  background: #f8f9fb;
+}
+
+/* Basit içerik kartı */
+.card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  padding: 1rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+
+  @media (min-width: 768px) {
+    padding: 1.25rem 1.25rem;
+  }
+}
+
+.h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0 0 .35rem 0;
+  color: #0f172a;
+}
+.h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: .25rem 0 .5rem 0;
+  color: #111827;
+}
+
+/* Liste – okunaklı, rahat satır aralığı */
+.list {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li {
+    margin: .35rem 0;
+    line-height: 1.65;
+    color: #374151;
+  }
+}
+
+/* Carousel */
+.carouselWrap { position: relative; }
+.carouselInner { overflow: hidden; }
+
+/* 
+  shotBox: Görsel konteyneri
+  - Mobilde oran (16:9), tablet ve üstünde geniş oran (21:9)
+  - Desktop’ta “yükseklik clamp” ile akışkan ama kontrollü yükseklik
+  - İçerideki img 'contain' ile ASLA taşmaz, tam sığar (gerekirse letterbox/pillarbox).
+*/
+.shotBox {
+  position: relative;
+  width: 100%;
+  background: #0b0c0f;         /* letterbox alanları koyu göstermesi için */
+  border-radius: 8px;
+  overflow: hidden;
+
+  /* Default (mobile): 16:9 kutu */
+  aspect-ratio: 16 / 9;
+
+  @media (min-width: 768px) {
+    /* Tablet ve üstü: 21:9 benzeri geniş oran */
+    aspect-ratio: 21 / 9;
+  }
+
+  @media (min-width: 992px) {
+    /* Desktop: oran yerine akışkan yükseklik,
+       büyük ekranlarda basık görünmesin, küçüklerde aşırı büyümesin */
+    aspect-ratio: auto;
+    height: clamp(420px, 45vw, 760px);
+    max-height: 760px;
+  }
+
+  @media (min-width: 1400px) {
+    height: clamp(440px, 38vw, 800px);
+    max-height: 800px;
+  }
+}
+
+/* 
+  shotImg: Görselin kendisi
+  - Her zaman kutunun içinde kalır (contain)
+  - En ve boy %100; taşma YOK
+*/
+.shotImg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;      /* kritik: taşma yok, tam sığar */
+  object-position: center;
+}
+
+/* Caption mobilde de görünsün */
+.captionAlways {
+  display: block !important;
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  pointer-events: none;     /* ok tıklamalarıyla çakışmasın */
+}
+.captionText {
+  display: inline-block;
+  margin: 0;
+  font-weight: 600;
+  font-size: .95rem;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  padding: .35rem .6rem;
+  border-radius: .5rem;
+
+  @media (min-width: 768px) { font-size: 1rem; padding: .4rem .75rem; }
+}

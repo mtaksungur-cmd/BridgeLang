@@ -1,0 +1,27 @@
+{
+    "/": {
+        "title": "Find Verified English Tutors in the UK | BridgeLang",
+        "description": "Connect with verified tutors for 1-on-1 English lessons. Specializing in British life, work, and culture. Start with a 15-minute intro lesson.",
+        "h1": "Master English for Your Life in the UK"
+    },
+    "/student/teachers": {
+        "title": "Browse Our Tutors | BridgeLang",
+        "description": "Explore verified English tutors. Filter by location, price, and specialty. Book a 15-minute intro lesson today.",
+        "h1": "Meet Your BridgeLang Tutors"
+    },
+    "/student/subscription": {
+        "title": "Pricing & Plans | BridgeLang",
+        "description": "Choose a plan that fits your learning pace. Free, Starter, Pro, and VIP options with loyalty rewards.",
+        "h1": "Simple Plans for Every Learner"
+    },
+    "/how-it-works": {
+        "title": "How It Works | BridgeLang",
+        "description": "Learn how BridgeLang connects students and teachers. simple booking, secure payments, and progress rewards.",
+        "h1": "Your Journey Starts Here"
+    },
+    "/about": {
+        "title": "About Us | BridgeLang",
+        "description": "BridgeLang is dedicated to helping newcomers in the UK build confidence through language.",
+        "h1": "Our Mission"
+    }
+}

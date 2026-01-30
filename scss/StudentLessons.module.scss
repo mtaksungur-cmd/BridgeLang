@@ -1,0 +1,125 @@
+.wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #f3f4f6;
+  min-height: 100vh;
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-bottom: 24px;
+  }
+}
+
+.lessonCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .card-body {
+    padding: 24px;
+  }
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.pill {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.pillApproved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.pillDefault {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.joinLink {
+  display: inline-block;
+  padding: 10px 16px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #1d4ed8;
+    color: white;
+    transform: translateY(-1px);
+  }
+}
+
+.approvedMsg {
+  font-size: 14px;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 10px;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.confirmBtn {
+  background: #10b981;
+  border: none;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #059669;
+    transform: translateY(-1px);
+  }
+}
+
+.reportBtn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #fecaca;
+  }
+}

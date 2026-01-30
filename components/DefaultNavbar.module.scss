@@ -1,0 +1,117 @@
+@use '../styles/variables' as v;
+
+.dropdown {
+  /* li için referans noktası */
+  position: relative;
+}
+
+.toggleBtn {
+  background: transparent;
+  border: 0;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.caret {
+  font-size: .85rem;
+  opacity: .9;
+}
+
+/* Menü kapalıyken gizle */
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 220px;
+  margin-top: .5rem;
+  padding: .5rem;
+  list-style: none;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.12);
+  border: 1px solid rgba(0,0,0,.06);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+  z-index: 1050;
+  pointer-events: none;
+}
+
+/* Açıkken */
+.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dropdownItem {
+  display: block;
+  background-color: v.$accent-color;
+  width: 100%;
+  padding: .6rem .75rem;
+  margin-bottom: 3px;
+  border-radius: 8px;
+  color: v.$bg-color; /* slate-900 */
+  text-decoration: none;
+  font-weight: 500;
+
+  &:hover {
+    background: v.$warning-color; /* slate-100 */
+    text-decoration: none;
+  }
+}
+
+/* =========================
+   RESPONSIVE DROPDOWN
+========================= */
+
+/* Tablet ve altı */
+@media (max-width: 768px) {
+  .dropdownMenu {
+    min-width: 200px;
+    right: 0;
+    left: auto;
+  }
+
+  .dropdownItem {
+    padding: .75rem .85rem;
+    font-size: .95rem;
+  }
+}
+
+/* Mobil */
+@media (max-width: 480px) {
+  .dropdownMenu {
+    position: fixed;
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    min-width: unset;
+    max-width: unset;
+    margin-top: 0;
+    border-radius: 16px;
+    box-shadow: 0 14px 30px rgba(0,0,0,.18);
+    transform: translateY(12px);
+  }
+
+  .show {
+    transform: translateY(0);
+  }
+
+  .dropdownItem {
+    padding: 1rem;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .toggleBtn {
+    padding: .6rem;
+  }
+}

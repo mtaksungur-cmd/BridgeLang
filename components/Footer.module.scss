@@ -1,0 +1,169 @@
+@use '../styles/variables' as v;
+
+.footer {
+  background: v.$primary-color;
+  color: #f9fafb;
+  padding: 1rem 0;
+  font-size: 0.9rem;
+  position: relative;
+  z-index: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  text-align: center; // küçük ekranlarda ortala
+}
+
+.heading {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: #fff;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    margin: 0.3rem 0;
+
+    a {
+      color: #d1d5db;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+
+      &:hover {
+        color: #fff;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+/* ✅ WhatsApp Butonu (Mobil uyumlu) */
+.whatsappLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #25d366;
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-top: 6px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  width: 100%;
+  max-width: 150px;
+
+  svg {
+    font-size: 1.1rem;
+  }
+
+  &:hover {
+    background-color: #1ebe5d;
+    transform: translateY(-1px);
+    text-decoration: none;
+  }
+}
+
+/* Sosyal medya ikonları */
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.5rem;
+
+  a {
+    color: #d1d5db;
+    font-size: 1.3rem;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
+/* Footer alt bilgileri */
+.bottomRow {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 0.8rem;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.6;
+
+  a {
+    color: #d1d5db;
+    text-decoration: none;
+
+    &:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+  }
+
+  small {
+    display: block;
+    margin-bottom: 0.4rem;
+    opacity: 0.95;
+  }
+}
+
+/* 🌐 Masaüstü düzenleri */
+@media (min-width: 768px) {
+  .grid {
+    text-align: left;
+  }
+
+  .whatsappLink {
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* 🌐 992px ve üzeri: Sadece "Follow Us" ortalansın */
+@media (min-width: 992px) {
+  .footer {
+    padding: 0.8rem 0;
+  }
+
+  .grid {
+    gap: 0.6rem 0.9rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .heading {
+    font-size: 0.95rem;
+  }
+
+  .bottomRow {
+    font-size: 0.78rem;
+  }
+
+  /* 🟢 Sadece son kolon ("Follow Us") ortala */
+  .grid > div:last-child {
+    text-align: center;
+
+    .socials {
+      justify-content: center;
+    }
+
+    .whatsappLink {
+      margin: 0.5rem auto 0 auto;
+      display: inline-flex;
+    }
+  }
+}

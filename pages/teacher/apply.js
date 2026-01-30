@@ -1,0 +1,608 @@
+// pages/teacher/apply.js
+import { useState } from 'react';
+import { db, auth } from '../../lib/firebase';
+import Link from 'next/link';
+import { setDoc, doc, Timestamp } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { getBadgesForTeacher } from '../../lib/badgeUtilsClient';
+import styles from '../../scss/TeacherApply.module.scss';
+
+const UK_COUNTRIES = ['England', 'Scotland', 'Wales', 'Northern Ireland'];
+const TIMEZONES = [
+  { id: 'Europe/London', label: 'Europe/London (UK)' },
+  { id: 'UTC', label: 'UTC' },
+];
+const DELIVERY_OPTIONS = [
+  { id: 'online', label: 'Online' },
+  { id: 'in-person', label: 'In person' },
+  { id: 'both', label: 'Both' },
+];
+
+export default function TeacherApply() {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    homeAddress: '',
+    city: '',
+    country: 'England',
+    postcode: '',
+    timezone: 'Europe/London',
+    languagesTaught: '',
+    languagesSpoken: '',
+    experienceYears: '',
+    educationLevel: '',
+    teachingSpecializations: '',
+    studentAges: '',
+    availability: '',
+    pricing30: '',
+    pricing45: '',
+    pricing60: '',
+    platformExperience: '',
+    deliveryMethod: '',
+    willingToTravel: false,
+    bio: '',
+    confirmInfo: false,
+    agreeTerms: false,
+    acceptResponsibility: false,
+    cancellationAware: false,
+    acceptPrivacy: false,
+
+    // 🔹 Intro video consent flags
+    introVideoConsentProfile: false,
+    introVideoConsentSocial: false,
+  });
+
+  const [files, setFiles] = useState({
+    profilePhoto: null,
+    cvFile: null,
+    introVideo: null,
+    certificateFiles: [],
+  });
+
+  const [success, setSuccess] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value, type, checked, files: fileList } = e.target;
+
+    if (type === 'file') {
+      // Sertifikalar
+      if (name === 'certificateFiles') {
+        setFiles((prev) => ({ ...prev, certificateFiles: Array.from(fileList) }));
+        return;
+      }
+
+      // Intro video (50MB sınır)
+      if (name === 'introVideo') {
+        const file = fileList[0];
+        if (file && file.size > 50 * 1024 * 1024) {
+          alert('Intro video must not exceed 50MB.');
+          return;
+        }
+        setFiles((prev) => ({ ...prev, introVideo: file || null }));
+        return;
+      }
+
+      // Diğer tekli dosyalar
+      setFiles((prev) => ({ ...prev, [name]: fileList[0] || null }));
+    } else if (type === 'checkbox') {
+      setForm((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // ✅ Boş dosya varsa null döndürür
+  const uploadFileViaApi = async (file) => {
+    if (!file) return null;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (!res.ok) {
+        console.error('upload failed, status:', res.status);
+        return null;
+      }
+
+      const data = await res.json();
+      if (!data?.url) {
+        console.error('upload returned no url:', data);
+        return null;
+      }
+
+      return data.url;
+    } catch (err) {
+      console.error('uploadFileViaApi error:', err);
+      return null;
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const requiredChecks = [
+      'confirmInfo',
+      'agreeTerms',
+      'acceptResponsibility',
+      'cancellationAware',
+      'acceptPrivacy',
+    ];
+    for (let key of requiredChecks) {
+      if (!form[key]) return alert('Please check all confirmations before submitting.');
+    }
+
+    try {
+      const email = form.email.trim().toLowerCase();
+
+      const userCred = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        form.password
+      );
+      const uid = userCred.user.uid;
+
+      // ✅ Dosya yükleme
+      const profilePhotoUrl = await uploadFileViaApi(files.profilePhoto);
+      const cvUrl = await uploadFileViaApi(files.cvFile);
+      const introVideoUrl = await uploadFileViaApi(files.introVideo);
+
+      const certificationUrls = [];
+      for (let cert of files.certificateFiles) {
+        const url = await uploadFileViaApi(cert);
+        if (url) certificationUrls.push(url);
+      }
+
+      // ✅ Consent alanları
+      const intro_video_consent_profile = !!form.introVideoConsentProfile;
+      const intro_video_consent_social = !!form.introVideoConsentSocial;
+
+      await setDoc(doc(db, 'pendingTeachers', uid), {
+        ...form,
+        email,
+        // Upload sonuçları
+        ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
+        ...(cvUrl ? { cvUrl } : {}),
+        ...(introVideoUrl ? { introVideoUrl } : {}),
+        certificationUrls: certificationUrls.filter(Boolean),
+
+        // Yeni intro video alanları
+        intro_video_path: introVideoUrl || null,
+        intro_video_consent_profile,
+        intro_video_consent_social,
+
+        status: 'pending',
+        createdAt: Timestamp.now(),
+        role: 'teacher',
+        badges: ['🆕 New Teacher'],
+      });
+
+      await getBadgesForTeacher(uid); // istersen açabilirsin
+
+      // ✅ Mail gönderimi (başvuru alındı)
+      await fetch('/api/mail/teacher-application', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email,
+        }),
+      });
+
+      setSuccess(
+        "✅ We've received your application and our team will review it soon – typically within a couple of business days. We'll email you once your profile has been approved or if any further information is needed."
+      );
+    } catch (err) {
+      alert('❌ Failed to submit application');
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className={styles.container}>
+      <h2 className={styles.title}>Apply to Teach with BridgeLang</h2>
+      <p className={styles.lead}>
+        Join our UK-based platform to teach online or in person. Fill in the form
+        below.
+      </p>
+
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.grid2}>
+          <input
+            className={styles.input}
+            name="name"
+            placeholder="Full Name"
+            value={form.name}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="email"
+            type="email"
+            placeholder="Email Address"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="password"
+            type="password"
+            placeholder="Password (required for login after approval)"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+
+          <input
+            className={styles.input}
+            name="homeAddress"
+            placeholder="Home Address"
+            value={form.homeAddress}
+            onChange={handleChange}
+            required
+          />
+
+          <select
+            name="country"
+            className={styles.select}
+            value={form.country}
+            onChange={handleChange}
+            required
+          >
+            {UK_COUNTRIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+
+          <input
+            className={styles.input}
+            name="city"
+            placeholder="City"
+            value={form.city}
+            onChange={handleChange}
+            required
+          />
+
+          <input
+            className={styles.input}
+            name="postcode"
+            placeholder="Postcode"
+            value={form.postcode}
+            onChange={handleChange}
+            required
+          />
+
+          <input
+            className={styles.input}
+            name="platformExperience"
+            placeholder="Platform Experience (e.g., Zoom, Skype)"
+            value={form.platformExperience}
+            onChange={handleChange}
+          />
+        </div>
+
+        <h4 className={styles.sectionTitle}>Languages & Experience</h4>
+        <div className={styles.grid2}>
+          <input
+            className={styles.input}
+            name="languagesTaught"
+            placeholder="Languages You Teach"
+            value={form.languagesTaught}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="languagesSpoken"
+            placeholder="Languages You Speak Fluently"
+            value={form.languagesSpoken}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="experienceYears"
+            placeholder="Years of Teaching Experience"
+            value={form.experienceYears}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="educationLevel"
+            placeholder="Highest Education Level"
+            value={form.educationLevel}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="teachingSpecializations"
+            placeholder="Teaching Specializations (comma-separated)"
+            value={form.teachingSpecializations}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="studentAges"
+            placeholder="Student Age Groups"
+            value={form.studentAges}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="availability"
+            placeholder="Available Days and Times"
+            value={form.availability}
+            onChange={handleChange}
+            required
+          />
+
+          <input
+            className={styles.input}
+            name="deliveryMethod"
+            placeholder="Delivery Method (e.g., Online or In-person)"
+            value={form.deliveryMethod}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <h4 className={styles.sectionTitle}>Pricing</h4>
+        <div className={styles.grid3}>
+          <input
+            className={styles.input}
+            name="pricing30"
+            placeholder="Price for 30 minutes (£)"
+            value={form.pricing30}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="pricing45"
+            placeholder="Price for 45 minutes (£)"
+            value={form.pricing45}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className={styles.input}
+            name="pricing60"
+            placeholder="Price for 60 minutes (£)"
+            value={form.pricing60}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <h4 className={styles.sectionTitle}>Bio</h4>
+        <textarea
+          className={styles.textarea}
+          name="bio"
+          placeholder="Short Bio (max 300 words)"
+          value={form.bio}
+          onChange={handleChange}
+          maxLength={2000}
+        />
+
+        <h4 className={styles.sectionTitle}>Uploads</h4>
+        <div className={styles.files}>
+          <label className={styles.fileLabel}>
+            <span>Profile Photo (JPEG, JPG, PNG)</span>
+            <input
+              className={styles.fileInput}
+              type="file"
+              name="profilePhoto"
+              accept="image/*"
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>CV (PDF)</span>
+            <input
+              className={styles.fileInput}
+              type="file"
+              name="cvFile"
+              accept=".pdf"
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>Certificates (PDF, JPG, PNG)</span>
+            <input
+              className={styles.fileInput}
+              type="file"
+              name="certificateFiles"
+              accept=".pdf,image/*"
+              multiple
+              onChange={handleChange}
+            />
+          </label>
+
+          <label className={styles.fileLabel}>
+            <span>
+              Intro Video (MP4) <small>(optional)</small>
+            </span>
+            <input
+              className={styles.fileInput}
+              type="file"
+              name="introVideo"
+              accept="video/mp4"
+              onChange={handleChange}
+            />
+          </label>
+
+
+        </div>
+          {!files.introVideo && (
+            <div className={styles.videoGuidelines}>
+              <p className={styles.optionalNote}>
+                Uploading an intro video is optional. You may also upload one later from your dashboard.
+              </p>
+              <p>
+                Please upload a short introduction video (MP4, 30–60 seconds, landscape).
+                Your video will help students get to know you before booking their first lesson.
+              </p>
+              <ul>
+                <li>Format: MP4</li>
+                <li>Duration: 30–60 seconds</li>
+                <li>Orientation: Landscape (16:9)</li>
+                <li>Resolution: 720p recommended</li>
+                <li>Clear audio and good lighting</li>
+                <li>Suggested content:</li>
+                <ul>
+                  <li>Your name and teaching background</li>
+                  <li>Who you teach (Adults, university students, teens aged 14–17)</li>
+                  <li>Your teaching style and areas of focus</li>
+                </ul>
+              </ul>
+            </div>
+          )}
+
+          {/* 🔹 Intro video seçildiyse consent + guideline göster */}
+          {files.introVideo && (
+            <div className={styles.checks}>
+              <label className={styles.checkItem}>
+                <input
+                  type="checkbox"
+                  name="introVideoConsentProfile"
+                  checked={form.introVideoConsentProfile}
+                  onChange={handleChange}
+                />
+                <span>
+                  I give my consent for BridgeLang to store my introduction video and
+                  display it publicly on my tutor profile.
+                </span>
+              </label>
+
+              <label className={styles.checkItem}>
+                <input
+                  type="checkbox"
+                  name="introVideoConsentSocial"
+                  checked={form.introVideoConsentSocial}
+                  onChange={handleChange}
+                />
+                <span>
+                  I also give BridgeLang permission to use my introduction video on its
+                  official social media channels and in promotional materials, with the
+                  purpose of helping students discover my profile.
+                </span>
+              </label>
+            </div>
+          )}
+
+        <h4 className={styles.sectionTitle}>Confirmations</h4>
+        <div className={styles.checks}>
+          <label className={styles.checkItem}>
+            <input
+              type="checkbox"
+              name="willingToTravel"
+              checked={form.willingToTravel}
+              onChange={handleChange}
+            />
+            <span>Willing to travel for lessons</span>
+          </label>
+
+          <label className={styles.checkItem}>
+            <input
+              type="checkbox"
+              name="confirmInfo"
+              checked={form.confirmInfo}
+              onChange={handleChange}
+              required
+            />
+            <span>I confirm that all the information is accurate.</span>
+          </label>
+
+          <label className={styles.checkItem}>
+            <input
+              type="checkbox"
+              name="agreeTerms"
+              checked={form.agreeTerms}
+              onChange={handleChange}
+              required
+            />
+            <span>I agree to BridgeLang&apos;s Teacher Terms.</span>
+          </label>
+
+          <label className={styles.checkItem}>
+            <input
+              type="checkbox"
+              name="acceptResponsibility"
+              checked={form.acceptResponsibility}
+              onChange={handleChange}
+              required
+            />
+            <span>I understand I&apos;m responsible for my schedule and rates.</span>
+          </label>
+
+          <label className={styles.checkItem}>
+            <input
+              type="checkbox"
+              name="cancellationAware"
+              checked={form.cancellationAware}
+              onChange={handleChange}
+              required
+            />
+            <span>
+              I acknowledge the{' '}
+              <Link href="/legal/refund" className={styles.inlineLink}>
+                Refund &amp; Cancellation Policy
+              </Link>
+              .
+            </span>
+          </label>
+
+          <label className={styles.checkItem}>
+            <input
+              type="checkbox"
+              name="acceptPrivacy"
+              checked={form.acceptPrivacy}
+              onChange={handleChange}
+              required
+            />
+            <span>
+              I accept the{' '}
+              <Link href="/legal/privacy" className={styles.inlineLink}>
+                Privacy Policy
+              </Link>
+              ,{' '}
+              <Link href="/legal/terms" className={styles.inlineLink}>
+                Terms of Use
+              </Link>{' '}
+              &amp;{' '}
+              <Link href="/legal/refund" className={styles.inlineLink}>
+                Cancellation &amp; Refund Policy
+              </Link>
+              .
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" className={styles.submitBtn}>
+          Submit Application
+        </button>
+      </form>
+
+      {success && (
+        <div className={styles.successBox}>
+          <p className={styles.successText}>{success}</p>
+          <p className={styles.successHint}>
+            Once your application is submitted, our team will review it and get back
+            to you shortly – typically within a couple of business days.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

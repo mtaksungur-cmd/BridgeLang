@@ -1,0 +1,83 @@
+@use '../styles/variables' as v;
+
+.container {
+  padding: v.$spacer-lg;
+  margin-top: v.$spacer-sm;
+  max-width: 600px;
+  margin: auto;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: v.$spacer;
+  color: v.$primary-color;
+}
+
+.teacherBox {
+  display: flex;
+  align-items: center;
+  gap: v.$spacer;
+  margin-bottom: v.$spacer;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.lessonDate {
+  margin-bottom: v.$spacer;
+  color: #333;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+}
+
+.stars {
+  display: flex;
+  gap: 6px;
+  font-size: 2rem;
+  margin-bottom: v.$spacer;
+  user-select: none;
+}
+
+.star {
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.filled {
+  color: #f6c800;
+}
+
+.textarea {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: v.$spacer;
+  resize: vertical;
+}
+
+.button {
+  background-color: v.$primary-color;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
