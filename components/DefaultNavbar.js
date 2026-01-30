@@ -6,6 +6,7 @@ import Image from "next/image";
 
 export default function DefaultNavbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const closeTimeout = useRef(null);
 
   const open = () => {
@@ -22,12 +23,9 @@ export default function DefaultNavbar() {
   };
 
   const handleMouseEnter = () => open();
-  const handleMouseLeave = () => scheduleClose(500); // 0.5 sn sonra kapanır
-
-  // Mobil: tıkla–aç/kapa
+  const handleMouseLeave = () => scheduleClose(500);
   const handleToggleClick = () => setDropdownOpen(v => !v);
 
-  // Temizlik
   useEffect(() => {
     return () => {
       if (closeTimeout.current) clearTimeout(closeTimeout.current);
@@ -35,102 +33,84 @@ export default function DefaultNavbar() {
   }, []);
 
   return (
-    <nav className="navbar navbar-expand-lg bg-primary">
-      <div className="container">
-        {/* Logo */}
-        <Link href="/" className="navbar-brand d-flex align-items-center">
-          <Image 
-            src="/bridgelang.png" 
-            alt="BridgeLang Logo" 
-            width={50} 
-            height={50} 
-            className="me-2"
+    <nav className={styles.navbar}>
+      <div className={styles.container}>
+        <Link href="/" className={styles.logo}>
+          <Image
+            src="/bridgelang.png"
+            alt="BridgeLang Logo"
+            width={40}
+            height={40}
           />
-          <span style={{ color: 'white', fontWeight: 'bold' }}>BridgeLang</span>
+          <span className={styles.logoText}>BridgeLang</span>
         </Link>
 
-        {/* Hamburger */}
         <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#defaultNavbar"
-          aria-controls="defaultNavbar"
-          aria-expanded="false"
+          className={styles.mobileToggle}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle navigation"
         >
-          <span className="navbar-toggler-icon" style={{ filter: 'invert(1)' }}></span>
+          <span className={styles.hamburger}></span>
+          <span className={styles.hamburger}></span>
+          <span className={styles.hamburger}></span>
         </button>
 
-        {/* Menu */}
-        <div className="collapse navbar-collapse" id="defaultNavbar">
-          <ul className="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-            <li className="nav-item">
-              <Link href="/how-it-works" className="nav-link text-light">How It Works</Link>
-            </li>
+        <ul className={`${styles.menu} ${mobileMenuOpen ? styles.menuOpen : ''}`}>
+          <li>
+            <Link href="/how-it-works" className={styles.link}>How It Works</Link>
+          </li>
+          <li>
+            <Link href="/student/teachers" className={styles.link}>
+              Meet Our UK-Based Tutors
+            </Link>
+          </li>
+          <li>
+            <Link href="/faq" className={styles.link}>FAQ</Link>
+          </li>
+          <li>
+            <Link href="/testimonials/student" className={styles.link}>
+              What Learners Experience
+            </Link>
+          </li>
 
-            {/* ✅ Teachers link — herkese açık */}
-            <li className="nav-item">
-              <Link href="/student/teachers" className="nav-link text-light">
-                Meet Our UK-Based Tutors
-              </Link>
-            </li>
+          <li
+            className={styles.dropdown}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <button
+              type="button"
+              className={styles.dropdownToggle}
+              onClick={handleToggleClick}
+              aria-haspopup="true"
+              aria-expanded={dropdownOpen ? 'true' : 'false'}
+            >
+              Sign Up
+              <span className={styles.caret}>▾</span>
+            </button>
 
-            {/* ✅ FAQ Link */}
-            <li className="nav-item">
-              <Link href="/faq" className="nav-link text-light">FAQ</Link>
-            </li>
-
-            <li className="nav-item">
-              <Link href="/testimonials/student" className="nav-link text-light">What Learners Experience with BridgeLang</Link>
-            </li>
-
-            {/* 
-            <li className="nav-item">
-              <Link href="/testimonials/teacher" className="nav-link text-light">Why Tutors Love BridgeLang</Link>
-            </li>
-            */}
-
-            {/* Sign Up (hover + click) */}
-            <li
-              className={`nav-item position-relative ${styles.dropdown}`}
+            <ul
+              className={`${styles.dropdownMenu} ${dropdownOpen ? styles.show : ''}`}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              <button
-                type="button"
-                className={`nav-link text-light ${styles.toggleBtn}`}
-                aria-haspopup="true"
-                aria-expanded={dropdownOpen ? 'true' : 'false'}
-                onClick={handleToggleClick} // mobil
-              >
-                Sign Up
-                <span className={styles.caret}>▾</span>
-              </button>
+              <li>
+                <Link className={styles.dropdownItem} href="/student/register">
+                  Join as a Student
+                </Link>
+              </li>
+              <li>
+                <Link className={styles.dropdownItem} href="/teacher/apply">
+                  Apply as a Tutor
+                </Link>
+              </li>
+            </ul>
+          </li>
 
-              <ul
-                className={`${styles.dropdownMenu} ${dropdownOpen ? styles.show : ''}`}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-              >
-                <li>
-                  <Link className={styles.dropdownItem} href="/student/register">
-                    Join as a Student
-                  </Link>
-                </li>
-                <li>
-                  <Link className={styles.dropdownItem} href="/teacher/apply">
-                    Apply as a Tutor
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li className="nav-item">
-              <Link href="/login" className="nav-link text-light">Login</Link>
-            </li>
-          </ul>
-        </div>
+          <li>
+            <Link href="/login" className={styles.loginBtn}>Login</Link>
+          </li>
+        </ul>
       </div>
     </nav>
   );

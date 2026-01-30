@@ -1,4 +1,3 @@
-// pages/account/security.js  (veya mevcut SecuritySettings sayfan)
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
@@ -16,15 +15,12 @@ export default function SecuritySettings() {
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
-
-  // intro video consent state
   const [introConsentProfile, setIntroConsentProfile] = useState(false);
   const [introConsentSocial, setIntroConsentSocial] = useState(false);
   const [hasIntroVideo, setHasIntroVideo] = useState(false);
 
   const router = useRouter();
 
-  /* ---------- FETCH USER ROLE + NOTIFICATION PREF + INTRO CONSENTS ---------- */
   useEffect(() => {
     const fetchUserData = async () => {
       const user = auth.currentUser;
@@ -34,18 +30,14 @@ export default function SecuritySettings() {
         const data = snap.data();
         setRole(data.role || '');
         setEmailNotifications(data.emailNotifications !== false);
-
         setIntroConsentProfile(!!data.intro_video_consent_profile);
         setIntroConsentSocial(!!data.intro_video_consent_social);
-        setHasIntroVideo(
-          !!data.intro_video_path || !!data.introVideoUrl
-        );
+        setHasIntroVideo(!!data.intro_video_path || !!data.introVideoUrl);
       }
     };
     fetchUserData();
   }, []);
 
-  /* ---------- TOGGLE EMAIL NOTIFICATIONS ---------- */
   const handleToggleNotifications = async () => {
     const user = auth.currentUser;
     if (!user) return setMessage('Please log in again.');
@@ -69,7 +61,6 @@ export default function SecuritySettings() {
     }
   };
 
-  /* ---------- INTRO VIDEO CONSENT CHANGE ---------- */
   const handleIntroConsentChange = async (key, newValue) => {
     const user = auth.currentUser;
     if (!user) return setMessage('Please log in again.');
@@ -83,8 +74,7 @@ export default function SecuritySettings() {
     try {
       const historyEntry = {
         type: 'consent_change',
-        consentKey:
-          key === 'intro_video_consent_profile' ? 'profile' : 'social',
+        consentKey: key === 'intro_video_consent_profile' ? 'profile' : 'social',
         newValue,
         timestamp: new Date().toISOString(),
       };
@@ -110,7 +100,6 @@ export default function SecuritySettings() {
     }
   };
 
-  /* ---------- ŞİFRE DEĞİŞTİR ---------- */
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -133,7 +122,6 @@ export default function SecuritySettings() {
     }
   };
 
-  /* ---------- HESABI DURAKLAT ---------- */
   const handlePauseAccount = async () => {
     try {
       setLoading(true);
@@ -151,7 +139,7 @@ export default function SecuritySettings() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
-      try { await signOut(auth); } catch {}
+      try { await signOut(auth); } catch { }
       setShowPauseModal(false);
       router.push('/login');
     } catch (err) {
@@ -162,7 +150,6 @@ export default function SecuritySettings() {
     }
   };
 
-  /* ---------- HESABI KALICI SİL ---------- */
   const handleDeleteAccount = async () => {
     try {
       setLoading(true);
@@ -182,7 +169,7 @@ export default function SecuritySettings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
 
-      try { await signOut(auth); } catch {}
+      try { await signOut(auth); } catch { }
       setShowDeleteModal(false);
       router.push('/');
     } catch (err) {
@@ -196,179 +183,168 @@ export default function SecuritySettings() {
   const goToPayments = () => router.push('/student/payments');
 
   return (
-    <div className={styles.wrapper}>
-      <h2 className={styles.title}>Account & Security</h2>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <h1 className={styles.pageTitle}>Account & Security</h1>
 
-      {/* EMAIL NOTIFICATIONS TOGGLE */}
-      <section className={styles.section}>
-        <h3>Email Notifications</h3>
-        <p className={styles.note}>
-          Turning this off will disable lesson, reminder, and chat notifications.<br />
-          You’ll still receive login and payment emails.
-        </p>
-        <div
-          className={`${styles.toggleWrapper} ${
-            emailNotifications ? styles.on : styles.off
-          }`}
-          onClick={handleToggleNotifications}
-        >
-          <div className={styles.toggleCircle}></div>
-        </div>
-        <p className={styles.toggleLabel}>
-          {emailNotifications ? 'Enabled' : 'Disabled'}
-        </p>
-      </section>
+        {message && <div className={styles.alert}>{message}</div>}
 
-      {/* INTRO VIDEO VISIBILITY (Teacher only) */}
-      {role === "teacher" && (
-        <section className={styles.section}>
-          <h3>Intro Video Visibility</h3>
-          <p className={styles.note}>
-            Manage who can see and use your introduction video.  
-            These settings only apply if you have an intro video uploaded.
-          </p>
-
-          {/* PROFILE CONSENT TOGGLE */}
-          <div className={styles.toggleBlock}>
-            <div className={styles.toggleHeader}>
-              <span className={styles.toggleTitle}>
-                Show on my public tutor profile
-              </span>
-              <div
-                className={`${styles.toggleWrapper} ${
-                  introConsentProfile ? styles.on : styles.off
-                }`}
-                onClick={() =>
-                  hasIntroVideo &&
-                  handleIntroConsentChange(
-                    "intro_video_consent_profile",
-                    !introConsentProfile
-                  )
-                }
-                style={{ opacity: hasIntroVideo ? 1 : 0.5, cursor: hasIntroVideo ? "pointer" : "not-allowed" }}
-              >
-                <div className={styles.toggleCircle}></div>
-              </div>
+        <div className={styles.grid}>
+          {/* LEFT COLUMN - Security */}
+          <div className={styles.column}>
+            <div className={styles.card}>
+              <h2 className={styles.cardTitle}>Change Password</h2>
+              <form onSubmit={handlePasswordChange} className={styles.form}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>New Password</label>
+                  <input
+                    type="password"
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Confirm Password</label>
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+                <button type="submit" disabled={loading} className={styles.btnPrimary}>
+                  {loading ? 'Updating...' : 'Update Password'}
+                </button>
+              </form>
             </div>
-            <p className={styles.toggleDescription}>
-              Enables your intro video to be shown directly on your BridgeLang tutor profile.
-            </p>
-            <p className={styles.toggleHint}>
-              You can turn this off at any time. Your intro video will immediately be removed from your public profile.
-            </p>
+
+            {role === 'teacher' && (
+              <div className={styles.card}>
+                <h2 className={styles.cardTitle}>Intro Video Visibility</h2>
+                <p className={styles.cardDesc}>
+                  Manage who can see and use your introduction video. These settings only apply if you have an intro video uploaded.
+                </p>
+
+                <div className={styles.toggleBlock}>
+                  <div className={styles.toggleRow}>
+                    <div className={styles.toggleInfo}>
+                      <div className={styles.toggleLabel}>Show on my public tutor profile</div>
+                      <div className={styles.toggleDesc}>
+                        Enables your intro video to be shown directly on your BridgeLang tutor profile.
+                      </div>
+                    </div>
+                    <div
+                      className={`${styles.toggle} ${introConsentProfile ? styles.toggleOn : styles.toggleOff}`}
+                      onClick={() =>
+                        hasIntroVideo &&
+                        handleIntroConsentChange('intro_video_consent_profile', !introConsentProfile)
+                      }
+                      style={{ opacity: hasIntroVideo ? 1 : 0.5, cursor: hasIntroVideo ? 'pointer' : 'not-allowed' }}
+                    >
+                      <div className={styles.toggleKnob}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.toggleBlock}>
+                  <div className={styles.toggleRow}>
+                    <div className={styles.toggleInfo}>
+                      <div className={styles.toggleLabel}>Allow use in BridgeLang promotional content</div>
+                      <div className={styles.toggleDesc}>
+                        Allows BridgeLang to use your intro video in ads, social media, and marketing material.
+                      </div>
+                    </div>
+                    <div
+                      className={`${styles.toggle} ${introConsentSocial ? styles.toggleOn : styles.toggleOff}`}
+                      onClick={() =>
+                        hasIntroVideo &&
+                        handleIntroConsentChange('intro_video_consent_social', !introConsentSocial)
+                      }
+                      style={{ opacity: hasIntroVideo ? 1 : 0.5, cursor: hasIntroVideo ? 'pointer' : 'not-allowed' }}
+                    >
+                      <div className={styles.toggleKnob}></div>
+                    </div>
+                  </div>
+                </div>
+
+                {!hasIntroVideo && (
+                  <p className={styles.muted}>
+                    You don't have an intro video yet. You can upload one from your Teacher Dashboard.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* SOCIAL CONSENT TOGGLE */}
-          <div className={styles.toggleBlock}>
-            <div className={styles.toggleHeader}>
-              <span className={styles.toggleTitle}>
-                Allow use in BridgeLang social media & promotional content
-              </span>
-              <div
-                className={`${styles.toggleWrapper} ${
-                  introConsentSocial ? styles.on : styles.off
-                }`}
-                onClick={() =>
-                  hasIntroVideo &&
-                  handleIntroConsentChange(
-                    "intro_video_consent_social",
-                    !introConsentSocial
-                  )
-                }
-                style={{ opacity: hasIntroVideo ? 1 : 0.5, cursor: hasIntroVideo ? "pointer" : "not-allowed" }}
-              >
-                <div className={styles.toggleCircle}></div>
+          {/* RIGHT COLUMN - Preferences & Actions */}
+          <div className={styles.column}>
+            <div className={styles.card}>
+              <h2 className={styles.cardTitle}>Email Notifications</h2>
+              <p className={styles.cardDesc}>
+                Turning this off will disable lesson, reminder, and chat notifications. You'll still receive login and payment emails.
+              </p>
+              <div className={styles.toggleRow}>
+                <div className={styles.toggleInfo}>
+                  <div className={styles.toggleLabel}>
+                    {emailNotifications ? 'Enabled' : 'Disabled'}
+                  </div>
+                </div>
+                <div
+                  className={`${styles.toggle} ${emailNotifications ? styles.toggleOn : styles.toggleOff}`}
+                  onClick={handleToggleNotifications}
+                >
+                  <div className={styles.toggleKnob}></div>
+                </div>
               </div>
             </div>
-            <p className={styles.toggleDescription}>
-              Allows BridgeLang to use your intro video in ads, social media, and marketing material.
-            </p>
-            <p className={styles.toggleHint}>
-              You can withdraw this permission at any time. Your video will no longer be used in BridgeLang’s social media or promotional content.
-            </p>
+
+            {role === 'student' && (
+              <div className={styles.card}>
+                <h2 className={styles.cardTitle}>Payment History</h2>
+                <p className={styles.cardDesc}>
+                  View your complete payment history and transaction details.
+                </p>
+                <button onClick={goToPayments} className={styles.btnSecondary}>
+                  View Payment History
+                </button>
+              </div>
+            )}
+
+            <div className={styles.dangerZone}>
+              <h2 className={styles.dangerTitle}>Danger Zone</h2>
+              <p className={styles.dangerDesc}>
+                You can temporarily pause your account or permanently delete it.
+              </p>
+              <div className={styles.dangerActions}>
+                <button onClick={() => setShowPauseModal(true)} className={styles.btnWarning}>
+                  Pause Account
+                </button>
+                <button onClick={() => setShowDeleteModal(true)} className={styles.btnDanger}>
+                  Delete Account
+                </button>
+              </div>
+            </div>
           </div>
-
-          {!hasIntroVideo && (
-            <p className={styles.muted}>
-              You don&apos;t have an intro video yet. You can upload one from your Teacher Dashboard.
-            </p>
-          )}
-        </section>
-      )}
-
-      {/* ŞİFRE */}
-      <section className={styles.section}>
-        <h3>Change Password</h3>
-        <form onSubmit={handlePasswordChange} className={styles.form}>
-          <input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className={styles.input}
-          />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className={styles.input}
-          />
-          <button type="submit" disabled={loading} className={styles.saveBtn}>
-            {loading ? 'Saving...' : 'Update Password'}
-          </button>
-        </form>
-      </section>
-
-      {/* HESABI DURAKLAT & SİL */}
-      <section className={styles.section}>
-        <h3>Account Control</h3>
-        <p className={styles.note}>
-          You can temporarily pause your account or permanently delete it.
-        </p>
-        <div className={styles.actions}>
-          <button
-            onClick={() => setShowPauseModal(true)}
-            className={styles.pauseBtn}
-          >
-            Pause Account
-          </button>
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className={styles.deleteBtn}
-          >
-            Delete Account
-          </button>
         </div>
-      </section>
+      </div>
 
-      {role === 'student' && (
-        <section className={styles.section}>
-          <h3>Payment History</h3>
-          <button onClick={goToPayments} className={styles.saveBtn}>
-            View Payment History
-          </button>
-        </section>
-      )}
-
-      {/* --- MODALLAR --- */}
+      {/* Modals */}
       {showPauseModal && (
-        <div className={styles.modal}>
-          <div className={styles.modalBox}>
-            <h4>Pause Account?</h4>
-            <p>
-              Your account will be paused until you click the reactivation link
-              sent to your email.
+        <div className={styles.modalOverlay} onClick={() => setShowPauseModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Pause Account?</h3>
+            <p className={styles.modalText}>
+              Your account will be paused until you click the reactivation link sent to your email.
             </p>
             <div className={styles.modalActions}>
-              <button onClick={handlePauseAccount} className={styles.confirmBtn}>
-                Yes, Pause
+              <button onClick={handlePauseAccount} className={styles.btnWarning} disabled={loading}>
+                {loading ? 'Pausing...' : 'Yes, Pause'}
               </button>
-              <button
-                onClick={() => setShowPauseModal(false)}
-                className={styles.cancelBtn}
-              >
-                No
+              <button onClick={() => setShowPauseModal(false)} className={styles.btnSecondary}>
+                Cancel
               </button>
             </div>
           </div>
@@ -376,32 +352,23 @@ export default function SecuritySettings() {
       )}
 
       {showDeleteModal && (
-        <div className={styles.modal}>
-          <div className={styles.modalBox}>
-            <h4>Delete Account Permanently?</h4>
-            <p>
-              This action cannot be undone. You won’t be able to re-register
-              with the same email.
+        <div className={styles.modalOverlay} onClick={() => setShowDeleteModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Delete Account Permanently?</h3>
+            <p className={styles.modalText}>
+              This action cannot be undone. You won't be able to re-register with the same email.
             </p>
             <div className={styles.modalActions}>
-              <button
-                onClick={handleDeleteAccount}
-                className={styles.deleteConfirm}
-              >
-                Yes, Delete
+              <button onClick={handleDeleteAccount} className={styles.btnDanger} disabled={loading}>
+                {loading ? 'Deleting...' : 'Yes, Delete'}
               </button>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className={styles.cancelBtn}
-              >
-                No
+              <button onClick={() => setShowDeleteModal(false)} className={styles.btnSecondary}>
+                Cancel
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {message && <p className={styles.message}>{message}</p>}
     </div>
   );
 }

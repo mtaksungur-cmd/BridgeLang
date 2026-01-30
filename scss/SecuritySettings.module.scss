@@ -1,62 +1,132 @@
-.wrapper {
-  background: #fff;
-  max-width: 480px;
-  margin: 40px auto;
-  padding: 24px 28px;
-  border-radius: 12px;
-  border: 1px solid #e5e8f0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+.page {
+  background: #f8fafc;
+  min-height: 100vh;
+  padding: 3rem 0;
 }
 
-.title {
-  font-size: 22px;
-  font-weight: 700;
-  color: #111;
-  margin-bottom: 20px;
-  text-align: center;
-}
+.container {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 0 1rem;
 
-.section {
-  margin-bottom: 28px;
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 10px;
+  @media (min-width: 640px) {
+    padding: 0 1.5rem;
   }
+
+  @media (min-width: 1024px) {
+    padding: 0 2rem;
+  }
+}
+
+.pageTitle {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+}
+
+.alert {
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  color: #1e40af;
+  font-size: 15px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.cardTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.cardDesc {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1.25rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
 }
 
 .input {
-  border: 1px solid #ccc;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
+  font-size: 15px;
+  transition: all 0.2s;
   outline: none;
-  transition: border 0.2s;
 
   &:focus {
-    border-color: #1464ff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  &::placeholder {
+    color: #94a3b8;
   }
 }
 
-.saveBtn {
-  background: #1464ff;
-  color: #fff;
+.btnPrimary {
+  padding: 12px 24px;
+  background: #2563eb;
+  color: white;
   border: none;
   border-radius: 8px;
-  padding: 10px 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s;
 
-  &:hover {
-    background: #0e50cc;
+  &:hover:not(:disabled) {
+    background: #1d4ed8;
+    transform: translateY(-1px);
   }
 
   &:disabled {
@@ -65,246 +135,204 @@
   }
 }
 
-.note {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 12px;
-}
-
-.message {
-  margin-top: 18px;
-  font-size: 14px;
-  text-align: center;
-  color: #333;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.pauseBtn {
-  background: #fef9c3;
-  color: #78350f;
-  border: 1px solid #fde68a;
+.btnSecondary {
+  padding: 12px 24px;
+  background: white;
+  color: #2563eb;
+  border: 2px solid #2563eb;
   border-radius: 8px;
-  padding: 10px 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+
   &:hover {
-    background: #fff7b3;
+    background: #eff6ff;
   }
 }
 
-.deleteBtn {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  &:hover {
-    background: #fecaca;
+.toggleBlock {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #e2e8f0;
+
+  &:last-child {
+    border-bottom: none;
   }
 }
 
-/* 🔹 MODAL (eklenen kısım) */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+.toggleRow {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  gap: 1.5rem;
 }
 
-.modalBox {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px 28px;
-  width: 90%;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-
-  h4 {
-    font-size: 18px;
-    font-weight: 700;
-    color: #111;
-    margin-bottom: 12px;
-  }
-
-  p {
-    font-size: 14px;
-    color: #444;
-    margin-bottom: 18px;
-  }
-}
-
-.modalActions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-/* ✅ Buton varyantları */
-.confirmBtn {
-  background: #1464ff;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #0e50cc;
-  }
-}
-
-.cancelBtn {
-  background: #f1f5f9;
-  color: #111;
-  border: 1px solid #d0d7e2;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #e2e8f0;
-  }
-}
-
-.deleteConfirm {
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #b91c1c;
-  }
-}
-
-/* --- iPhone tarzı toggle --- */
-.toggleWrapper {
-  width: 50px;
-  height: 28px;
-  border-radius: 50px;
-  position: relative;
-  cursor: pointer;
-  transition: background 0.25s;
-}
-
-.toggleCircle {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #fff;
-  transition: left 0.25s;
-}
-
-.on {
-  background: #22c55e;
-}
-.on .toggleCircle {
-  left: 24px;
-}
-
-.off {
-  background: #ef4444;
-}
-.off .toggleCircle {
-  left: 2px;
+.toggleInfo {
+  flex: 1;
 }
 
 .toggleLabel {
-  margin-top: 6px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
 }
 
-/* 🔸 küçük ekranlar için */
-@media (max-width: 480px) {
-  .wrapper {
-    padding: 20px;
-  }
-
-  .modalBox {
-    padding: 20px;
-  }
-
-  .confirmBtn,
-  .cancelBtn,
-  .deleteConfirm {
-    flex: 1;
-    min-width: 100px;
-  }
+.toggleDesc {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
 }
 
-.checkRow {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  margin-bottom: 8px;
+.toggle {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
 
-  input {
-    margin-top: 3px;
+.toggleOff {
+  background: #cbd5e1;
+}
+
+.toggleOn {
+  background: #2563eb;
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s;
+
+  .toggleOn & {
+    transform: translateX(24px);
   }
 }
 
 .muted {
-  font-size: 0.9rem;
-  color: #666;
-  margin-top: 6px;
-}
-
-/* 🟦 Intro Video Visibility — Title & layout */
-.toggleBlock {
-  margin-bottom: 20px;
-}
-
-.toggleHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.toggleTitle {
-  font-size: 15px;
-  font-weight: 600;
-  color: #111;
-  max-width: 70%;
-}
-
-.toggleDescription {
   font-size: 13px;
-  color: #666;
-  margin-top: 6px;
-  line-height: 1.4;
+  color: #94a3b8;
+  font-style: italic;
+  margin-top: 1rem;
 }
 
-.toggleHint {
-  margin-top: 4px;
-  font-size: 0.78rem;
-  color: #9ca3af; /* soft grey */
-  line-height: 1.4;
-  font-style: italic;
+.dangerZone {
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.dangerTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #dc2626;
+  margin-bottom: 0.5rem;
+}
+
+.dangerDesc {
+  font-size: 14px;
+  color: #7f1d1d;
+  margin-bottom: 1.5rem;
+}
+
+.dangerActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btnWarning {
+  padding: 10px 20px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #d97706;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btnDanger {
+  padding: 10px 20px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #b91c1c;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modalTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.modalText {
+  font-size: 15px;
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
 }

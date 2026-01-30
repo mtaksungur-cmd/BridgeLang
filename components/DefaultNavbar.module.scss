@@ -1,117 +1,218 @@
-@use '../styles/variables' as v;
+.navbar {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+
+  @media (min-width: 640px) {
+    padding: 0 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 0 2rem;
+  }
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.logoText {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.mobileToggle {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
+.hamburger {
+  width: 24px;
+  height: 2px;
+  background: #1f2937;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.menu {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  gap: 2rem;
+
+  @media (max-width: 1023px) {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    background: white;
+    flex-direction: column;
+    padding: 1.5rem;
+    gap: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-120%);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+}
+
+.menuOpen {
+  @media (max-width: 1023px) {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.link {
+  color: #475569;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    color: #2563eb;
+  }
+}
 
 .dropdown {
-  /* li için referans noktası */
   position: relative;
 }
 
-.toggleBtn {
+.dropdownToggle {
   background: transparent;
-  border: 0;
-  padding: 0.5rem 0.75rem;
+  border: none;
+  color: #475569;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: .4rem;
+  gap: 4px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #2563eb;
+  }
 }
 
 .caret {
-  font-size: .85rem;
-  opacity: .9;
+  font-size: 10px;
+  transition: transform 0.2s;
+
+  .dropdownToggle:hover & {
+    transform: translateY(2px);
+  }
 }
 
-/* Menü kapalıyken gizle */
 .dropdownMenu {
   position: absolute;
   top: 100%;
   right: 0;
-  min-width: 220px;
-  margin-top: .5rem;
-  padding: .5rem;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   list-style: none;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,.12);
-  border: 1px solid rgba(0,0,0,.06);
+  padding: 8px 0;
+  min-width: 200px;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(6px);
-  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
-  z-index: 1050;
-  pointer-events: none;
+  transform: translateY(-8px);
+  transition: all 0.2s;
+
+  @media (max-width: 1023px) {
+    position: static;
+    box-shadow: none;
+    border: none;
+    padding: 8px 16px;
+  }
 }
 
-/* Açıkken */
 .show {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
-  pointer-events: auto;
 }
 
 .dropdownItem {
   display: block;
-  background-color: v.$accent-color;
-  width: 100%;
-  padding: .6rem .75rem;
-  margin-bottom: 3px;
-  border-radius: 8px;
-  color: v.$bg-color; /* slate-900 */
+  padding: 10px 16px;
+  color: #374151;
   text-decoration: none;
-  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
 
   &:hover {
-    background: v.$warning-color; /* slate-100 */
-    text-decoration: none;
+    background: #f3f4f6;
+    color: #2563eb;
   }
 }
 
-/* =========================
-   RESPONSIVE DROPDOWN
-========================= */
+.loginBtn {
+  padding: 8px 20px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s;
 
-/* Tablet ve altı */
-@media (max-width: 768px) {
-  .dropdownMenu {
-    min-width: 200px;
-    right: 0;
-    left: auto;
-  }
-
-  .dropdownItem {
-    padding: .75rem .85rem;
-    font-size: .95rem;
+  &:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
   }
 }
 
-/* Mobil */
-@media (max-width: 480px) {
-  .dropdownMenu {
-    position: fixed;
-    top: auto;
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    width: auto;
-    min-width: unset;
-    max-width: unset;
-    margin-top: 0;
-    border-radius: 16px;
-    box-shadow: 0 14px 30px rgba(0,0,0,.18);
-    transform: translateY(12px);
-  }
+.logoutBtn {
+  padding: 8px 20px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 
-  .show {
-    transform: translateY(0);
-  }
-
-  .dropdownItem {
-    padding: 1rem;
-    font-size: 1rem;
-    text-align: center;
-  }
-
-  .toggleBtn {
-    padding: .6rem;
+  &:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
   }
 }
