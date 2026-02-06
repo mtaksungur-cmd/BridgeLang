@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { adminDb } from '../../../lib/firebaseAdmin';
+import { adminDb } from '../../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
     if (req.method === 'GET') {

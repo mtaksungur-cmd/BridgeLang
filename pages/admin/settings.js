@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db } from '../../../lib/firebase';
+import { db } from '../../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import toast, { Toaster } from 'react-hot-toast';
 
