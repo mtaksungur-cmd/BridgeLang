@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import Navbar from '../components/Navbar';
+import NavbarSwitcher from '../components/NavbarSwitcher';
 import Footer from '../components/Footer';
 
 export default function PrivacyPolicy() {
@@ -11,7 +11,7 @@ export default function PrivacyPolicy() {
                 <meta name="description" content="BridgeLang privacy policy and data protection information" />
             </Head>
 
-            <Navbar />
+            <NavbarSwitcher />
 
             <div style={{ maxWidth: '900px', margin: '4rem auto', padding: '0 1.5rem' }}>
                 <h1 style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '1rem' }}>

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import Navbar from '../components/Navbar';
+import NavbarSwitcher from '../components/NavbarSwitcher';
 import Footer from '../components/Footer';
 import GDPRSettings from '../components/GDPRSettings';
 
@@ -45,7 +45,7 @@ export default function Settings() {
                 <meta name="description" content="Manage your account settings and privacy" />
             </Head>
 
-            <Navbar />
+            <NavbarSwitcher />
 
             <div style={{
                 maxWidth: '1200px',
