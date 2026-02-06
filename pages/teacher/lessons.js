@@ -4,7 +4,7 @@ import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';
-import { Calendar, Clock, MapPin, CheckCircle, XCircle, Video, AlertCircle, User } from 'lucide-react';
+import { Calendar, Clock, MapPin, CheckCircle, XCircle, Video, AlertCircle, Settings } from 'lucide-react';
 import notify from '../../lib/toast';
 import LessonCountdown from '../../components/LessonCountdown';
 
@@ -314,7 +314,7 @@ export default function TeacherLessons() {
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}>
-                        <User style={{ width: '28px', height: '28px', color: '#4f46e5' }} />
+                        <Settings style={{ width: '28px', height: '28px', color: '#4f46e5' }} />
                       </div>
                     )}
                     <div style={{ flex: 1 }}>
