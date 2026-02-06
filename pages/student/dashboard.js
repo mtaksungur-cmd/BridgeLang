@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useSubscriptionGuard } from '../../lib/subscriptionGuard';
 import {
   BookOpen, Clock, Zap, Calendar, MessageCircle, TrendingUp, Search,
-  Target, Award, ChevronRight, Flame, User, Star
+  Target, Award, ChevronRight, Flame, Settings, Star
 } from 'lucide-react';
 import SeoHead from '../../components/SeoHead';
 import WelcomeBanner from '../../components/WelcomeBanner';
@@ -246,7 +246,7 @@ export default function StudentDashboard() {
                     e.currentTarget.style.color = '#475569';
                   }}
                 >
-                  <User style={{ width: '16px', height: '16px' }} />
+                  <Settings style={{ width: '16px', height: '16px' }} />
                   Settings
                 </button>
               </Link>
@@ -491,12 +491,12 @@ export default function StudentDashboard() {
             <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
                 <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>Your Teachers</h3>
-                <User style={{ width: '20px', height: '20px', color: '#64748b' }} />
+                <Settings style={{ width: '20px', height: '20px', color: '#64748b' }} />
               </div>
 
               {recentTeachers.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                  <User style={{ width: '40px', height: '40px', color: '#cbd5e1', margin: '0 auto 0.75rem' }} />
+                  <Settings style={{ width: '40px', height: '40px', color: '#cbd5e1', margin: '0 auto 0.75rem' }} />
                   <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>No teachers yet</p>
                 </div>
               ) : (
@@ -793,7 +793,7 @@ export default function StudentDashboard() {
                     e.currentTarget.style.borderColor = '#e2e8f0';
                   }}
                 >
-                  <User style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
+                  <Settings style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
                   <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
                     Settings
                   </div>

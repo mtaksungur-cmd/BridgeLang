@@ -5,7 +5,7 @@ import { db, auth } from '../../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, limit } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
-  Calendar, MessageSquare, TrendingUp, Award, User, Clock,
+  Calendar, MessageSquare, TrendingUp, Award, Settings, Clock,
   DollarSign, BookOpen, Star, ChevronRight, AlertCircle
 } from 'lucide-react';
 import SeoHead from '../../components/SeoHead';
@@ -237,7 +237,7 @@ export default function TeacherDashboard() {
                     e.currentTarget.style.color = '#475569';
                   }}
                 >
-                  <User style={{ width: '16px', height: '16px' }} />
+                  <Settings style={{ width: '16px', height: '16px' }} />
                   Edit Profile
                 </button>
               </Link>
@@ -565,7 +565,7 @@ export default function TeacherDashboard() {
                     e.currentTarget.style.borderColor = '#e2e8f0';
                   }}
                 >
-                  <User style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
+                  <Settings style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
                   <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
                     Edit Profile
                   </div>
@@ -655,7 +655,7 @@ export default function TeacherDashboard() {
                     e.currentTarget.style.borderColor = '#e2e8f0';
                   }}
                 >
-                  <User style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
+                  <Settings style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
                   <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
                     Settings
                   </div>

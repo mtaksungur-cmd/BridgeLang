@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { db, auth } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, orderBy, addDoc, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { Send, Search, MessageSquare, User } from 'lucide-react';
+import { Send, Search, MessageSquare, Settings } from 'lucide-react';
 import SeoHead from '../../components/SeoHead';
 
 export default function StudentChats() {
@@ -336,7 +336,7 @@ export default function StudentChats() {
                         e.currentTarget.style.color = '#475569';
                       }}
                     >
-                      <User style={{ width: '14px', height: '14px' }} />
+                      <Settings style={{ width: '14px', height: '14px' }} />
                       View Profile
                     </button>
                   </div>
