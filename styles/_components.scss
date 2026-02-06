@@ -1,0 +1,526 @@
+@use './_variables' as v;
+
+// ==========================================
+// Shared Component Styles
+// Reference Design System Components
+// ==========================================
+
+// ——— Accordion Component (From Teacher Apply Reference) ———
+.accordion {
+    margin-bottom: 1.5rem;
+
+    .accordionHeader {
+        background: linear-gradient(135deg, v.$header-primary 0%, v.$header-secondary 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: v.$radius-input;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: v.$font-size-base;
+        transition: v.$transition-base;
+        user-select: none;
+
+        &:hover {
+            opacity: 0.95;
+        }
+
+        &.expanded {
+            border-radius: v.$radius-input v.$radius-input 0 0;
+        }
+
+        .chevron {
+            transition: transform 0.2s;
+            font-size: 14px;
+        }
+
+        &.expanded .chevron {
+            transform: rotate(180deg);
+        }
+    }
+
+    .accordionBody {
+        background: v.$card-white;
+        padding: v.$card-padding;
+        border-radius: 0 0 v.$radius-input v.$radius-input;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+        animation: slideDown 0.3s ease;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+
+    }
+
+    to {
+        opacity: 1;
+
+    }
+}
+
+// ——— Progress Steps (From How-It-Works Reference) ———
+.progressSteps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    padding: 0 2rem;
+
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        position: relative;
+
+        &:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 60%;
+            width: 100%;
+            height: 2px;
+            background: v.$border-light;
+            z-index: -1;
+        }
+
+        &.completed:not(:last-child)::after {
+            background: v.$success-green;
+        }
+
+        .stepCircle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: v.$font-size-base;
+            background: white;
+            border: 2px solid v.$border-light;
+            color: v.$text-light;
+            transition: v.$transition-base;
+        }
+
+        &.active .stepCircle {
+            background: v.$primary-blue;
+            border-color: v.$primary-blue;
+            color: white;
+        }
+
+        &.completed .stepCircle {
+            background: v.$success-green;
+            border-color: v.$success-green;
+            color: white;
+
+            &::before {
+                content: '✓';
+            }
+
+            span {
+                display: none;
+            }
+        }
+
+        .stepLabel {
+            font-size: v.$font-size-sm;
+            color: v.$text-medium;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        &.active .stepLabel {
+            color: v.$primary-blue;
+            font-weight: 600;
+        }
+    }
+
+    // ——— Step Indicator Bar (From Reference - Bottom Blue Bar) ———
+    .stepIndicatorBar {
+        background: linear-gradient(135deg, #3d5a99 0%, #2d4479 100%);
+        padding: 1.5rem 2rem;
+        text-align: center;
+        color: white;
+        margin-top: 3rem;
+
+        .stepTitle {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            letter-spacing: 0.3px;
+        }
+
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+
+            .dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                transition: v.$transition-base;
+
+                &.active {
+                    background: white;
+                    width: 12px;
+                    height: 12px;
+                }
+            }
+        }
+
+        @media (max-width: 768px) {
+            padding: 1.25rem 1rem;
+
+            .stepTitle {
+                font-size: 16px;
+            }
+        }
+    }
+
+
+    // ——— Tutor Card (From Teacher Listing Reference) ———
+    .tutorCard {
+        background: v.$card-white;
+        border-radius: v.$radius-card;
+        padding: 2rem;
+        box-shadow: v.$shadow-card;
+        transition: v.$transition-slow;
+        text-align: center;
+        border: none;
+
+        &:hover {
+
+            box-shadow: v.$shadow-card-hover;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            border: 4px solid v.$bg-lavender;
+            overflow: hidden;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
+        .name {
+            font-size: v.$font-size-lg;
+            font-weight: 600;
+            color: v.$text-dark;
+            margin-bottom: 0.25rem;
+        }
+
+        .verifiedBadge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: v.$success-green;
+            font-size: v.$font-size-sm;
+            font-weight: 500;
+            margin-bottom: 1rem;
+
+            &::before {
+                content: '✓';
+                font-weight: 700;
+            }
+        }
+
+        .info {
+            font-size: v.$font-size-sm;
+            color: v.$text-light;
+            margin-bottom: 0.5rem;
+
+            strong {
+                color: v.$text-medium;
+            }
+        }
+
+        .price {
+            font-size: v.$font-size-lg;
+            font-weight: 700;
+            color: v.$text-dark;
+            margin: 1rem 0;
+        }
+
+        .viewBtn {
+            width: 100%;
+            background: linear-gradient(135deg, v.$primary-blue 0%, v.$primary-blue-dark 100%);
+            color: white;
+            border: none;
+            border-radius: v.$radius-button;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: v.$font-size-base;
+            box-shadow: v.$shadow-button;
+            cursor: pointer;
+            transition: v.$transition-base;
+
+            &:hover {
+                box-shadow: v.$shadow-button-hover;
+            }
+        }
+    }
+
+    // ——— Pricing Table (From Pricing Reference) ———
+    .pricingTable {
+        background: v.$card-white;
+        border-radius: v.$radius-card;
+        box-shadow: v.$shadow-card;
+        overflow: hidden;
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: v.$primary-blue-dark;
+            color: white;
+
+            th {
+                padding: 1.25rem 1rem;
+                font-weight: 600;
+                text-align: center;
+                font-size: v.$font-size-base;
+            }
+
+            th:first-child {
+                text-align: left;
+            }
+        }
+
+        tbody {
+            tr {
+                border-bottom: 1px solid v.$border-light;
+
+                &:nth-child(even) {
+                    background: #f7fafc;
+                }
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                td {
+                    padding: 1rem;
+                    text-align: center;
+                    font-size: v.$font-size-sm;
+                    color: v.$text-medium;
+
+                    &:first-child {
+                        text-align: left;
+                        font-weight: 500;
+                        color: v.$text-dark;
+                    }
+                }
+            }
+        }
+
+        .checkmark {
+            color: v.$success-green;
+            font-weight: 700;
+            font-size: v.$font-size-lg;
+        }
+    }
+
+    // ——— Modal Overlay & Modal ———
+    .modalOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: v.$z-modal-overlay;
+        padding: 1rem;
+        animation: fadeIn 0.2s;
+    }
+
+    .modal {
+        background: v.$card-white;
+        border-radius: v.$radius-card;
+        padding: v.$card-padding;
+        max-width: 480px;
+        width: 100%;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        animation: slideUp 0.3s;
+
+        .modalTitle {
+            font-size: v.$font-size-xl;
+            font-weight: 700;
+            color: v.$text-dark;
+            margin-bottom: 0.75rem;
+        }
+
+        .modalText {
+            font-size: v.$font-size-base;
+            color: v.$text-medium;
+            line-height: v.$line-height-base;
+            margin-bottom: 1.5rem;
+        }
+
+        .modalActions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+
+        }
+
+        to {
+            opacity: 1;
+
+        }
+    }
+
+    // ——— Form Grid (2-column layout) ———
+    .formGrid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: v.$form-gap;
+
+        @media (min-width: 768px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        &.fullWidth {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // ——— iOS-Style Toggle Switch ———
+    .toggleSwitch {
+        position: relative;
+        width: 52px;
+        height: 28px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: background 0.3s;
+        background: v.$border-medium;
+        flex-shrink: 0;
+
+        &.on {
+            background: v.$primary-blue;
+        }
+
+        .knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        &.on .knob {
+            transform: translateX(24px);
+        }
+    }
+
+    // ——— Alert/Banner ———
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: v.$radius-input;
+        margin-bottom: 1.5rem;
+        font-size: v.$font-size-base;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+
+        &.alertInfo {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+        }
+
+        &.alertSuccess {
+            background: #d1fae5;
+            border: 1px solid #6ee7b7;
+            color: #065f46;
+        }
+
+        &.alertWarning {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+        }
+
+        &.alertDanger {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+    }
+
+    // ——— Loading Spinner ———
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid v.$border-light;
+        border-top-color: v.$primary-blue;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 2rem auto;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    // ——— Responsive Utilities ———
+    @media (max-width: 768px) {
+        .progressSteps {
+            padding: 0 1rem;
+
+            .step {
+                .stepLabel {
+                    font-size: 12px;
+                }
+            }
+        }
+
+        .tutorCard {
+            padding: 1.5rem;
+        }
+
+        .modal {
+            padding: 2rem 1.5rem;
+        }
+    }
+}

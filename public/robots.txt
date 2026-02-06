@@ -1,0 +1,21 @@
+# BridgeLang Robots.txt
+# Allow all crawlers access to public pages
+
+User-agent: *
+Allow: /
+Allow: /how-it-works
+Allow: /student/subscription
+Allow: /student/teachers
+Allow: /about
+Allow: /teacher/apply
+
+# Disallow authenticated/private areas
+Disallow: /student/dashboard
+Disallow: /student/chats
+Disallow: /student/lessons
+Disallow: /student/profile
+Disallow: /teacher/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://bridgelang.com/sitemap.xml

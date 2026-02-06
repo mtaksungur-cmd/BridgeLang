@@ -1,39 +1,31 @@
-// pages/student/lessons.js
 import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import Image from 'next/image';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { DateTime } from 'luxon';
-import SubscriptionBanner from '../../components/SubscriptionBanner';
-import LoyaltyBadge from '../../components/LoyaltyBadge';
-import { getLoyaltyInfo } from '../../lib/loyalty';
-import styles from '../../scss/StudentLessons.module.scss';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import SeoHead from '../../components/SeoHead';
 
 export default function StudentLessons() {
   const [bookings, setBookings] = useState([]);
   const [user, setUser] = useState(null);
-  const [loyalty, setLoyalty] = useState(null);
   const [teachers, setTeachers] = useState({});
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     let _uid;
     onAuthStateChanged(auth, async (u) => {
-      if (!u) return;
+      if (!u) {
+        setLoading(false);
+        return;
+      }
       _uid = u.uid;
 
       const userSnap = await getDoc(doc(db, 'users', _uid));
       if (userSnap.exists()) setUser(userSnap.data());
-
-      try {
-        const info = await getLoyaltyInfo(_uid);
-        setLoyalty(info);
-      } catch (e) {
-        console.error('loyalty load error:', e);
-        setLoyalty(null);
-      }
 
       const q = query(
         collection(db, 'bookings'),
@@ -56,39 +48,33 @@ export default function StudentLessons() {
       notConfirmed.sort(sortByDateDesc);
       others.sort(sortByDateDesc);
       setBookings([...notConfirmed, ...others]);
+      setLoading(false);
     });
   }, []);
 
   const confirmLesson = async (booking) => {
     try {
-      // 🔹 Local güncelleme (isteğe bağlı)
       const updates = { studentConfirmed: true };
-      if (booking.teacherApproved) {
-        updates.status = 'approved';
-        updates.payoutSent = false;
-      } else {
+
+      // ✅ New status logic:
+      // - If booking is 'confirmed' (paid), mark as 'student_approved'
+      // - Only becomes 'approved' when BOTH teacher and student confirm
+      if (booking.status === 'confirmed' || booking.status === 'pending') {
         updates.status = 'student_approved';
       }
 
-      // 🔹 Firestore güncelle
       await updateDoc(doc(db, 'bookings', booking.id), updates);
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...updates } : b));
-      alert('You confirmed the lesson.');
 
-      // 🔹 Mail ve server tarafı işlemleri (API)
       await fetch('/api/booking/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId: booking.id,
-          role: 'student', // 👈 öğretmene mail gidecek
-        }),
+        body: JSON.stringify({ bookingId: booking.id, role: 'student' }),
       });
 
-      // 🔹 Eğer her iki taraf da onayladıysa ödeme gönder
       const latestSnap = await getDoc(doc(db, 'bookings', booking.id));
       const latest = latestSnap.data();
-      
+
       if (latest?.teacherApproved && latest?.studentConfirmed) {
         await updateDoc(doc(db, 'bookings', booking.id), { status: 'approved', payoutSent: false });
         await fetch('/api/transfer-payout', {
@@ -99,7 +85,6 @@ export default function StudentLessons() {
       }
     } catch (err) {
       console.error('confirmLesson error:', err);
-      alert('Something went wrong confirming the lesson.');
     }
   };
 
@@ -125,106 +110,270 @@ export default function StudentLessons() {
     return bTime - aTime;
   }
 
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #e8eef7 0%, #d4ddf0 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{
+          width: '48px',
+          height: '48px',
+          border: '4px solid #e5e7eb',
+          borderTop: '4px solid #3b82f6',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <p style={{ color: '#64748b', fontWeight: '600', fontSize: '0.9375rem' }}>Loading lessons...</p>
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <SubscriptionBanner />
+    <>
+      <SeoHead
+        title="My Lessons"
+        description="View and manage your upcoming and past lessons on BridgeLang."
+      />
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #e8eef7 0%, #d4ddf0 100%)' }} className="animate-fade-in">
+        {/* Header */}
+        <div style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '2rem 1.5rem' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.5rem', letterSpacing: '-0.025em' }}>
+              My Lessons
+            </h1>
+            <p style={{ fontSize: '1rem', color: '#64748b' }}>
+              {bookings.length} {bookings.length === 1 ? 'lesson' : 'lessons'}
+            </p>
+          </div>
+        </div>
 
-      {loyalty && (
-        <LoyaltyBadge
-          plan={loyalty.plan}
-          loyaltyMonths={loyalty.loyaltyMonths}
-          loyaltyBonusCount={loyalty.loyaltyBonusCount}
-          discountEligible={loyalty.discountEligible}
-          promoCode={loyalty.promoCode}
-          lessonCoupons={user?.lessonCoupons || []}
-          subscriptionCoupons={user?.subscriptionCoupons || []}
-          lessonsTaken={user?.lessonsTaken || 0}
-        />
-      )}
+        {/* Lessons List */}
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          {bookings.length === 0 ? (
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '3rem', textAlign: 'center' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.5rem' }}>
+                No lessons yet
+              </h3>
+              <p style={{ fontSize: '1rem', color: '#64748b', marginBottom: '1.5rem' }}>
+                Browse tutors to book your first lesson
+              </p>
+              <Link href="/student/teachers">
+                <button style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '0.9375rem',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#2563eb'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#3b82f6'}
+                >
+                  Browse Tutors
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+              {bookings.map(b => {
+                const t = teachers[b.teacherId] || {};
 
-      <div className={`container ${styles.wrap}`}>
-        <h2 className="h3 mb-4"><span className="me-2">📘</span>Your Lessons</h2>
+                // Calculate lesson end time properly
+                const [hours, mins] = (b.startTime || '00:00').split(':').map(Number);
+                const startDate = new Date(b.date);
+                startDate.setHours(hours, mins, 0, 0);
+                const endDate = new Date(startDate.getTime() + (b.duration || 0) * 60 * 1000);
+                const now = new Date();
 
-        <div className="row g-4">
-          {bookings.map(b => {
-            const t = teachers[b.teacherId] || {};
-            return (
-              <div key={b.id} className="col-12 col-md-6 col-lg-4 col-xl-3">
-                <div className={`card h-100 shadow-sm ${styles.lessonCard}`}>
-                  <div className="card-body">
-                    <div className="d-flex align-items-center mb-3">
-                      {t.profilePhotoUrl ? (
-                        <Image
-                          src={t.profilePhotoUrl}
-                          alt="Teacher"
-                          className={styles.avatar}
-                          width={44}
-                          height={44}
-                        />
-                      ) : (
-                        <div className={styles.avatarPlaceholder}>T</div>
-                      )}
-                      <div className="ms-3">
-                        <div className="fw-semibold">Teacher: {t.name || '-'}</div>
-                        <div className="text-muted small">
-                          {(t.level || t.languagesTaught) ? (t.level || t.languagesTaught) : ''}
-                        </div>
+                const isPast = now > endDate;  // Only past if current time is after lesson end
+                const needsConfirmation = isPast && !b.studentConfirmed;
+
+                return (
+                  <div key={b.id} style={{
+                    background: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '1.5rem',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}>
+                    {/* Teacher */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        background: '#e0e7ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.125rem',
+                        fontWeight: '600',
+                        color: '#4f46e5',
+                        overflow: 'hidden',
+                        flexShrink: '0'
+                      }}>
+                        {t.profilePhotoUrl ? (
+                          <img src={t.profilePhotoUrl} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          (t.name || 'T').charAt(0)
+                        )}
+                      </div>
+                      <div style={{ flex: '1', minWidth: '0' }}>
+                        <h4 style={{ fontSize: '1rem', fontWeight: '600', color: '#0f172a', margin: '0 0 0.125rem 0' }}>
+                          {t.name || 'Teacher'}
+                        </h4>
+                        <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: '0' }}>
+                          {t.level || 'English Teacher'}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="mb-2">
-                      <div className="small text-muted">Date:</div>
-                      <div className="fw-semibold">{b.date}</div>
-                    </div>
-                    <div className="mb-2">
-                      <div className="small text-muted">Time:</div>
-                      <div className="fw-semibold">{b.startTime} — {b.endTime}</div>
-                    </div>
-                    <div className="mb-3">
-                      <div className="small text-muted">Location:</div>
-                      <div className="fw-semibold">{b.location || "Not specified"}</div>
+                    {/* Details */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: '0.5rem', fontSize: '0.875rem' }}>
+                        <span style={{ color: '#64748b' }}>Date:</span>
+                        <span style={{ color: '#0f172a', fontWeight: '500' }}>{b.date}</span>
+
+                        <span style={{ color: '#64748b' }}>Time:</span>
+                        <span style={{ color: '#0f172a', fontWeight: '500' }}>
+                          {b.startTime} — {b.endTime}
+                        </span>
+
+                        <span style={{ color: '#64748b' }}>Location:</span>
+                        <span style={{ color: '#0f172a', fontWeight: '500' }}>
+                          {b.location || 'Online'}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="mb-3">
-                      <span className={`${styles.pill} ${b.status === 'approved' ? styles.pillApproved : styles.pillDefault}`}>
-                        {b.status === 'approved' ? 'Approved' : b.status.replace('_', ' ')}
+                    {/* Status */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '0.375rem 0.75rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: '500',
+                        borderRadius: '4px',
+                        ...(b.status === 'approved' ?
+                          { background: '#dcfce7', color: '#166534' } :
+                          needsConfirmation ?
+                            { background: '#fef3c7', color: '#92400e' } :
+                            { background: '#dbeafe', color: '#1e40af' }
+                        )
+                      }}>
+                        {b.status === 'approved' ? '✓ Approved' :
+                          needsConfirmation ? '⏳ Confirm Attendance' :
+                            b.status.replace('_', ' ')}
                       </span>
                     </div>
 
+                    {/* Meeting Link */}
                     {b.meetingLink && (
-                      <div className="mb-3">
-                        <a className={styles.joinLink} href={b.meetingLink} target="_blank" rel="noopener noreferrer">
-                          🔗 Join Lesson
-                        </a>
-                      </div>
-                    )}
-
-                    {b.status === 'approved' && (
-                      <p className={`mb-3 ${styles.approvedMsg}`}>🎉 Lesson approved by both sides.</p>
-                    )}
-
-                    {isPastLesson(b.date, b.endTime, b.timezone) && !b.studentConfirmed && (
-                      <button
-                        className={`btn btn-success w-100 mb-2 ${styles.confirmBtn}`}
-                        onClick={() => confirmLesson(b)}
+                      <a
+                        href={b.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'block',
+                          padding: '0.75rem',
+                          background: '#eff6ff',
+                          border: '1px solid #bfdbfe',
+                          borderRadius: '6px',
+                          textAlign: 'center',
+                          color: '#1e40af',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          textDecoration: 'none',
+                          marginBottom: '1rem'
+                        }}
                       >
-                        ✅ I attended
-                      </button>
+                        Join Meeting →
+                      </a>
                     )}
 
-                    <button
-                      className={`btn w-100 ${styles.reportBtn}`}
-                      onClick={() => router.push(`/student/report?bookingId=${b.id}`)}
-                    >
-                      🛑 Report
-                    </button>
+                    {/* Actions */}
+                    <div style={{ marginTop: 'auto', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      {needsConfirmation && (
+                        <button
+                          onClick={() => confirmLesson(b)}
+                          style={{
+                            flex: '1',
+                            padding: '0.625rem',
+                            background: '#22c55e',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#16a34a'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = '#22c55e'}
+                        >
+                          I Attended
+                        </button>
+                      )}
+                      {b.status === 'approved' && (
+                        <button
+                          onClick={() => router.push(`/student/review/${b.id}`)}
+                          style={{
+                            flex: '1',
+                            padding: '0.625rem',
+                            background: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#2563eb'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = '#3b82f6'}
+                        >
+                          ✍️ Write Review
+                        </button>
+                      )}
+                      <button
+                        onClick={() => router.push(`/student/report?bookingId=${b.id}`)}
+                        style={{
+                          flex: needsConfirmation || b.status === 'approved' ? '0' : '1',
+                          padding: '0.625rem',
+                          background: 'white',
+                          color: '#64748b',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#f8fafc';
+                          e.currentTarget.style.borderColor = '#94a3b8';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'white';
+                          e.currentTarget.style.borderColor = '#cbd5e1';
+                        }}
+                      >
+                        Report Issue
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

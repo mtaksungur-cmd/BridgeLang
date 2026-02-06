@@ -1,261 +1,518 @@
-.homePage {
-  min-height: 100vh;
+@use '../styles/variables' as v;
+
+// ==========================================
+// Homepage - Reference Design System
+// ==========================================
+
+.page {
+  min-height: calc(100vh - var(--nav-height));
 }
 
-/* HERO kısmı */
-.heroTitle {
-  font-weight: 700;
-  line-height: 1.2;
-  color: #222;
-}
+// ——— Hero Section ———
+.hero {
+  padding: 4rem 0 3rem;
 
-.heroLead {
-  font-size: 1.1rem;
-  color: #444;
-}
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
 
-.heroBtnPrimary {
-  padding: 10px 22px;
-  font-weight: 600;
-  border-radius: 8px;
-}
+    @media (min-width: 640px) {
+      padding: 0 1.5rem;
+    }
 
-.heroBtnSecondary {
-  padding: 10px 22px;
-  font-weight: 600;
-  border-radius: 8px;
-}
-
-/* HOW IT WORKS */
-.howItWorks {
-  margin-top: 3rem;
-}
-
-.howCard {
-  transition: transform .2s ease, box-shadow .2s ease;
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  padding: 20px;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  }
-}
-
-/* TUTOR HIGHLIGHTS */
-.tutorHighlights {
-  margin-top: 3rem;
-}
-
-.highlightBox {
-  border: 1px solid #eee;
-  border-radius: 10px;
-  padding: 20px;
-  background: #fff;
-}
-
-/* SAFETY */
-.safety {
-  margin-top: 3rem;
-}
-
-.safetyList {
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.safetyList li {
-  padding: 12px 16px;
-  font-size: 0.95rem;
-}
-
-/* PRICING TEASER */
-.pricing {
-  margin-top: 3rem;
-
-  .pricingBox {
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    background: #f9f9ff;
-    padding: 24px;
-  }
-}
-
-/* TESTIMONIALS */
-.testimonials {
-  margin-top: 3rem;
-}
-
-.testimonialCard {
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 20px;
-  background: #fff;
-  font-style: italic;
-}
-
-/* FAQ TEASER */
-.faq {
-  margin-top: 3rem;
-}
-
-.faqBox {
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  background: #fff;
-  padding: 24px;
-}
-
-/* FINAL CTA */
-.finalCta {
-  margin: 4rem 0;
-  text-align: center;
-
-  h2 {
-    font-weight: 700;
-  }
-}
-
-/* ===========================
-   TRUST SECTION
-=========================== */
-
-.trustSection {
-  margin-top: 4rem;
-
-  h2 {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    color: #222;
-  }
-}
-
-.trustCard {
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  padding: 20px;
-  transition: 0.2s ease;
-  height: 100%;
-
-  h6 {
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 6px;
+    @media (min-width: 1024px) {
+      padding: 0 2rem;
+    }
   }
 
-  p {
-    font-size: 0.95rem;
-    color: #444;
-    line-height: 1.45;
+  .heroCard {
+    background: v.$card-white;
+    border-radius: v.$radius-card;
+    box-shadow: v.$shadow-card;
+    padding: 3rem;
+    margin-bottom: 2rem;
+
+    @media (max-width: 768px) {
+      padding: 2rem 1.5rem;
+    }
   }
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-  }
-}
+  .heroGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: center;
 
-.trustList {
-  list-style: none;
-  padding: 0;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 12px;
-
-  li {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f3f3f3;
-    font-size: 0.95rem;
-    color: #333;
+    @media (min-width: 1024px) {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 
-  li:last-child {
-    border-bottom: none;
-  }
-}
-
-/* Mobile swipe (only for first 3 cards) */
-@media (max-width: 768px) {
-  .trustSection .row {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-
-  .trustSection .col-md-6 {
-    min-width: 75%;
-  }
-
-  .trustList {
-    margin-top: 1rem;
-  }
-}
-
-/* ===========================
-   VERIFIED TUTORS SECTION
-=========================== */
-
-.verifySection {
-  margin-top: 4rem;
-  background: #f9f9ff;
-  border: 1px solid #e5e5f5;
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 1000px;
-  margin-left: auto;
-  margin-right: auto;
-
-  h2 {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    color: #222;
+  .heroContent {
     text-align: center;
-    margin-bottom: 1.2rem;
+
+    @media (min-width: 1024px) {
+      text-align: left;
+    }
   }
 
-  p {
-    color: #444;
-    font-size: 1rem;
+  .heroTitle {
+    font-size: 36px;
+    font-weight: 700;
+    color: v.$text-dark;
+    line-height: 1.2;
+    margin-bottom: 1.25rem;
+
+    @media (max-width: 768px) {
+      font-size: 28px;
+    }
+  }
+
+  .heroLead {
+    font-size: 18px;
+    color: v.$text-medium;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+
+    @media (max-width: 768px) {
+      font-size: 16px;
+    }
+  }
+
+  .heroBtns {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    @media (min-width: 1024px) {
+      justify-content: flex-start;
+    }
+  }
+
+  .btnPrimary {
+    background: linear-gradient(135deg, v.$primary-blue 0%, v.$primary-blue-dark 100%);
+    color: white;
+    border: none;
+    border-radius: v.$radius-button;
+    padding: 14px 32px;
+    font-weight: 600;
+    font-size: v.$font-size-base;
+    box-shadow: v.$shadow-button;
+    cursor: pointer;
+    transition: v.$transition-base;
+    text-decoration: none;
+    display: inline-block;
+
+    &:hover {
+      box-shadow: v.$shadow-button-hover;
+      color: white;
+    }
+  }
+
+  .btnSecondary {
+    background: white;
+    color: v.$primary-blue;
+    border: 2px solid v.$primary-blue;
+    border-radius: v.$radius-button;
+    padding: 12px 28px;
+    font-weight: 600;
+    font-size: v.$font-size-base;
+    cursor: pointer;
+    transition: v.$transition-base;
+    text-decoration: none;
+    display: inline-block;
+
+    &:hover {
+      background: #f7fafc;
+      color: v.$primary-blue;
+    }
+  }
+
+  .heroImage {
     text-align: center;
-    max-width: 720px;
-    margin: 0 auto 1.4rem auto;
-    line-height: 1.55;
-  }
-}
 
-.verifyList {
-  list-style: none;
-  padding: 0;
-  margin-top: 1.5rem;
-  max-width: 850px;
-  margin-left: auto;
-  margin-right: auto;
-
-  li {
-    display: table;
-    align-items: flex-start;
-    gap: 10px;
-    font-size: 0.98rem;
-    margin-bottom: 12px;
-    color: #333;
-    line-height: 1.45;
-
-    span {
-      font-size: 1.2rem;
+    img {
+      border-radius: v.$radius-card;
+      max-width: 100%;
+      height: auto;
     }
   }
 }
 
-@media (max-width: 600px) {
-  .verifySection {
-    padding: 22px;
+// ——— Trust Section (20 Cards) ———
+.trust {
+  padding: 4rem 0;
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+
+    @media (min-width: 640px) {
+      padding: 0 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      padding: 0 2rem;
+    }
   }
 
-  .verifyList li {
-    font-size: 0.9rem;
+  .sectionTitle {
+    font-size: 32px;
+    font-weight: 700;
+    color: v.$text-dark;
+    margin-bottom: 3rem;
+    text-align: center;
+
+    @media (max-width: 768px) {
+      font-size: 26px;
+    }
+  }
+
+  .featureGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .featureCard {
+    background: v.$card-white;
+    border-radius: v.$radius-card;
+    padding: 2rem;
+    box-shadow: v.$shadow-card;
+    transition: v.$transition-slow;
+    border: none;
+
+    &:hover {
+
+      box-shadow: v.$shadow-card-hover;
+    }
+  }
+
+  .featureTitle {
+    font-size: 17px;
+    font-weight: 600;
+    color: v.$text-dark;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .featureDesc {
+    font-size: 14px;
+    color: v.$text-medium;
+    line-height: 1.6;
+    margin: 0;
+  }
+}
+
+// ——— Verification Section ———
+.verifySection {
+  padding: 3rem 0;
+  max-width: 900px;
+  margin: 0 auto;
+
+  background: v.$card-white;
+  border-radius: v.$radius-card;
+  box-shadow: v.$shadow-card;
+  padding: 2.5rem;
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: v.$text-dark;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  p {
+    font-size: 15px;
+    color: v.$text-medium;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+
+    li {
+      padding: 0.75rem 0;
+      font-size: 15px;
+      color: v.$text-medium;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+
+      span {
+        color: v.$success-green;
+        font-weight: 700;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+
+      strong {
+        color: v.$text-dark;
+      }
+    }
+  }
+}
+
+// ——— How It Works Section ———
+.howItWorks {
+  padding: 4rem 0;
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+
+    @media (min-width: 640px) {
+      padding: 0 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      padding: 0 2rem;
+    }
+  }
+
+  .sectionTitle {
+    font-size: 32px;
+    font-weight: 700;
+    color: v.$text-dark;
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  .stepsGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .stepCard {
+    background: v.$card-white;
+    border-radius: v.$radius-card;
+    padding: 2.5rem 2rem;
+    box-shadow: v.$shadow-card;
+    text-align: center;
+    transition: v.$transition-slow;
+
+    &:hover {
+
+      box-shadow: v.$shadow-card-hover;
+    }
+
+    h5 {
+      font-size: 20px;
+      font-weight: 600;
+      color: v.$text-dark;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 15px;
+      color: v.$text-medium;
+      line-height: 1.6;
+      margin: 0;
+    }
+  }
+}
+
+// ——— CTA Section ———
+.finalCta {
+  padding: 3rem 0;
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+
+  background: v.$card-white;
+  border-radius: v.$radius-card;
+  box-shadow: v.$shadow-card;
+  padding: 3rem 2rem;
+
+  h2 {
+    font-size: 32px;
+    font-weight: 700;
+    color: v.$text-dark;
+    margin-bottom: 1rem;
+
+    @media (max-width: 768px) {
+      font-size: 26px;
+    }
+  }
+
+  p {
+    font-size: 16px;
+    color: v.$text-medium;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .btnPrimary {
+    background: linear-gradient(135deg, v.$primary-blue 0%, v.$primary-blue-dark 100%);
+    color: white;
+    border: none;
+    border-radius: v.$radius-button;
+    padding: 16px 40px;
+    font-weight: 600;
+    font-size: 17px;
+    box-shadow: v.$shadow-button;
+    cursor: pointer;
+    transition: v.$transition-base;
+    text-decoration: none;
+    display: inline-block;
+
+    &:hover {
+      box-shadow: v.$shadow-button-hover;
+      color: white;
+    }
+  }
+
+  .ctaSubtext {
+    margin-top: 1.5rem;
+    font-style: italic;
+    font-size: 14px;
+    opacity: 0.75;
+    color: v.$text-light;
+  }
+}
+
+// ——— FAQ Box ———
+.faqBox {
+  background: v.$card-white;
+  border-radius: v.$radius-card;
+  box-shadow: v.$shadow-card;
+  padding: 2.5rem;
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+
+  h3 {
+    font-size: 24px;
+    font-weight: 700;
+    color: v.$text-dark;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    font-size: 15px;
+    color: v.$text-medium;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  a {
+    background: white;
+    color: v.$primary-blue;
+    border: 2px solid v.$primary-blue;
+    border-radius: v.$radius-button;
+    padding: 12px 28px;
+    font-weight: 600;
+    font-size: v.$font-size-base;
+    cursor: pointer;
+    transition: v.$transition-base;
+    text-decoration: none;
+    display: inline-block;
+
+    &:hover {
+      background: #f7fafc;
+      color: v.$primary-blue;
+    }
+  }
+}
+
+// ——— Tutor Highlights ———
+.tutorHighlights {
+  padding: 3rem 0;
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+
+    @media (min-width: 640px) {
+      padding: 0 1.5rem;
+    }
+  }
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: v.$text-dark;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .highlightGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .highlightBox {
+    background: v.$card-white;
+    border-radius: v.$radius-card;
+    padding: 2rem;
+    box-shadow: v.$shadow-card;
+
+    h6 {
+      font-size: 17px;
+      font-weight: 600;
+      color: v.$text-dark;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      font-size: 15px;
+      color: v.$text-medium;
+      line-height: 1.6;
+      margin: 0;
+    }
+  }
+}
+
+// ——— Spacing Utilities ———
+.mt-5 {
+  margin-top: 4rem;
+}
+
+.mb-4 {
+  margin-bottom: 2rem;
+}
+
+// ——— Responsive Adjustments ———
+@media (max-width: 768px) {
+  .hero {
+    padding: 2rem 0;
+  }
+
+  .trust,
+  .howItWorks,
+  .tutorHighlights {
+    padding: 3rem 0;
+  }
+
+  .finalCta {
+    padding: 2rem 1.5rem;
   }
 }

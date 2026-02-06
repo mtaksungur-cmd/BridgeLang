@@ -33,21 +33,25 @@ export default function PricingTable() {
                                     <span className={styles.price}>
                                         £0 <small>(one-time access)</small>
                                     </span>
+                                    <div className={styles.planDesc}>Explore tutors and start at your own pace.</div>
                                 </td>
                                 <td>
                                     <span className={styles.price}>
                                         £4.99 <small>(1-month access)</small>
                                     </span>
+                                    <div className={styles.planDesc}>A simple step into regular learning.</div>
                                 </td>
                                 <td>
                                     <span className={styles.price}>
                                         £9.99 <small>(1-month access)</small>
                                     </span>
+                                    <div className={styles.planDesc}>Designed for consistent progress.</div>
                                 </td>
                                 <td className={`${styles.vipCol} ${styles.vipCell}`}>
                                     <span className={styles.price}>
                                         £14.99 <small>(1-month access)</small>
                                     </span>
+                                    <div className={styles.planDesc}>Maximum flexibility for committed learners.</div>
                                 </td>
                             </tr>
 
@@ -94,13 +98,14 @@ export default function PricingTable() {
                             </div>
                             <div className={styles.featureItem}>
                                 <CheckCircleIcon /> One 15-minute intro lesson per tutor (£4.99)
+                                <div className={styles.fairUse}>Available to all learners · Fair-use policy applies</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <p className={styles.footerNote}>
-                    No long-term commitment. Choose a tutor and continue only if it's the right match.
+                    No long-term commitment. Choose a tutor and continue only if it&apos;s the right match.
                 </p>
 
             </div>

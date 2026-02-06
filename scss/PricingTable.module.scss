@@ -1,178 +1,292 @@
-@use "sass:color";
+@use '../styles/variables' as v;
+
+// ==========================================
+// Pricing Table - Reference Design
+// Navy header, clean rows, green checkmarks
+// ==========================================
 
 .section {
-    background-color: #f8f9fa;
-    padding: 5rem 0;
+    padding: 4rem 0;
+    background: transparent;
 }
 
 .header {
     text-align: center;
     margin-bottom: 3rem;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
 
     h2 {
-        font-weight: 800;
-        color: #111;
+        font-size: 32px;
+        font-weight: 700;
+        color: v.$text-dark;
         margin-bottom: 1rem;
-        font-size: 2.25rem;
+        letter-spacing: -0.5px;
     }
 
     p {
-        font-size: 1.15rem;
-        color: #555;
+        font-size: 16px;
+        color: v.$text-medium;
         line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
     }
 }
 
+// Table Container (White card from reference)
 .tableContainer {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
-    padding: 2rem;
-    overflow-x: auto;
+    background: v.$card-white;
+    border-radius: v.$radius-card;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
+// Table (Exact reference match)
 .table {
     width: 100%;
-    min-width: 700px;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
 
-    th,
-    td {
-        padding: 1.5rem;
-        text-align: center;
-        border-bottom: 1px solid #f0f0f0;
-        vertical-align: middle;
-    }
+    // Navy Header (From reference: #3d5a99)
+    thead {
+        background: linear-gradient(135deg, #3d5a99 0%, #2d4479 100%);
+        color: white;
 
-    th {
-        font-weight: 700;
-        font-size: 1.1rem;
-        color: #222;
-        background: #fff;
+        th {
+            padding: 1.5rem 1.25rem;
+            font-weight: 600;
+            text-align: center;
+            font-size: 16px;
+            letter-spacing: 0.3px;
 
-        &.featureCol {
-            text-align: left;
-            width: 25%;
-            color: #666;
-            font-size: 0.95rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            &.featureCol {
+                text-align: left;
+                padding-left: 2rem;
+            }
+
+            &.vipCol {
+                background: rgba(255, 255, 255, 0.1);
+            }
         }
     }
 
-    /* VIP Column Highlight */
-    .vipCol {
-        background-color: #f0f7ff;
-        position: relative;
-        border-radius: 12px 12px 0 0;
+    tbody {
+        tr {
+            border-bottom: 1px solid #e2e8f0;
 
-        &.vipCell {
-            background-color: #f0f7ff;
-            border-radius: 0;
+            &:nth-child(even) {
+                background: #f8fafc;
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            td {
+                padding: 1.5rem 1.25rem;
+                text-align: center;
+                font-size: 15px;
+                color: v.$text-medium;
+                vertical-align: middle;
+
+                &:first-child {
+                    text-align: left;
+                    font-weight: 600;
+                    color: v.$text-dark;
+                    padding-left: 2rem;
+                }
+
+                &.vipCol {
+                    background: rgba(61, 90, 153, 0.03);
+                }
+
+                &.vipCell {
+                    font-weight: 600;
+                    color: #3d5a99;
+                }
+
+                &.vipLast {
+                    border-bottom-right-radius: v.$radius-card;
+                }
+            }
         }
-
-        &.vipLast {
-            border-radius: 0 0 12px 12px;
-        }
-    }
-
-    td {
-        font-size: 1.05rem;
-        color: #333;
-    }
-
-    tr:last-child td {
-        border-bottom: none;
     }
 }
 
+// Price Styling
 .price {
-    font-weight: 800;
-    font-size: 1.35rem;
-    color: #000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.2rem;
+    display: inline-block;
+    font-weight: 700;
+    font-size: 18px;
+    color: v.$text-dark;
 
     small {
         font-weight: 400;
-        font-size: 0.85rem;
-        color: #777;
+        font-size: 13px;
+        color: v.$text-medium;
+        display: block;
+        margin-top: 0.25rem;
     }
 }
 
-.tooltipIcon {
-    display: inline-flex;
-    margin-left: 0.4rem;
-    color: #999;
-    cursor: help;
-    vertical-align: middle;
-    transition: color 0.2s;
-
-    &:hover {
-        color: #0d6efd;
-    }
-}
-
-.rewardNote {
-    display: block;
-    font-size: 0.75rem;
-    color: #888;
-    font-weight: 400;
-    margin-top: 0.25rem;
+// Plan Descriptions (below price)
+.planDesc {
+    font-size: 13px;
+    color: v.$text-light;
+    margin-top: 0.5rem;
+    line-height: 1.4;
     font-style: italic;
-    max-width: 200px;
+    max-width: 180px;
     margin-left: auto;
     margin-right: auto;
+
+    @media (max-width: 768px) {
+        font-size: 12px;
+        max-width: 140px;
+    }
 }
 
+// Fair-use policy note
+.fairUse {
+    font-size: 12px;
+    color: v.$text-light;
+    margin-top: 0.375rem;
+    font-style: italic;
+}
+
+// Tooltip Icon
+.tooltipIcon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.5rem;
+    color: v.$text-light;
+    cursor: help;
+    transition: v.$transition-base;
+
+    &:hover {
+        color: v.$primary-blue;
+    }
+
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+// "All Plans Include" Section
 .includes {
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid #eaeaea;
+    padding: 2.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-top: 2px solid #e2e8f0;
 
     h4 {
-        text-align: center;
-        font-size: 1rem;
+        font-size: 20px;
         font-weight: 700;
-        text-transform: uppercase;
-        color: #999;
-        letter-spacing: 1px;
-        margin-bottom: 2rem;
+        color: v.$text-dark;
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.3px;
     }
 }
 
 .featuresGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.featureItem {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2rem;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 15px;
+    color: v.$text-medium;
+    line-height: 1.5;
 
-    .featureItem {
-        display: flex;
-        align-items: center;
-        font-weight: 500;
-        color: #444;
+    svg {
+        width: 24px;
+        height: 24px;
+        color: #22c55e; // Green from reference
+        flex-shrink: 0;
+    }
+}
 
-        svg {
-            width: 22px;
-            height: 22px;
-            color: #198754;
-            margin-right: 0.75rem;
-            flex-shrink: 0;
+// Footer Note
+.footerNote {
+    text-align: center;
+    font-size: 14px;
+    color: v.$text-light;
+    margin-top: 2rem;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+    .table {
+        font-size: 14px;
+
+        thead th,
+        tbody td {
+            padding: 1rem 0.75rem;
+        }
+
+        thead th.featureCol,
+        tbody td:first-child {
+            padding-left: 1.5rem;
+        }
+    }
+
+    .price {
+        font-size: 16px;
+
+        small {
+            font-size: 12px;
         }
     }
 }
 
-.footerNote {
-    text-align: center;
-    margin-top: 2.5rem;
-    font-size: 0.95rem;
-    color: #666;
-    font-weight: 500;
+@media (max-width: 768px) {
+    .header h2 {
+        font-size: 26px;
+    }
+
+    .table {
+        display: block;
+        overflow-x: auto;
+
+        thead th,
+        tbody td {
+            padding: 0.75rem 0.5rem;
+            font-size: 13px;
+        }
+
+        thead th.featureCol,
+        tbody td:first-child {
+            padding-left: 1rem;
+            font-size: 13px;
+        }
+    }
+
+    .includes {
+        padding: 1.5rem;
+
+        h4 {
+            font-size: 18px;
+        }
+    }
+
+    .featuresGrid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .featureItem {
+        font-size: 14px;
+    }
+
+    .price {
+        font-size: 15px;
+    }
 }

@@ -4,7 +4,9 @@ import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';
-import styles from '../../scss/TeacherLessons.module.scss';
+import { Calendar, Clock, MapPin, CheckCircle, XCircle, Video, AlertCircle, User } from 'lucide-react';
+import notify from '../../lib/toast';
+import LessonCountdown from '../../components/LessonCountdown';
 
 function parseFlexibleTime(timeStr) {
   if (!timeStr) return null;
@@ -49,6 +51,7 @@ function getLessonEndMs(b) {
 export default function TeacherLessons() {
   const [bookings, setBookings] = useState([]);
   const [students, setStudents] = useState({});
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -92,13 +95,86 @@ export default function TeacherLessons() {
         });
 
         setBookings(data);
+        setLoading(false);
       } catch (err) {
         console.error('Firestore query failed:', err);
+        setLoading(false);
       }
     });
 
     return () => unsub();
   }, [router]);
+
+  const handleApprove = async (booking) => {
+    try {
+      console.log('Approving booking:', booking.id);
+
+      // Create Daily.co room
+      const dailyResponse = await fetch('/api/daily/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: booking.date,
+          startTime: booking.startTime,
+          duration: booking.duration || 60,
+          timezone: booking.timezone || 'Europe/London'
+        })
+      });
+
+      if (!dailyResponse.ok) {
+        throw new Error('Failed to create video room');
+      }
+
+      const { url } = await dailyResponse.json();
+      console.log('Daily.co room created:', url);
+
+      // Update booking with approval and meeting link
+      await updateDoc(doc(db, 'bookings', booking.id), {
+        status: 'approved',
+        teacherApproved: true,
+        meetingLink: url
+      });
+
+      setBookings((prev) => prev.map((r) =>
+        r.id === booking.id ? { ...r, status: 'approved', teacherApproved: true, meetingLink: url } : r
+      ));
+
+      notify.success('Booking approved and video room created!');
+    } catch (err) {
+      console.error('Approve error:', err);
+      notify.error('Failed to approve: ' + err.message);
+    }
+  };
+
+  const handleReject = async (booking) => {
+    const reason = prompt('Rejection reason (optional, student will see this):');
+    if (reason === null) return;
+
+    if (!window.confirm('Student will receive full refund. Continue?')) return;
+
+    try {
+      console.log('Processing rejection...');
+
+      const response = await fetch('/api/booking/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: booking.id, reason: reason || 'Teacher unavailable' })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Rejection failed');
+      }
+
+      await updateDoc(doc(db, 'bookings', booking.id), { status: 'rejected', meetingLink: null });
+      setBookings((prev) => prev.map((r) => r.id === booking.id ? { ...r, status: 'rejected', meetingLink: null } : r));
+
+      notify.success('Booking rejected and student refunded!');
+    } catch (err) {
+      console.error('Reject error:', err);
+      notify.error('Failed to reject: ' + err.message);
+    }
+  };
 
   const handleComplete = async (booking) => {
     try {
@@ -114,7 +190,7 @@ export default function TeacherLessons() {
       await updateDoc(doc(db, 'bookings', booking.id), updates);
       setBookings((prev) => prev.map((r) => (r.id === booking.id ? { ...r, ...updates } : r)));
 
-      alert('You confirmed the lesson.');
+      notify.success('✅ Lesson marked as completed!');
 
       await fetch('/api/booking/confirm', {
         method: 'POST',
@@ -127,7 +203,7 @@ export default function TeacherLessons() {
 
       const latestSnap = await getDoc(doc(db, 'bookings', booking.id));
       const latest = latestSnap.data();
-      
+
       if (latest?.teacherApproved && latest?.studentConfirmed) {
         await updateDoc(doc(db, 'bookings', booking.id), { status: 'approved', payoutSent: false });
         await fetch('/api/transfer-payout', {
@@ -138,98 +214,357 @@ export default function TeacherLessons() {
       }
     } catch (err) {
       console.error('handleComplete error:', err);
-      alert('Something went wrong confirming the lesson.');
+      notify.error('Something went wrong confirming the lesson.');
     }
   };
 
+  const getStatusColor = (status) => {
+    const colors = {
+      'pending': { bg: '#fef3c7', border: '#fde047', text: '#92400e' },
+      'confirmed': { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af' },
+      'approved': { bg: '#d1fae5', border: '#6ee7b7', text: '#065f46' },
+      'rejected': { bg: '#fee2e2', border: '#fca5a5', text: '#991b1b' },
+      'teacher_approved': { bg: '#e0e7ff', border: '#a5b4fc', text: '#3730a3' },
+    };
+    return colors[status] || colors.pending;
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: '48px', height: '48px', border: '4px solid #e5e7eb', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
+          <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading lessons...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.container}>
-      <h2 className={styles.title}>📩 Your Lessons</h2>
+    <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '2rem 1rem' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+            📚 My Lessons
+          </h1>
+          <p style={{ fontSize: '0.9375rem', color: '#64748b', margin: 0 }}>
+            Manage your bookings and upcoming lessons
+          </p>
+        </div>
 
-      {bookings.length === 0 ? (
-        <p className={styles.empty}>No lessons found.</p>
-      ) : (
-        <div className={styles.grid}>
-          {bookings.map((r) => {
-            const student = students[r.studentId] || {};
+        {bookings.length === 0 ? (
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '4rem 2rem',
+            textAlign: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}>
+            <Calendar style={{ width: '64px', height: '64px', color: '#cbd5e1', margin: '0 auto 1.5rem' }} />
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+              No lessons yet
+            </h3>
+            <p style={{ fontSize: '0.9375rem', color: '#64748b', margin: 0 }}>
+              Your upcoming lessons will appear here
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: '1.25rem' }}>
+            {bookings.map((booking) => {
+              const student = students[booking.studentId] || {};
+              const statusColors = getStatusColor(booking.status);
 
-            const endMs = getLessonEndMs(r);
-            const showCompleteBtn =
-              ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(r.status) &&
-              endMs &&
-              Date.now() > endMs &&
-              !r.teacherApproved;
+              const endMs = getLessonEndMs(booking);
+              const showCompleteBtn =
+                ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(booking.status) &&
+                endMs &&
+                Date.now() > endMs &&
+                !booking.teacherApproved;
 
-            return (
-              <div key={r.id} className={styles.card}>
-                <div className={styles.header}>
-                  {student.profilePhotoUrl && (
-                    <Image
-                      src={student.profilePhotoUrl}
-                      alt="Student"
-                      className={styles.avatar}
-                      width={44}
-                      height={44}
-                    />
-                  )}
-                  <div className={styles.headerInfo}>
-                    {/* 🔹 Öğrenci adına tıklayınca profile gider */}
-                    <div
-                      className={styles.studentName}
-                      onClick={() => router.push(`/teacher/students/${r.studentId}`)}
-                      style={{ cursor: 'pointer', color: '#1464ff', textDecoration: 'underline' }}
-                    >
-                      <strong>Student:</strong> {student.name || '-'}
+              // ✅ FIX: Show approve/reject buttons for BOTH pending AND confirmed (paid bookings)
+              // Teacher must approve even if student paid
+              const isPending = booking.status === 'pending' || booking.status === 'confirmed';
+
+              return (
+                <div key={booking.id} style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  border: '1px solid #e5e7eb'
+                }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+                    {student.profilePhotoUrl ? (
+                      <Image
+                        src={student.profilePhotoUrl}
+                        alt={student.name || 'Student'}
+                        width={56}
+                        height={56}
+                        style={{ borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        background: '#e0e7ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <User style={{ width: '28px', height: '28px', color: '#4f46e5' }} />
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <h3
+                        style={{
+                          fontSize: '1.125rem',
+                          fontWeight: '600',
+                          color: '#2563eb',
+                          margin: '0 0 0.25rem 0',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => router.push(`/teacher/students/${booking.studentId}`)}
+                      >
+                        {student.name || 'Student'}
+                      </h3>
+                      {student.level && (
+                        <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
+                          {student.level}
+                        </p>
+                      )}
                     </div>
-                    {student.level && <div className={styles.studentLevel}>({student.level})</div>}
+                    <div style={{
+                      padding: '0.5rem 1rem',
+                      background: statusColors.bg,
+                      border: `1px solid ${statusColors.border}`,
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      color: statusColors.text,
+                      textTransform: 'capitalize'
+                    }}>
+                      {booking.status.replace(/_/g, ' ')}
+                    </div>
+                  </div>
+
+                  {/* Details Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                      <div style={{ width: '36px', height: '36px', background: '#eff6ff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Calendar style={{ width: '18px', height: '18px', color: '#2563eb' }} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.125rem 0' }}>Date</p>
+                        <p style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>
+                          {new Date(booking.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                      <div style={{ width: '36px', height: '36px', background: '#f0fdf4', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Clock style={{ width: '18px', height: '18px', color: '#10b981' }} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.125rem 0' }}>Time</p>
+                        <p style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>
+                          {booking.startTime} - {booking.endTime}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                      <div style={{ width: '36px', height: '36px', background: '#fef3c7', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <MapPin style={{ width: '18px', height: '18px', color: '#f59e0b' }} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.125rem 0' }}>Location</p>
+                        <p style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>
+                          {booking.location || 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                      <div style={{ width: '36px', height: '36px', background: '#f5f3ff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Clock style={{ width: '18px', height: '18px', color: '#8b5cf6' }} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.125rem 0' }}>Duration</p>
+                        <p style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>
+                          {booking.duration} minutes
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meeting Link */}
+                  {booking.meetingLink && (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <a
+                        href={booking.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.625rem 1rem',
+                          background: '#8b5cf6',
+                          color: 'white',
+                          borderRadius: '8px',
+                          textDecoration: 'none',
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#7c3aed'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = '#8b5cf6'}
+                      >
+                        <Video style={{ width: '16px', height: '16px' }} />
+                        Join Lesson
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    {isPending && (
+                      <>
+                        <button
+                          onClick={() => handleApprove(booking)}
+                          style={{
+                            flex: '1',
+                            minWidth: '140px',
+                            padding: '0.75rem 1.25rem',
+                            background: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.9375rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                          }}
+                        >
+                          <CheckCircle style={{ width: '18px', height: '18px' }} />
+                          Approve Booking
+                        </button>
+                        <button
+                          onClick={() => handleReject(booking)}
+                          style={{
+                            flex: '1',
+                            minWidth: '140px',
+                            padding: '0.75rem 1.25rem',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.9375rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                          }}
+                        >
+                          <XCircle style={{ width: '18px', height: '18px' }} />
+                          Reject
+                        </button>
+                      </>
+                    )}
+
+                    {showCompleteBtn && (
+                      <button
+                        onClick={() => handleComplete(booking)}
+                        style={{
+                          flex: '1',
+                          minWidth: '200px',
+                          padding: '0.75rem 1.25rem',
+                          background: '#2563eb',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '0.9375rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem'
+                        }}
+                      >
+                        <CheckCircle style={{ width: '18px', height: '18px' }} />
+                        Confirm Lesson Completed
+                      </button>
+                    )}
+
+                    {/* Show completion status only if lesson ended AND teacher confirmed */}
+                    {(() => {
+                      const endMs = getLessonEndMs(booking);
+                      const now = Date.now();
+                      const lessonEnded = endMs && now > endMs;
+                      const isCompleted = booking.status === 'approved' && lessonEnded && booking.teacherApproved;
+
+                      return isCompleted ? (
+                        <div style={{
+                          flex: '1',
+                          padding: '0.75rem 1.25rem',
+                          background: '#d1fae5',
+                          border: '1px solid #6ee7b7',
+                          borderRadius: '8px',
+                          fontSize: '0.9375rem',
+                          fontWeight: '600',
+                          color: '#065f46',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}>
+                          <CheckCircle style={{ width: '18px', height: '18px' }} />
+                          Lesson Completed
+                        </div>
+                      ) : null;
+                    })()}
+
+                    <button
+                      onClick={() => router.push(`/teacher/report?bookingId=${booking.id}`)}
+                      style={{
+                        padding: '0.75rem 1.25rem',
+                        background: '#f3f4f6',
+                        color: '#6b7280',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      <AlertCircle style={{ width: '16px', height: '16px' }} />
+                      Report
+                    </button>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                <div className={styles.row}>
-                  <span>
-                    <strong>Date:</strong> {r.date}
-                  </span>
-                  <span>
-                    <strong>Time:</strong> {r.startTime} – {r.endTime}
-                  </span>
-                </div>
-
-                <div className={styles.row}>
-                  <span>
-                    <strong>Location:</strong> {r.location || 'Not specified'}
-                  </span>
-                </div>
-
-                <div className={styles.statusRow}>
-                  <span className={`${styles.badge} ${styles[`badge--${r.status}`]}`}>{r.status}</span>
-                  {r.meetingLink && (
-                    <a href={r.meetingLink} target="_blank" rel="noopener noreferrer" className={styles.link}>
-                      🔗 Join Lesson
-                    </a>
-                  )}
-                </div>
-
-                <div className={styles.actions}>
-                  {showCompleteBtn && (
-                    <button className={styles.primaryBtn} onClick={() => handleComplete(r)}>
-                      🎓 Confirm Lesson Completed
-                    </button>
-                  )}
-                  {r.status === 'approved' && (
-                    <p className={styles.approved}>🎉 Lesson approved by both sides.</p>
-                  )}
-                  <button
-                    className={styles.dangerBtn}
-                    onClick={() => router.push(`/teacher/report?bookingId=${r.id}`)}
-                  >
-                    🛑 Report
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <style jsx>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

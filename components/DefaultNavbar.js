@@ -42,7 +42,7 @@ export default function DefaultNavbar() {
             width={40}
             height={40}
           />
-          <span className={styles.logoText}>BridgeLang</span>
+          <span className={styles.logoText}>BridgeLang<sup className={styles.trademark}>®</sup></span>
         </Link>
 
         <button

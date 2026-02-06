@@ -1,10 +1,18 @@
 .navbar {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 12px rgba(31, 45, 85, 0.06), 0 1px 4px rgba(31, 45, 85, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 16px rgba(31, 45, 85, 0.08), 0 2px 8px rgba(31, 45, 85, 0.06);
+  }
 }
 
 .container {
@@ -38,9 +46,17 @@
 }
 
 .logoText {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e3a8a;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #1e293b;
+}
+
+.trademark {
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 2px;
+  color: #64748b;
 }
 
 .mobileToggle {
@@ -71,7 +87,7 @@
   margin: 0;
   padding: 0;
   align-items: center;
-  gap: 2rem;
+  gap: 1.25rem;
 
   @media (max-width: 1023px) {
     position: absolute;
@@ -83,7 +99,7 @@
     padding: 1.5rem;
     gap: 1rem;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-120%);
+
     opacity: 0;
     transition: all 0.3s;
   }
@@ -91,7 +107,7 @@
 
 .menuOpen {
   @media (max-width: 1023px) {
-    transform: translateY(0);
+
     opacity: 1;
   }
 }
@@ -111,6 +127,11 @@
 
 .dropdown {
   position: relative;
+
+  &:hover .dropdownMenu {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 .dropdownToggle {
@@ -133,10 +154,6 @@
 .caret {
   font-size: 10px;
   transition: transform 0.2s;
-
-  .dropdownToggle:hover & {
-    transform: translateY(2px);
-  }
 }
 
 .dropdownMenu {
@@ -150,10 +167,9 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   list-style: none;
   padding: 8px 0;
-  min-width: 200px;
+  min-width: 220px;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-8px);
   transition: all 0.2s;
 
   @media (max-width: 1023px) {
@@ -161,13 +177,15 @@
     box-shadow: none;
     border: none;
     padding: 8px 16px;
+    opacity: 1;
+    visibility: visible;
   }
 }
 
 .show {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+
 }
 
 .dropdownItem {
@@ -196,7 +214,7 @@
 
   &:hover {
     background: #1d4ed8;
-    transform: translateY(-1px);
+
   }
 }
 
@@ -213,6 +231,6 @@
 
   &:hover {
     background: #b91c1c;
-    transform: translateY(-1px);
+
   }
 }

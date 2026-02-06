@@ -30,7 +30,6 @@
 
   &:hover {
     box-shadow: 0 6px 18px rgba(25, 36, 60, 0.08);
-    transform: translateY(-2px);
   }
 }
 
@@ -127,7 +126,7 @@
 }
 
 .primaryBtn {
-  background: v.$primary-color;
+  background: v.$primary-blue;
   color: #fff;
   border: none;
   border-radius: 10px;

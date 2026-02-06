@@ -1,15 +1,90 @@
-// styles/_variables.scss
+// ==========================================
+// BridgeLang Custom Design System Variables
+// Inspired by references, uniquely BridgeLang
+// ==========================================
 
-// ——— Renk Paleti ———
-$primary-color:   #1F3B70; // Lacivert
-$accent-color:    #D73B3E; // Canlı Kırmızı
-$bg-color:        #F8F5F0; // Krem
-$text-color:      #222222; // Koyu Gri
-$hover-color:     #4B89C4; // Açık Mavi
-$warning-color:   #F6A800; // Altın Sarı
+// ——— Color Palette (BridgeLang Brand) ———
+// Backgrounds
+$bg-lavender: #eef2f7; // Slightly cooler lavender
+$bg-lavender-dark: #dde3ee; // Custom gradient end
+$card-white: #ffffff; // Pure white cards
 
-// ——— Spacing & Font ———
-$spacer-sm:  0.5rem;
-$spacer:     1rem;
-$spacer-lg:  2rem;
-$font-stack: system-ui, sans-serif;
+// Primary Brand Colors (BridgeLang Unique)
+$primary-blue: #4a6fbd; // Slightly adjusted blue
+$primary-blue-dark: #37529b; // Custom dark blue
+$accent-purple: #6b5db8; // Unique purple accent
+$accent-teal: #22b8aa; // Modern teal for highlights
+
+// Headers & UI Elements (Custom Navy-Indigo)
+$header-primary: #3f5a9c; // BridgeLang header blue
+$header-secondary: #2f4578; // Darker gradient variant
+
+// Semantic Colors (Warmer palette)
+$success-green: #28c76f; // Warmer green
+$warning-amber: #ff9f43; // Warm amber
+$danger-coral: #ea5455; // Coral red
+
+// Typography Colors
+$text-dark: #1e2532; // Slightly warmer dark
+$text-medium: #4a5568; // Body text
+$text-light: #718096; // Muted text, labels
+$text-muted: #a0aec0; // Placeholders
+
+// Borders & Dividers
+$border-light: #e4e9f0; // Subtle borders
+$border-medium: #cbd5e1; // Input borders
+
+
+// ——— Shadows (Custom BridgeLang Style) ———
+$shadow-card: 0 16px 48px rgba(31, 45, 85, 0.11);
+$shadow-card-hover: 0 20px 56px rgba(31, 45, 85, 0.15);
+$shadow-button: 0 6px 16px rgba(63, 90, 156, 0.35);
+$shadow-button-hover: 0 8px 24px rgba(63, 90, 156, 0.45);
+$shadow-input-focus: 0 0 0 4px rgba(63, 90, 156, 0.12);
+$shadow-subtle: 0 2px 8px rgba(31, 45, 85, 0.06);
+
+
+// ——— Border Radius (BridgeLang Custom) ———
+$radius-card: 20px; // Slightly less rounded than reference
+$radius-input: 10px; // Medium rounded inputs
+$radius-button: 9999px; // Pill-shaped (same)
+$radius-badge: 6px; // Small badges
+
+
+// ——— Spacing (Premium, Generous) ———
+$card-padding: 2.5rem; // 40px - card interior
+$card-padding-lg: 3rem; // 48px - larger cards
+$section-gap: 2rem; // 32px - between sections
+$form-gap: 1.25rem; // 20px - between form fields
+$grid-gap: 2rem; // 32px - grid spacing
+
+// ——— Typography ———
+$font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+$font-size-xs: 13px;
+$font-size-sm: 14px;
+$font-size-base: 15px;
+$font-size-lg: 18px;
+$font-size-xl: 20px;
+$font-size-2xl: 24px;
+$font-size-3xl: 28px;
+
+$line-height-tight: 1.2;
+$line-height-base: 1.6;
+$line-height-loose: 1.8;
+
+// ——— Z-Index Layers ———
+$z-navbar: 1000;
+$z-modal-overlay: 2000;
+$z-modal: 2100;
+$z-tooltip: 3000;
+
+// ——— Transitions ———
+$transition-base: all 0.2s ease;
+$transition-slow: all 0.3s ease;
+
+// ——— Backward Compatibility Aliases ———
+// For existing SCSS files that haven't been refactored yet
+$spacer-sm: 0.5rem; // 8px
+$spacer: 1rem; // 16px
+$spacer-lg: 2rem; // 32px

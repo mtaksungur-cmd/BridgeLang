@@ -1,412 +1,618 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { auth, db } from '../../lib/firebase';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-// import ReCAPTCHA from 'react-google-recaptcha';
-import styles from '../../scss/StudentRegister.module.scss';
-import Script from "next/script";
+import { getErrorMessage, getErrorCode } from '../../utils/firebaseErrors';
+import { Check, ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function StudentRegister() {
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
-    dob: '',
-    parentName: '',
-    parentEmail: '',
-    city: '',
-    country: 'England',
-    phone: '',
-    level: '',
-    intro: '',
-    profilePhoto: null,
-    learning_goals: {},
-    otherGoal: '',
-    acceptTerms: false,
+    country: 'United Kingdom',
+    nativeLanguage: '',
+    learningGoals: [],
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  // const recaptchaRef = useRef(null);
+  const [expandedCategories, setExpandedCategories] = useState({});
 
-  const goalCategories = {
-    exam: {
-      label: 'Exam & Academic Goals',
-      options: [
-        'IELTS (Academic / General)',
-        'TOEFL (iBT)',
-        'PTE (Pearson Test of English)',
-        'Cambridge Exams',
-        'OET (Occupational English Test)',
-        'SAT / ACT English',
-        'EAP (English for Academic Purposes)',
-        'Essay Writing / Research Skills',
-        'Academic Presentations',
-      ],
-      cambridgeLevels: ['KET', 'PET', 'FCE', 'CAE', 'CPE'],
-    },
-    professional: {
-      label: 'Professional & Career Goals',
-      options: [
-        'Business English',
-        'Workplace Communication & Writing',
-        'Interview Preparation',
-        'Presentation Skills',
-        'English for Healthcare / Nursing (NHS)',
-        'English for IT / Engineering / Technology',
-        'English for Hospitality / Tourism',
-        'English for Retail / Customer Service',
-        'CV & Cover Letter Writing',
-      ],
-    },
-    general: {
-      label: 'General & Social Goals',
-      options: [
-        'Everyday English',
-        'Conversational Fluency',
-        'Grammar & Writing Skills',
-        'Pronunciation & Accent Reduction',
-        'Listening & Speaking Confidence',
-        'English for Travel',
-        'Cultural English (films, music, media)',
-        'Modern English Expressions and Fluency',
-      ],
-    },
-    personal: {
-      label: 'Personal & Integration Goals',
-      options: [
-        'English for Immigration / Citizenship',
-        'English for Life in the UK',
-        'Parent Support English',
-        'Social English',
-        'Integration & Cultural Understanding',
-        'English for Hobbies',
-        'Other',
-      ],
-    },
-    teen: {
-      label: 'Teen Learners / Young Learners (Ages 14–17)',
-      options: [
-        'School Projects & Presentations',
-        'Speaking Confidence for Teenagers',
-        'English for Exams (GCSE / A-Level)',
-        'Creative English (Storytelling, Drama, Games)',
-        'Homework & Academic Support',
-      ],
-    },
-    digital: {
-      label: 'Digital & Modern English Goals',
-      options: [
-        'English for Social Media / Influencers',
-        'English for Content Creators',
-        'English for Remote Work & Freelancing',
-        'English for Online Meetings & Presentations',
-        'English for AI Tools & Digital Literacy',
-        'Email Etiquette & Online Communication',
-        'Networking & Collaboration in English',
-      ],
-    },
-  };
-
-  const calcAge = (dob) => {
-    if (!dob) return null;
-    const birth = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    return age;
-  };
-  const age = calcAge(form.dob);
-
-  const handleGoalToggle = (category, goal) => {
-    setForm((prev) => {
-      const prevGoals = prev.learning_goals[category] || [];
-      const updated =
-        prevGoals.includes(goal)
-          ? prevGoals.filter((g) => g !== goal)
-          : [...prevGoals, goal];
-      return {
-        ...prev,
-        learning_goals: { ...prev.learning_goals, [category]: updated },
-      };
-    });
+  const learningGoalCategories = {
+    'Exam & Academic Goals': [
+      'IELTS (Academic / General)',
+      'TOEFL (iBT)',
+      'PTE (Pearson Test of English)',
+      'Cambridge Exams',
+      'OET (Occupational English Test)',
+      'SAT / ACT English',
+      'EAP (English for Academic Purposes)',
+      'Essay Writing / Research Skills',
+      'Academic Presentations'
+    ],
+    'Professional & Career Goals': [
+      'Business English',
+      'Workplace Communication & Writing',
+      'Interview Preparation',
+      'Presentation Skills',
+      'English for Healthcare / Nursing (NHS)',
+      'English for IT / Engineering / Technology',
+      'English for Hospitality / Tourism',
+      'English for Retail / Customer Service',
+      'CV & Cover Letter Writing'
+    ],
+    'General & Social Goals': [
+      'Everyday English',
+      'Conversational Fluency',
+      'Grammar & Writing Skills',
+      'Pronunciation & Accent Reduction',
+      'Listening & Speaking Confidence',
+      'English for Travel',
+      'Cultural English (films, music, media)',
+      'Modern English Expressions and Fluency'
+    ],
+    'Personal & Integration Goals': [
+      'English for Immigration / Citizenship',
+      'English for Life in the UK',
+      'Parent Support English',
+      'Social English',
+      'Integration & Cultural Understanding',
+      'English for Hobbies',
+      'Other'
+    ],
+    'Digital & Modern English Goals': [
+      'English for Social Media / Influencers',
+      'English for Content Creators',
+      'English for Remote Work & Freelancing',
+      'English for Online Meetings & Presentations',
+      'English for AI Tools & Digital Literacy',
+      'Email Etiquette & Online Communication',
+      'Networking & Collaboration in English'
+    ]
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
-    if (type === 'file') {
-      setForm((p) => ({ ...p, profilePhoto: files?.[0] || null }));
-    } else if (type === 'checkbox') {
-      setForm((p) => ({ ...p, [name]: checked }));
-    } else {
-      setForm((p) => ({ ...p, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
   };
 
-  const uploadFileViaApi = async (file) => {
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-    const data = await res.json();
-    if (!res.ok || !data?.url) throw new Error('Image upload failed');
-    return data.url;
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const toggleGoal = (goal) => {
+    setForm(prev => ({
+      ...prev,
+      learningGoals: prev.learningGoals.includes(goal)
+        ? prev.learningGoals.filter(g => g !== goal)
+        : [...prev.learningGoals, goal]
+    }));
+  };
+
+  const handleNext = () => {
     setError('');
-    setSuccess(false);
 
-    const flatGoals = Object.values(form.learning_goals).flat();
-    if (flatGoals.length === 0 && !form.otherGoal.trim())
-      return setError('Please select at least one learning goal.');
-    if (form.otherGoal.length > 250)
-      return setError('Other goal must be under 250 characters.');
-    if (!form.acceptTerms)
-      return setError('You must accept the Terms and Privacy Policy.');
+    if (step === 1) {
+      if (!form.name || !form.email || !form.password) {
+        setError('Please fill in all required fields.');
+        return;
+      }
+      if (form.password.length < 6) {
+        setError('Password must be at least 6 characters.');
+        return;
+      }
+    }
 
-    const age = calcAge(form.dob);
-    if (age < 14)
-      return setError('You must be at least 14 years old to register.');
+    setStep(step + 1);
+  };
 
+  const handlePrev = () => {
+    setError('');
+    setStep(step - 1);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setSubmitting(true);
+    setError('');
+
     try {
-      // const token = await recaptchaRef.current.executeAsync();
-      // recaptchaRef.current.reset();
-
       const email = form.email.trim().toLowerCase();
-      const { user } = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        form.password
-      );
 
-      let profilePhotoUrl = '';
-      if (form.profilePhoto)
-        profilePhotoUrl = await uploadFileViaApi(form.profilePhoto);
+      if (form.password.length < 6) {
+        throw new Error('auth/weak-password');
+      }
+
+      // ✅ CHECK FOR DUPLICATE EMAIL ACROSS ALL ROLES
+      console.log('Checking for existing user with email:', email);
+      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const usersRef = collection(db, 'users');
+      const emailQuery = query(usersRef, where('email', '==', email));
+      const existingUsers = await getDocs(emailQuery);
+
+      if (!existingUsers.empty) {
+        const existingUser = existingUsers.docs[0].data();
+        const existingRole = existingUser.role;
+
+        if (existingRole === 'student') {
+          throw new Error('This email is already registered as a student account. Please sign in or use a different email.');
+        } else if (existingRole === 'teacher') {
+          throw new Error('This email is already registered as a teacher account. Please sign in or use a different email.');
+        } else {
+          throw new Error('This email is already in use. Please sign in or use a different email.');
+        }
+      }
+
+      const { user } = await createUserWithEmailAndPassword(auth, email, form.password);
 
       await setDoc(doc(db, 'users', user.uid), {
         name: form.name.trim(),
         email,
-        dob: form.dob,
-        city: form.city.trim(),
         country: form.country,
-        phone: form.phone.trim() || '',
-        level: form.level || '',
-        intro: form.intro.trim() || '',
-        learning_goals: form.learning_goals,
-        otherGoal: form.otherGoal.trim(),
-        profilePhotoUrl,
+        nativeLanguage: form.nativeLanguage || null,
+        learningGoals: form.learningGoals.length > 0 ? form.learningGoals : null,
         role: 'student',
-        emailVerified: !!user.emailVerified,
-        createdAt: Date.now(),
-        parentConsentRequired: age < 18,
         subscriptionPlan: 'free',
         viewLimit: 10,
         messagesLeft: 5,
-        emailNotifications: true,
+        credits: 0,
+        emailVerified: false,
+        createdAt: new Date(),
       });
 
-      // 🔹 Mail gönderimi
-      if (age < 18) {
-        if (!form.parentEmail || !form.parentName) {
-          throw new Error('Parental information is required for learners under 18.');
-        }
-        await fetch('/api/parent-consent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            studentId: user.uid,
-            studentName: form.name,
-            parentName: form.parentName,
-            parentEmail: form.parentEmail,
-            dob: form.dob,
-          }),
-        });
-      } else {
+      if (process.env.NEXT_PUBLIC_SEND_AUTH_EMAILS === 'true') {
         await fetch('/api/auth/send-verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, name: form.name }),
-        });
+        }).catch(console.error);
       }
 
-      // Yeni öğrenci → admin bildirimi
-      await fetch('/api/mail/admin-new-student', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email }),
-      });
-
-      // Yeni öğrenci → hoş geldin maili
       await fetch('/api/mail/student-welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name, email }),
-      });
+      }).catch(console.error);
 
       await signOut(auth);
       setSuccess(true);
-      {
-        success && (
-          <Script id="fb-lead" strategy="afterInteractive">
-            {`fbq('track', 'Lead');`}
-          </Script>
-        )
-      }
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Registration failed.');
+      setError(getErrorMessage(getErrorCode(err)));
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <div className={styles.container}>
-      <h2 className={styles.title}>Student Registration</h2>
-
-      <form onSubmit={handleRegister} className={styles.form}>
-        <input className={styles.input} name="name" placeholder="Full Name" onChange={handleChange} required />
-        <input className={styles.input} name="email" type="email" placeholder="Email Address" onChange={handleChange} required />
-        <input className={styles.input} name="password" type="password" placeholder="Password (min 6 chars)" onChange={handleChange} required />
-        <label>Date of Birth</label>
-        <input className={styles.input} name="dob" type="date" onChange={handleChange} required />
-
-        {age !== null && age < 18 && age >= 14 && (
-          <>
-            <label>Parent/Guardian Name</label>
-            <input className={styles.input} name="parentName" onChange={handleChange} required />
-            <label>Parent/Guardian Email</label>
-            <input className={styles.input} type="email" name="parentEmail" onChange={handleChange} required />
-          </>
-        )}
-
-        <input className={styles.input} name="city" placeholder="City" onChange={handleChange} required />
-        <select name="country" className={styles.input} onChange={handleChange} value={form.country}>
-          <option>England</option>
-          <option>Scotland</option>
-          <option>Wales</option>
-          <option>Northern Ireland</option>
-        </select>
-
-        <input className={styles.input} name="phone" placeholder="Phone (optional)" onChange={handleChange} />
-        <select name="level" className={styles.input} onChange={handleChange}>
-          <option value="">Select your level (optional)</option>
-          <option>Beginner</option>
-          <option>Elementary</option>
-          <option>Intermediate</option>
-          <option>Upper-Intermediate</option>
-          <option>Advanced</option>
-        </select>
-
-        <textarea className={styles.textarea} name="intro" placeholder="Tell us a bit about yourself (optional)" onChange={handleChange} />
-
-        <div className={styles.files}>
-          <label className={styles.fileLabel}>
-            <span>Profile Photo (optional)</span>
-            <input
-              className={styles.hiddenFileInput}
-              type="file"
-              name="profilePhoto"
-              accept="image/*"
-              onChange={handleChange}
-            />
-          </label>
-          <span className={styles.fileName}>
-            {form.profilePhoto ? form.profilePhoto.name : 'No file chosen'}
-          </span>
-        </div>
-
-        {/* 🔹 Learning Goals (kategoriler) */}
-        <p className={styles.sectionTitle}>Your English Learning Goals</p>
-        {Object.entries(goalCategories).map(([key, cat]) => {
-          if (key === 'teen' && (age === null || age > 17)) return null;
-          return (
-            <div key={key} className={styles.goalCategory}>
-              <p className={styles.categoryTitle}>{cat.label}</p>
-              <div className={styles.checks}>
-                {cat.options.map((goal) => (
-                  <label key={goal} className={styles.checkItem}>
-                    <input
-                      type="checkbox"
-                      checked={(form.learning_goals[key] || []).includes(goal)}
-                      onChange={() => handleGoalToggle(key, goal)}
-                    />
-                    {goal}
-                  </label>
-                ))}
-              </div>
-              {(form.learning_goals[key] || []).includes('Cambridge Exams') && (
-                <select
-                  className={styles.input}
-                  onChange={(e) =>
-                    handleGoalToggle(key, `Cambridge ${e.target.value}`)
-                  }
-                >
-                  <option value="">Select Cambridge Exam</option>
-                  {cat.cambridgeLevels.map((lvl) => (
-                    <option key={lvl}>{lvl}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-          );
-        })}
-
-        {/* 🔹 “Other Goals” alanı en altta */}
-        <div className={styles.otherBox}>
-          <p className={styles.sectionTitle}>Other Goals (optional)</p>
-          <textarea
-            className={styles.textarea}
-            name="otherGoal"
-            placeholder="Please specify your goal (max 250 characters)"
-            maxLength={250}
-            value={form.otherGoal}
-            onChange={handleChange}
-          />
-        </div>
-
-        <label className={styles.checkItem}>
-          <input
-            type="checkbox"
-            name="acceptTerms"
-            checked={form.acceptTerms}
-            onChange={handleChange}
-          />
-          <span>
-            I agree to the{' '}
-            <Link href="/legal/terms" target="_blank" className={styles.inlineLink}>
-              Terms of Use
-            </Link>{' '}
-            and{' '}
-            <Link href="/legal/privacy" target="_blank" className={styles.inlineLink}>
-              Privacy Policy
+  if (success) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <header style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center' }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+              <Image src="/bridgelang.png" alt="BridgeLang" width={40} height={40} />
+              <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>BridgeLang</span>
             </Link>
-          </span>
-        </label>
+          </div>
+        </header>
 
-        {/* <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} size="invisible" ref={recaptchaRef} /> */}
-
-        <button type="submit" className={styles.submitBtn} disabled={submitting}>
-          {submitting ? 'Creating your account…' : 'Register'}
-        </button>
-      </form>
-
-      {error && <p className={styles.error}>❌ {error}</p>}
-      {success && (
-        <div className={styles.successBox}>
-          <p className={styles.successText}>✅ Registration successful!</p>
-          <p className={styles.successHint}>
-            {age < 18
-              ? `We’ve emailed a parental consent request to ${form.parentEmail}.`
-              : `We’ve sent a verification email to ${form.email}. Please check Inbox/Spam.`}
-          </p>
+        <div style={{ flex: '1', background: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <div style={{ width: '100%', maxWidth: '540px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '3rem', textAlign: 'center' }}>
+            <div style={{ width: '80px', height: '80px', background: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+              <Check style={{ width: '40px', height: '40px', color: '#22c55e' }} />
+            </div>
+            <h2 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', marginBottom: '1rem' }}>
+              Welcome to BridgeLang!
+            </h2>
+            <p style={{ fontSize: '1rem', color: '#64748b', marginBottom: '2rem', lineHeight: '1.6' }}>
+              Your account has been created successfully. Please check your email to verify your account and get started.
+            </p>
+            <Link href="/login">
+              <button style={{
+                padding: '0.75rem 2rem',
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.9375rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+                onMouseEnter={(e) => e.target.style.background = '#2563eb'}
+                onMouseLeave={(e) => e.target.style.background = '#3b82f6'}
+              >
+                Sign In
+              </button>
+            </Link>
+          </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  const totalSteps = 3;
+  const progress = (step / totalSteps) * 100;
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Platform Header */}
+      <header style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+            <Image src="/bridgelang.png" alt="BridgeLang" width={40} height={40} />
+            <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>BridgeLang</span>
+          </Link>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div style={{ flex: '1', background: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ width: '100%', maxWidth: step === 3 ? '720px' : '560px' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+            {/* Progress Bar */}
+            <div style={{ marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#64748b' }}>
+                  Step {step} of {totalSteps}
+                </span>
+                <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                  {Math.round(progress)}% Complete
+                </span>
+              </div>
+              <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${progress}%`,
+                  height: '100%',
+                  background: '#3b82f6',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+            </div>
+
+            {/* Title */}
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.5rem' }}>
+                {step === 1 ? 'Create Your Account' : step === 2 ? 'Learning Preferences' : 'Your Learning Goals'}
+              </h1>
+              <p style={{ fontSize: '0.9375rem', color: '#64748b' }}>
+                {step === 1 ? 'Enter your basic information' : step === 2 ? 'Tell us about yourself' : 'Select all that apply (optional)'}
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div style={{
+                padding: '0.875rem 1rem',
+                marginBottom: '1.5rem',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                background: '#fee2e2',
+                border: '1px solid #fca5a5',
+                color: '#991b1b'
+              }}>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={step === totalSteps ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
+              {/* Step 1: Basic Info */}
+              {step === 1 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
+                      Full Name <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                      placeholder="John Smith"
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 0.875rem',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        fontSize: '0.9375rem',
+                        color: '#0f172a',
+                        background: 'white',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
+                      Email Address <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                      placeholder="john@example.com"
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 0.875rem',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        fontSize: '0.9375rem',
+                        color: '#0f172a',
+                        background: 'white',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
+                      Password <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: '0 0 0.375rem 0' }}>
+                      At least 6 characters
+                    </p>
+                    <input
+                      type="password"
+                      name="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      required
+                      minLength={6}
+                      placeholder="••••••••"
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 0.875rem',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        fontSize: '0.9375rem',
+                        color: '#0f172a',
+                        background: 'white',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
+                      Country
+                    </label>
+                    <select
+                      name="country"
+                      value={form.country}
+                      onChange={handleChange}
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 0.875rem',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        fontSize: '0.9375rem',
+                        color: '#0f172a',
+                        background: 'white',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option>United Kingdom</option>
+                      <option>Turkey</option>
+                      <option>United States</option>
+                      <option>Canada</option>
+                      <option>Australia</option>
+                      <option>Germany</option>
+                      <option>France</option>
+                      <option>Spain</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Basic Preferences */}
+              {step === 2 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
+                      Native Language
+                    </label>
+                    <select
+                      name="nativeLanguage"
+                      value={form.nativeLanguage}
+                      onChange={handleChange}
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        padding: '0 0.875rem',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        fontSize: '0.9375rem',
+                        color: '#0f172a',
+                        background: 'white',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="">Select...</option>
+                      <option>English</option>
+                      <option>Spanish</option>
+                      <option>Arabic</option>
+                      <option>Mandarin</option>
+                      <option>Turkish</option>
+                      <option>French</option>
+                      <option>German</option>
+                      <option>Portuguese</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Learning Goals */}
+              {step === 3 && (
+                <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                  {Object.entries(learningGoalCategories).map(([category, goals]) => (
+                    <div key={category} style={{ marginBottom: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                      <button
+                        type="button"
+                        onClick={() => toggleCategory(category)}
+                        style={{
+                          width: '100%',
+                          padding: '0.875rem 1rem',
+                          background: expandedCategories[category] ? '#f8fafc' : 'white',
+                          border: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          fontSize: '0.9375rem',
+                          fontWeight: '600',
+                          color: '#0f172a',
+                          transition: 'background 0.2s'
+                        }}
+                      >
+                        <span>{category}</span>
+                        {expandedCategories[category] ?
+                          <ChevronUp style={{ width: '18px', height: '18px', color: '#64748b' }} /> :
+                          <ChevronDown style={{ width: '18px', height: '18px', color: '#64748b' }} />
+                        }
+                      </button>
+                      {expandedCategories[category] && (
+                        <div style={{ padding: '0.75rem 1rem', background: 'white', borderTop: '1px solid #f1f5f9' }}>
+                          {goals.map(goal => (
+                            <label key={goal} style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '0.5rem 0',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              color: '#475569'
+                            }}>
+                              <input
+                                type="checkbox"
+                                checked={form.learningGoals.includes(goal)}
+                                onChange={() => toggleGoal(goal)}
+                                style={{
+                                  width: '16px',
+                                  height: '16px',
+                                  marginRight: '0.75rem',
+                                  cursor: 'pointer',
+                                  accentColor: '#3b82f6'
+                                }}
+                              />
+                              {goal}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {form.learningGoals.length > 0 && (
+                    <div style={{ marginTop: '1rem', padding: '0.875rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px' }}>
+                      <p style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem' }}>
+                        Selected: {form.learningGoals.length} goal{form.learningGoals.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #3b82f6' }}>
+                    <p style={{ fontSize: '0.8125rem', color: '#475569', margin: '0', lineHeight: '1.5' }}>
+                      By creating an account, you agree to our{' '}
+                      <Link href="/terms" style={{ color: '#3b82f6', textDecoration: 'none' }}>Terms & Conditions</Link>
+                      {' '}and{' '}
+                      <Link href="/privacy" style={{ color: '#3b82f6', textDecoration: 'none' }}>Privacy Policy</Link>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                {step > 1 && (
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    style={{
+                      flex: '1',
+                      height: '48px',
+                      background: 'white',
+                      color: '#64748b',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      fontSize: '0.9375rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.target.style.borderColor = '#94a3b8'; e.target.style.background = '#f8fafc'; }}
+                    onMouseLeave={(e) => { e.target.style.borderColor = '#cbd5e1'; e.target.style.background = 'white'; }}
+                  >
+                    <ChevronLeft style={{ width: '18px', height: '18px' }} />
+                    Previous
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    flex: '1',
+                    height: '48px',
+                    background: submitting ? '#94a3b8' : '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.9375rem',
+                    fontWeight: '600',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => { if (!submitting) e.target.style.background = '#2563eb'; }}
+                  onMouseLeave={(e) => { if (!submitting) e.target.style.background = '#3b82f6'; }}
+                >
+                  {submitting ? 'Creating account...' : step === totalSteps ? 'Create Account' : 'Next'}
+                  {!submitting && step < totalSteps && <ChevronRight style={{ width: '18px', height: '18px' }} />}
+                </button>
+              </div>
+            </form>
+
+            {/* Footer */}
+            <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #f1f5f9', textAlign: 'center', fontSize: '0.875rem', color: '#64748b' }}>
+              Already have an account?{' '}
+              <Link href="/login" style={{ color: '#3b82f6', fontWeight: '500', textDecoration: 'none' }}>
+                Sign In
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

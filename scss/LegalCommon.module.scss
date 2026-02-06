@@ -66,7 +66,7 @@
         transition: color 0.2s ease;
         &:hover {
           text-decoration: underline;
-          color: v.$primary-color; // değişken varsa primary rengi kullan
+          color: v.$primary-blue; // değişken varsa primary rengi kullan
         }
       }
     }

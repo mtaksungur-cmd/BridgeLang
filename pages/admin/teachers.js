@@ -2,107 +2,38 @@
 
 import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-} from 'firebase/firestore';
-import styles from '../../scss/AdminTeachers.module.scss';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
-
-function toDate(value) {
-  if (!value) return null;
-  if (value.toDate) return value.toDate();
-  return new Date(value);
-}
-
-function formatTimestamp(value) {
-  if (!value) return '—';
-  const d = new Date(value);
-  return isNaN(d.getTime())
-    ? '—'
-    : d.toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-}
-
-function getHistoryLabel(h) {
-  if (!h?.type) return 'Unknown action';
-
-  if (h.type === 'upload') {
-    return 'Intro video uploaded';
-  }
-
-  if (h.type === 'delete') {
-    return 'Intro video deleted';
-  }
-
-  if (h.type === 'consent_change') {
-    const target =
-      h.consentKey === 'profile'
-        ? 'Profile visibility'
-        : h.consentKey === 'social'
-        ? 'Social media usage'
-        : 'Unknown consent';
-
-    const state = h.newValue ? 'ENABLED' : 'DISABLED';
-
-    return `${target} ${state}`;
-  }
-
-  return h.type;
-}
+import SeoHead from '../../components/SeoHead';
 
 export default function AdminTeachers() {
   const [pending, setPending] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [loadingPending, setLoadingPending] = useState(true);
-  const [loadingTeachers, setLoadingTeachers] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [approvingId, setApprovingId] = useState(null);
   const [rejectingId, setRejectingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-  // 🔹 Pending teachers (başvurular)
   useEffect(() => {
-    (async () => {
-      try {
-        setLoadingPending(true);
-        const snap = await getDocs(collection(db, 'pendingTeachers'));
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setPending(data);
-      } finally {
-        setLoadingPending(false);
-      }
-    })();
+    loadData();
   }, []);
 
-  // 🔹 Onaylanmış öğretmenler (users / role=teacher)
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoadingTeachers(true);
-        const q = query(
-          collection(db, 'users'),
-          where('role', '==', 'teacher'),
-          orderBy('createdAt', 'desc')
-        );
-        const snap = await getDocs(q);
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setTeachers(data);
-      } catch (err) {
-        console.error('load teachers error:', err);
-      } finally {
-        setLoadingTeachers(false);
-      }
-    })();
-  }, []);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const pendingSnap = await getDocs(collection(db, 'pendingTeachers'));
+      setPending(pendingSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+      const teachersSnap = await getDocs(
+        query(collection(db, 'users'), where('role', '==', 'teacher'), orderBy('createdAt', 'desc'))
+      );
+      setTeachers(teachersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      console.error('Load error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const approveTeacher = async (app) => {
     if (!confirm(`Approve ${app.name || 'this teacher'}?`)) return;
@@ -114,32 +45,18 @@ export default function AdminTeachers() {
         body: JSON.stringify({ teacher: app }),
       });
       if (!res.ok) throw new Error('API error');
-
-      // pending listesinden çıkar
-      setPending(prev => prev.filter(p => p.id !== app.id));
-
-      // users koleksiyonundan tekrar çek (en temizi)
-      const snap = await getDocs(
-        query(
-          collection(db, 'users'),
-          where('role', '==', 'teacher'),
-          orderBy('createdAt', 'desc')
-        )
-      );
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setTeachers(data);
-
-      alert(`✅ ${app.name || 'Teacher'} approved.`);
+      await loadData();
+      alert(`✅ ${app.name} approved!`);
     } catch (err) {
-      console.error('Approval error:', err);
-      alert('❌ Approval failed.');
+      console.error(err);
+      alert('❌ Approval failed');
     } finally {
       setApprovingId(null);
     }
   };
 
   const rejectTeacher = async (teacher) => {
-    if (!confirm(`Reject application of ${teacher.name || 'this teacher'}?`)) return;
+    if (!confirm(`Reject ${teacher.name}?`)) return;
     setRejectingId(teacher.id);
     try {
       const res = await fetch('/api/admin/rejectTeacher', {
@@ -151,23 +68,19 @@ export default function AdminTeachers() {
           teacherName: teacher.name,
         }),
       });
-
       if (!res.ok) throw new Error('API error');
-
       setPending(prev => prev.filter(a => a.id !== teacher.id));
-      alert(`❌ ${teacher.name || 'Teacher'} application rejected.`);
+      alert(`❌ ${teacher.name} rejected`);
     } catch (err) {
-      console.error('Rejection error:', err);
-      alert('❌ Rejection failed.');
+      console.error(err);
+      alert('❌ Rejection failed');
     } finally {
       setRejectingId(null);
     }
   };
 
-  const handleDeleteTeacher = async (t) => {
-    if (!confirm(`This will permanently delete ${t.name || 'this teacher'} (user + auth). Continue?`)) {
-      return;
-    }
+  const deleteTeacher = async (t) => {
+    if (!confirm(`DELETE ${t.name} permanently?`)) return;
     setDeletingId(t.id);
     try {
       const res = await fetch('/api/admin/deleteTeacher', {
@@ -179,521 +92,262 @@ export default function AdminTeachers() {
           teacherName: t.name,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Delete failed');
-
+      if (!res.ok) throw new Error('Delete failed');
       setTeachers(prev => prev.filter(x => x.id !== t.id));
-      alert(`🗑️ ${t.name || 'Teacher'} deleted.`);
+      alert(`🗑️ ${t.name} deleted`);
     } catch (err) {
-      console.error('Delete teacher error:', err);
-      alert('❌ Failed to delete teacher.');
+      console.error(err);
+      alert('❌ Delete failed');
     } finally {
       setDeletingId(null);
     }
   };
 
   const formatDate = (val) => {
-    const d = toDate(val);
-    if (!d || isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    if (!val) return '—';
+    const d = val.toDate ? val.toDate() : new Date(val);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB');
   };
 
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
-    <main className={`container ${styles.page}`}>
-      {/* 🔹 Header */}
-      <header className={styles.header}>
-        <h1>Teachers Administration</h1>
-        <p className={styles.sub}>
-          Review pending applications and manage all approved tutors on the platform.
-        </p>
-      </header>
+    <>
+      <SeoHead title="Teachers Administration" description="Manage teacher applications and approved tutors" />
+      <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <header style={{ marginBottom: '2rem' }}>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+              Teachers Administration
+            </h1>
+            <p style={{ fontSize: '0.9375rem', color: '#64748b', margin: 0 }}>
+              Review pending applications and manage approved tutors
+            </p>
+          </header>
 
-      {/* =======================
-          PENDING APPLICATIONS
-         ======================= */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2>Pending Teacher Applications</h2>
-          <span className={styles.countBadge}>{pending.length}</span>
-        </div>
+          {/* Pending Applications */}
+          <section style={{ marginBottom: '3rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                Pending Applications
+              </h2>
+              <span style={{
+                padding: '0.25rem 0.625rem',
+                background: '#fef3c7',
+                color: '#92400e',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}>
+                {pending.length}
+              </span>
+            </div>
 
-        {loadingPending ? (
-          <div className={styles.loading}>Loading pending applications…</div>
-        ) : pending.length === 0 ? (
-          <div className={styles.empty}>No pending applications.</div>
-        ) : (
-          <div className={styles.grid}>
-            {pending.map((app) => (
-              <article key={app.id} className={styles.card}>
-                <div className={styles.head}>
-                  <div className={styles.identity}>
-                    {app.profilePhotoUrl ? (
-                      <Image
-                        src={app.profilePhotoUrl}
-                        alt={`${app.name || 'Teacher'} photo`}
-                        className={styles.avatar}
-                        width={56}
-                        height={56}
-                      />
-                    ) : (
-                      <div className={styles.avatarFallback}>👤</div>
-                    )}
-                    <div>
-                      <h3 className={styles.name}>{app.name || 'Unnamed'}</h3>
-                      <div className={styles.meta}>
-                        <span>{app.email || '—'}</span>
-                        {app.city && <span> · {app.city}</span>}
-                        {app.postcode && <span> · {app.postcode}</span>}
-                      </div>
-                      <div className={styles.metaSmall}>
-                        <span>Applied: {formatDate(app.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={styles.actions}>
-                    <button
-                      className={styles.approve}
-                      onClick={() => approveTeacher(app)}
-                      disabled={approvingId === app.id}
-                    >
-                      {approvingId === app.id ? 'Approving…' : '✅ Approve'}
-                    </button>
-                    <button
-                      className={styles.reject}
-                      onClick={() => rejectTeacher(app)}
-                      disabled={rejectingId === app.id}
-                    >
-                      {rejectingId === app.id ? 'Rejecting…' : '❌ Reject'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className={styles.body}>
-                  <div className={styles.col}>
-                    <dl className={styles.dl}>
-                      <dt>Bio</dt>
-                      <dd>{app.bio || '—'}</dd>
-
-                      <dt>Address</dt>
-                      <dd>
-                        {[app.homeAddress, app.city, app.postcode, app.country]
-                          .filter(Boolean)
-                          .join(', ') || '—'}
-                      </dd>
-
-                      <dt>Timezone</dt>
-                      <dd>{app.timezone || '—'}</dd>
-
-                      <dt>Languages Taught</dt>
-                      <dd>{app.languagesTaught || '—'}</dd>
-
-                      <dt>Languages Spoken</dt>
-                      <dd>{app.languagesSpoken || '—'}</dd>
-                    </dl>
-                  </div>
-
-                  <div className={styles.col}>
-                    <dl className={styles.dl}>
-                      <dt>Experience (years)</dt>
-                      <dd>{app.experienceYears ?? '—'}</dd>
-
-                      <dt>Education</dt>
-                      <dd>{app.educationLevel || '—'}</dd>
-
-                      <dt>Specialisations</dt>
-                      <dd>{app.teachingSpecializations || '—'}</dd>
-
-                      <dt>Lesson Delivery</dt>
-                      <dd>{app.deliveryMethod || '—'}</dd>
-
-                      <dt>Student Ages</dt>
-                      <dd>{app.studentAges || '—'}</dd>
-                    </dl>
-                  </div>
-
-                  <div className={styles.col}>
-                    <dl className={styles.dl}>
-                      <dt>Pricing</dt>
-                      <dd>
-                        <div className={styles.priceRow}>
-                          <span>30 min</span>
-                          <strong>£{app.pricing30 ?? '—'}</strong>
-                        </div>
-                        <div className={styles.priceRow}>
-                          <span>45 min</span>
-                          <strong>£{app.pricing45 ?? '—'}</strong>
-                        </div>
-                        <div className={styles.priceRow}>
-                          <span>60 min</span>
-                          <strong>£{app.pricing60 ?? '—'}</strong>
-                        </div>
-                      </dd>
-
-                      <dt>Platform Experience</dt>
-                      <dd>{app.platformExperience || '—'}</dd>
-
-                      <dt>Willing to travel</dt>
-                      <dd>{app.willingToTravel ? 'Yes' : 'No'}</dd>
-                    </dl>
-                  </div>
-
-                  <div className={styles.col}>
-                    <dl className={styles.dl}>
-                      <dt>Certificates</dt>
-                      <dd>
-                        {app.certificationUrls?.length ? (
-                          <ul className={styles.linkList}>
-                            {app.certificationUrls.map((url, i) => (
-                              <li key={i}>
-                                <a href={url} target="_blank" rel="noopener noreferrer">
-                                  View Certificate {i + 1}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
+            {pending.length === 0 ? (
+              <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '2rem', textAlign: 'center' }}>
+                <p style={{ color: '#94a3b8', margin: 0 }}>No pending applications</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '1.5rem' }}>
+                {pending.map(app => (
+                  <div key={app.id} style={{
+                    background: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        {app.profilePhotoUrl ? (
+                          <Image src={app.profilePhotoUrl} alt={app.name} width={60} height={60} style={{ borderRadius: '10px' }} />
                         ) : (
-                          'None'
+                          <div style={{ width: '60px', height: '60px', background: '#f1f5f9', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+                            👤
+                          </div>
                         )}
-                      </dd>
-
-                      <dt>CV</dt>
-                      <dd>
-                        {app.cvUrl ? (
-                          <a href={app.cvUrl} target="_blank" rel="noopener noreferrer">
-                            📄 View CV
-                          </a>
-                        ) : (
-                          'Not uploaded'
-                        )}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-                {/* INTRO VIDEO (NEW, FULL-WIDTH SECTION) */}
-                {/* INTRO VIDEO + CONSENTS (ADMIN VIEW) */}
-                {app.introVideoUrl && (
-                  <div className={styles.introVideoSection}>
-                    <h3>Intro Video</h3>
-
-                    {/* CONSENT INFO */}
-                    <div className={styles.videoConsentMeta}>
-                      <div>
-                        Profile visibility:{' '}
-                        <strong
-                          className={
-                            app.intro_video_consent_profile
-                              ? styles.allowed
-                              : styles.notAllowed
-                          }
-                        >
-                          {app.intro_video_consent_profile ? 'Allowed' : 'Not allowed'}
-                        </strong>
-                      </div>
-
-                      <div>
-                        Social usage:{' '}
-                        <strong
-                          className={
-                            app.intro_video_consent_social
-                              ? styles.allowed
-                              : styles.notAllowed
-                          }
-                        >
-                          {app.intro_video_consent_social ? 'Allowed' : 'Not allowed'}
-                        </strong>
-                      </div>
-                    </div>
-
-                    {/* VIDEO PLAYER */}
-                    <div className={styles.videoWrapper}>
-                      <video
-                        className={styles.video}
-                        controls
-                        preload="metadata"
-                        controlsList="nodownload"
-                        onContextMenu={(e) => e.preventDefault()}
-                      >
-                        <source src={app.introVideoUrl} type="video/mp4" />
-                      </video>
-                    </div>
-
-                    {/* DOWNLOAD ONLY IF SOCIAL CONSENT TRUE */}
-                    {app.intro_video_consent_social === true && (
-                      <a
-                        href={app.introVideoUrl}
-                        download
-                        className={styles.downloadBtn}
-                      >
-                        ⬇ Download video (social consent granted)
-                      </a>
-                    )}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* =======================
-          APPROVED TEACHERS
-         ======================= */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2>Approved Tutors</h2>
-          <span className={styles.countBadge}>{teachers.length}</span>
-        </div>
-
-        {loadingTeachers ? (
-          <div className={styles.loading}>Loading approved teachers…</div>
-        ) : teachers.length === 0 ? (
-          <div className={styles.empty}>No approved teachers yet.</div>
-        ) : (
-          <div className={styles.teacherGrid}>
-            {teachers.map((t) => {
-              const created = formatDate(t.createdAt);
-              const approved = formatDate(t.approvedAt);
-              const avgRating =
-                typeof t.avgRating === 'number'
-                  ? t.avgRating.toFixed(1)
-                  : '—';
-
-              return (
-                <article key={t.id} className={styles.teacherCard}>
-                  <div className={styles.teacherTop}>
-                    <div className={styles.identity}>
-                      {t.profilePhotoUrl ? (
-                        <Image
-                          src={t.profilePhotoUrl}
-                          alt={`${t.name || 'Teacher'} photo`}
-                          className={styles.avatar}
-                          width={56}
-                          height={56}
-                        />
-                      ) : (
-                        <div className={styles.avatarFallback}>👤</div>
-                      )}
-                      <div>
-                        <h3 className={styles.name}>{t.name || 'Unnamed'}</h3>
-                        <div className={styles.meta}>
-                          <span>{t.email || '—'}</span>
-                          {t.city && <span> · {t.city}</span>}
-                          {t.postcode && <span> · {t.postcode}</span>}
-                        </div>
-                        <div className={styles.metaSmall}>
-                          <span>Status: {t.status || '—'}</span>
-                          <span> · Joined: {created}</span>
-                          {approved !== '—' && <span> · Approved: {approved}</span>}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className={styles.teacherActions}>
-                      <button
-                        className={styles.deleteBtn}
-                        onClick={() => handleDeleteTeacher(t)}
-                        disabled={deletingId === t.id}
-                      >
-                        {deletingId === t.id ? 'Deleting…' : '🗑 Delete'}
-                      </button>
-                    </div>
-                  </div>
-
-                  
-                  {/* 🟦 BIO TEK SATIR – TAM GENİŞLİK */}
-                  <div className={styles.bioBlock}>
-                    <h3>Bio</h3>
-                    <p>{t.bio || '—'}</p>
-                  </div>
-
-                  {/* 🟩 ALTTAKİ 3 KOLON GRID */}
-                  <div className={styles.bodyGrid}>
-                    {/* Column 1 */}
-                    <div className={styles.col}>
-                      <dl className={styles.dl}>
-                        <dt>Languages Taught</dt><dd>{t.languagesTaught}</dd>
-                        <dt>Languages Spoken</dt><dd>{t.languagesSpoken}</dd>
-                        <dt>Experience (years)</dt><dd>{t.experienceYears}</dd>
-                        <dt>Education</dt><dd>{t.educationLevel}</dd>
-                        <dt>Student Ages</dt><dd>{t.studentAges}</dd>
-                        <dt>Lesson Delivery</dt><dd>{t.deliveryMethod}</dd>
-                        <dt>Willing to travel</dt><dd>{t.willingToTravel ? 'Yes' : 'No'}</dd>
-                      </dl>
-                    </div>
-
-                    {/* Column 2 */}
-                    <div className={styles.col}>
-                      <dl className={styles.dl}>
-                        <dt>Specialisations</dt>
-                        <dd>{t.teachingSpecializations || '—'}</dd>
-                        <dt>Address</dt>
-                        <dd>{t.homeAddress}, {t.city}, {t.postcode}</dd>
-                        <dt>Certificates</dt>
-                        <dd>
-                          {t.certificationUrls?.length
-                            ? t.certificationUrls.map((u,i)=>(<div key={i}><a href={u} target="_blank">View Certificate {i+1}</a></div>))
-                            : 'None'}
-                        </dd>
-                        <dt>CV</dt>
-                        <dd>{t.cvUrl ? <a href={t.cvUrl} target="_blank">📄 View CV</a> : 'Not uploaded'}</dd>
-                      </dl>
-                    </div>
-
-                    {/* Column 3 */}
-                    <div className={styles.col}>
-                      <dl className={styles.dl}>
-                        <dt>Pricing</dt>
-                        <dd>
-                          <div className={styles.priceRow}><span>30 min</span><strong>£{t.pricing30}</strong></div>
-                          <div className={styles.priceRow}><span>45 min</span><strong>£{t.pricing45}</strong></div>
-                          <div className={styles.priceRow}><span>60 min</span><strong>£{t.pricing60}</strong></div>
-                        </dd>
-
-                        <dt>Performance</dt>
-                        <dd>
-                          Avg rating: {t.avgRating || 0}<br/>
-                          Total lessons: {t.totalLessons || 0}<br/>
-                          Total earnings: £{t.totalEarnings || 0}<br/>
-                          Repeat rate: {t.repeatRate || 0}%
-                        </dd>
-
-                        <dt>Badges</dt>
-                        <dd>
-                          {t.badges?.length
-                            ? t.badges.map((b,i)=><span key={i} className={styles.badge}>{b}</span>)
-                            : 'No badges'}
-                        </dd>
-                      </dl>
-                    </div>
-                  </div>
-
-                  {/* =======================
-                      INTRO VIDEO PERMISSIONS
-                  ======================= */}
-                  {t.introVideoUrl && (
-                    <section className={styles.videoAdminBlock}>
-                      <header className={styles.videoAdminHeader}>
-                        <h4>Intro Video Management</h4>
-                      </header>
-
-                      {/* PERMISSIONS */}
-                      <div className={styles.videoAdminMeta}>
                         <div>
-                          Profile visibility:{' '}
-                          <span
-                            className={
-                              t.intro_video_consent_profile
-                                ? styles.allowed
-                                : styles.notAllowed
-                            }
-                          >
-                            {t.intro_video_consent_profile ? 'Allowed' : 'Not allowed'}
-                          </span>
-                        </div>
-
-                        <div>
-                          Social usage:{' '}
-                          <span
-                            className={
-                              t.intro_video_consent_social
-                                ? styles.allowed
-                                : styles.notAllowed
-                            }
-                          >
-                            {t.intro_video_consent_social ? 'Allowed' : 'Not allowed'}
-                          </span>
+                          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                            {app.name || 'Unnamed'}
+                          </h3>
+                          <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.25rem 0' }}>{app.email}</p>
+                          <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: 0 }}>
+                            Applied: {formatDate(app.createdAt)}
+                          </p>
                         </div>
                       </div>
-
-                      {/* VIDEO PLAYER */}
-                      <div className={styles.videoAdminPlayer}>
-                        <video
-                          controls
-                          preload="metadata"
-                          controlsList="nodownload"
-                          onContextMenu={(e) => e.preventDefault()}
+                      <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button
+                          onClick={() => approveTeacher(app)}
+                          disabled={approvingId === app.id}
+                          style={{
+                            padding: '0.625rem 1.25rem',
+                            background: approvingId === app.id ? '#94a3b8' : '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            cursor: approvingId === app.id ? 'not-allowed' : 'pointer'
+                          }}
                         >
-                          <source src={t.introVideoUrl} type="video/mp4" />
+                          {approvingId === app.id ? 'Approving...' : '✅ Approve'}
+                        </button>
+                        <button
+                          onClick={() => rejectTeacher(app)}
+                          disabled={rejectingId === app.id}
+                          style={{
+                            padding: '0.625rem 1.25rem',
+                            background: rejectingId === app.id ? '#94a3b8' : '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            cursor: rejectingId === app.id ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          {rejectingId === app.id ? 'Rejecting...' : '❌ Reject'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                      <InfoItem label="Bio" value={app.bio} />
+                      <InfoItem label="City" value={app.city} />
+                      <InfoItem label="Experience" value={`${app.experienceYears || 0} years`} />
+                      <InfoItem label="Languages Taught" value={app.languagesTaught} />
+                      <InfoItem label="Pricing 30 min" value={`£${app.pricing30}`} />
+                      <InfoItem label="Pricing 60 min" value={`£${app.pricing60}`} />
+                    </div>
+
+                    {app.introVideoUrl && (
+                      <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9' }}>
+                        <h4 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', margin: '0 0 0.75rem 0' }}>
+                          Intro Video
+                        </h4>
+                        <video controls style={{ width: '100%', maxWidth: '600px', borderRadius: '8px' }}>
+                          <source src={app.introVideoUrl} type="video/mp4" />
                         </video>
                       </div>
-
-                      {/* DOWNLOAD (ONLY IF SOCIAL CONSENT TRUE) */}
-                      {t.intro_video_consent_social === true && (
-                        <a
-                          href={t.introVideoUrl}
-                          download
-                          className={styles.downloadBtn}
-                        >
-                          ⬇ Download video (social consent granted)
-                        </a>
-                      )}
-
-                      {/* CONSENT HISTORY */}
-                      <div className={styles.historyBlock}>
-                        <h5>Consent history</h5>
-
-                        {Array.isArray(t.intro_video_history) &&
-                        t.intro_video_history.length > 0 ? (
-                          <ul className={styles.historyList}>
-                            {t.intro_video_history
-                              .slice()
-                              .reverse()
-                              .map((h, i) => (
-                                <li key={i} className={styles.historyItem}>
-                                  <div className={styles.historyAction}>
-                                    {getHistoryLabel(h)}
-                                  </div>
-                                  <div className={styles.historyMeta}>
-                                    {formatTimestamp(h.timestamp)}
-                                  </div>
-                                </li>
-                              ))}
-                          </ul>
-                        ) : (
-                          <p className={styles.muted}>No consent history recorded.</p>
-                        )}
-                      </div>
-                    </section>
-                  )}
-
-                  <div className={styles.teacherFooter}>
-                    <dl className={styles.dlInline}>
-                      <dt>CV</dt>
-                      <dd>
-                        {t.cvUrl ? (
-                          <a href={t.cvUrl} target="_blank" rel="noopener noreferrer">
-                            📄 View CV
-                          </a>
-                        ) : (
-                          'Not uploaded'
-                        )}
-                      </dd>
-
-                      <dt>Certificates</dt>
-                      <dd>
-                        {t.certificationUrls?.length ? (
-                          <span>{t.certificationUrls.length} file(s)</span>
-                        ) : (
-                          'None'
-                        )}
-                      </dd>
-
-                      <dt>Intro Video</dt>
-                      <dd>{t.introVideoUrl ? 'Uploaded' : 'Not uploaded'}</dd>
-                    </dl>
+                    )}
                   </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-    </main>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Approved Teachers */}
+          <section>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                Approved Tutors
+              </h2>
+              <span style={{
+                padding: '0.25rem 0.625rem',
+                background: '#dcfce7',
+                color: '#166534',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}>
+                {teachers.length}
+              </span>
+            </div>
+
+            {teachers.length === 0 ? (
+              <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '2rem', textAlign: 'center' }}>
+                <p style={{ color: '#94a3b8', margin: 0 }}>No approved teachers yet</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
+                {teachers.map(t => (
+                  <div key={t.id} style={{
+                    background: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      {t.profilePhotoUrl ? (
+                        <Image src={t.profilePhotoUrl} alt={t.name} width={56} height={56} style={{ borderRadius: '10px' }} />
+                      ) : (
+                        <div style={{ width: '56px', height: '56px', background: '#f1f5f9', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+                          👤
+                        </div>
+                      )}
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                          {t.name}
+                        </h3>
+                        <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: '0 0 0.25rem 0' }}>{t.email}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
+                          Joined: {formatDate(t.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '6px' }}>
+                      <InfoRow label="City" value={t.city} />
+                      <InfoRow label="Experience" value={`${t.experienceYears || 0} years`} />
+                      <InfoRow label="Total Lessons" value={t.totalLessons || 0} />
+                      <InfoRow label="Avg Rating" value={t.avgRating ? `${t.avgRating.toFixed(1)} ⭐` : '—'} />
+                    </div>
+
+                    <button
+                      onClick={() => deleteTeacher(t)}
+                      disabled={deletingId === t.id}
+                      style={{
+                        width: '100%',
+                        padding: '0.625rem',
+                        background: deletingId === t.id ? '#94a3b8' : 'white',
+                        color: deletingId === t.id ? 'white' : '#dc2626',
+                        border: '1px solid #fecaca',
+                        borderRadius: '6px',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        cursor: deletingId === t.id ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {deletingId === t.id ? 'Deleting...' : '🗑 Delete Teacher'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function InfoItem({ label, value }) {
+  return (
+    <div>
+      <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+        {label}
+      </div>
+      <div style={{ fontSize: '0.875rem', color: '#0f172a' }}>
+        {value || '—'}
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>{label}:</span>
+      <span style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#0f172a' }}>{value}</span>
+    </div>
   );
 }

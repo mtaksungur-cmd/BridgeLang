@@ -4,14 +4,7 @@ import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
-import styles from '../../scss/AdminStudents.module.scss';
-
-function toDate(v) {
-  if (!v) return null;
-  if (typeof v === 'number') return new Date(v);
-  if (v.toDate) return v.toDate();
-  return new Date(v);
-}
+import SeoHead from '../../components/SeoHead';
 
 export default function AdminStudents() {
   const [students, setStudents] = useState([]);
@@ -19,181 +12,158 @@ export default function AdminStudents() {
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const q = query(
-          collection(db, "users"),
-          where("role", "==", "student"),
-          orderBy("createdAt", "desc")
-        );
-        const snap = await getDocs(q);
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setStudents(list);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    loadStudents();
   }, []);
 
-  const formatDate = (v) => {
-    const d = toDate(v);
-    if (!d || isNaN(d)) return "—";
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const loadStudents = async () => {
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, 'users'),
+        where('role', '==', 'student'),
+        orderBy('createdAt', 'desc')
+      );
+      const snap = await getDocs(q);
+      setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (s) => {
     if (!confirm(`Delete ${s.name}?`)) return;
     setDeletingId(s.id);
-
     try {
-      const res = await fetch("/api/admin/deleteStudent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/admin/deleteStudent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId: s.id }),
       });
-
-      if (!res.ok) throw new Error("delete failed");
-
+      if (!res.ok) throw new Error('delete failed');
       setStudents(prev => prev.filter(x => x.id !== s.id));
-      alert("Deleted.");
+      alert('✅ Deleted');
     } catch (err) {
-      alert("Delete failed.");
+      alert('❌ Delete failed');
     } finally {
       setDeletingId(null);
     }
   };
 
-  const renderArray = (arr) => {
-    if (!Array.isArray(arr) || arr.length === 0) return "—";
-    return arr.join(", ");
+  const formatDate = (val) => {
+    if (!val) return '—';
+    const d = val.toDate ? val.toDate() : new Date(val);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB');
   };
 
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
-    <main className={`container ${styles.page}`}>
-      <header className={styles.header}>
-        <h1>All Students</h1>
-        <p className={styles.sub}>View and manage all registered students.</p>
-        <span className={styles.countBadge}>{students.length}</span>
-      </header>
+    <>
+      <SeoHead title="Students Administration" description="Manage all students" />
+      <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <header style={{ marginBottom: '2rem' }}>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+              All Students
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <p style={{ fontSize: '0.9375rem', color: '#64748b', margin: 0 }}>
+                View and manage registered students
+              </p>
+              <span style={{
+                padding: '0.25rem 0.625rem',
+                background: '#dbeafe',
+                color: '#1e40af',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}>
+                {students.length}
+              </span>
+            </div>
+          </header>
 
-      {loading ? (
-        <div className={styles.loading}>Loading…</div>
-      ) : (
-        <div className={styles.grid}>
-          {students.map((s) => (
-            <article key={s.id} className={styles.card}>
-              {/* ========== TOP ========== */}
-              <div className={styles.top}>
-                <div className={styles.identity}>
-                  <div className={styles.avatar}>
+          {students.length === 0 ? (
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '2rem', textAlign: 'center' }}>
+              <p style={{ color: '#94a3b8', margin: 0 }}>No students yet</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+              {students.map(s => (
+                <div key={s.id} style={{
+                  background: 'white',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}>
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                     {s.profilePhotoUrl ? (
-                      <Image src={s.profilePhotoUrl} width={56} height={56} alt="profile" />
+                      <Image src={s.profilePhotoUrl} alt={s.name} width={56} height={56} style={{ borderRadius: '10px' }} />
                     ) : (
-                      <div className={styles.avatarFallback}>👤</div>
+                      <div style={{ width: '56px', height: '56px', background: '#f1f5f9', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+                        👤
+                      </div>
                     )}
-                  </div>
-
-                  <div>
-                    <h3>{s.name || "Unnamed"}</h3>
-                    <span className={styles.email}>{s.email}</span>
-                    <div className={styles.meta}>Joined: {formatDate(s.createdAt)}</div>
-                    <div className={styles.meta}>
-                        Status: {s.status ? s.status : "active"}
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                        {s.name || 'Unnamed'}
+                      </h3>
+                      <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: '0 0 0.25rem 0' }}>{s.email}</p>
+                      <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
+                        Joined: {formatDate(s.createdAt)}
+                      </p>
                     </div>
                   </div>
+
+                  <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '6px', marginBottom: '1rem' }}>
+                    <InfoRow label="Plan" value={s.subscriptionPlan || 'free'} />
+                    <InfoRow label="City" value={s.city} />
+                    <InfoRow label="Messages Left" value={s.messagesLeft ?? 0} />
+                    <InfoRow label="Lessons Taken" value={s.lessonsTaken || 0} />
+                  </div>
+
+                  <button
+                    onClick={() => handleDelete(s)}
+                    disabled={deletingId === s.id}
+                    style={{
+                      width: '100%',
+                      padding: '0.625rem',
+                      background: deletingId === s.id ? '#94a3b8' : 'white',
+                      color: deletingId === s.id ? 'white' : '#dc2626',
+                      border: '1px solid #fecaca',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: deletingId === s.id ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {deletingId === s.id ? 'Deleting...' : '🗑 Delete Student'}
+                  </button>
                 </div>
-
-                <button
-                  className={styles.deleteBtn}
-                  onClick={() => handleDelete(s)}
-                  disabled={deletingId === s.id}
-                >
-                  {deletingId === s.id ? "Deleting…" : "🗑 Delete"}
-                </button>
-              </div>
-
-              {/* ========== BODY ========== */}
-              <div className={styles.body}>
-                <dl>
-                  <dt>City</dt>
-                  <dd>{s.city || "—"}</dd>
-
-                  <dt>Country</dt>
-                  <dd>{s.country || "—"}</dd>
-
-                  <dt>Date of Birth</dt>
-                  <dd>{s.dob || "—"}</dd>
-
-                  <dt>Phone</dt>
-                  <dd>{s.phone || "—"}</dd>
-
-                  <dt>Intro</dt>
-                  <dd>{s.intro || "—"}</dd>
-
-                  <dt>Level</dt>
-                  <dd>{s.level || "—"}</dd>
-
-                  <dt>Profile Views</dt>
-                  <dd>{s.viewLimit ?? 0}</dd>
-
-                  <dt>Messages Left</dt>
-                  <dd>{s.messagesLeft ?? 0}</dd>
-
-                  {/* ===== Subscription Info ===== */}
-                  <dt>Subscription Plan</dt>
-                  <dd>{s.subscriptionPlan || "free"}</dd>
-
-                  {s.subscription?.planKey && (
-                    <>
-                      <dt>Active Until</dt>
-                      <dd>{formatDate(s.subscription.activeUntil)}</dd>
-
-                      <dt>Last Payment</dt>
-                      <dd>{formatDate(s.subscription.lastPaymentAt)}</dd>
-
-                      <dt>Lifetime Payments</dt>
-                      <dd>{s.subscription.lifetimePayments ?? 0}</dd>
-                    </>
-                  )}
-
-                  {/* ===== Learning Goals ===== */}
-                  <dt>Learning Goals</dt>
-                  <dd>
-                    <strong>Exam:</strong> {renderArray(s.learning_goals?.exam)}<br/>
-                    <strong>General:</strong> {renderArray(s.learning_goals?.general)}<br/>
-                    <strong>Professional:</strong> {renderArray(s.learning_goals?.professional)}<br/>
-                    <strong>Personal:</strong> {renderArray(s.learning_goals?.personal)}<br/>
-                    <strong>Digital:</strong> {renderArray(s.learning_goals?.digital)}
-                  </dd>
-
-                  {/* ===== Lessons Taken ===== */}
-                  <dt>Lessons Taken</dt>
-                  <dd>{s.lessonsTaken ?? 0}</dd>
-
-                  {/* ===== Email & Notifications ===== */}
-                  <dt>Email Verified</dt>
-                  <dd>{s.emailVerified ? "Yes" : "No"}</dd>
-
-                  <dt>Email Notifications</dt>
-                  <dd>{s.emailNotifications ? "Enabled" : "Disabled"}</dd>
-
-                  <dt>Parent Consent</dt>
-                  <dd>{s.parentConsentRequired ? "Required" : "Not required"}</dd>
-
-                  {/* ===== Stripe ===== */}
-                  {s.stripe?.customerId && (
-                    <>
-                      <dt>Stripe Customer</dt>
-                      <dd>{s.stripe.customerId}</dd>
-                    </>
-                  )}
-                </dl>
-              </div>
-            </article>
-          ))}
+              ))}
+            </div>
+          )}
         </div>
-      )}
-    </main>
+      </div>
+    </>
+  );
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+      <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>{label}:</span>
+      <span style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#0f172a' }}>{value || '—'}</span>
+    </div>
   );
 }

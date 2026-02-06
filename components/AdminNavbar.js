@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import styles from './AdminNavbar.module.scss';
+import Image from 'next/image';
+import styles from './DefaultNavbar.module.scss';
 
 export default function AdminNavbar() {
   const router = useRouter();
@@ -21,50 +22,51 @@ export default function AdminNavbar() {
   };
 
   return (
-    <header className={styles.bar}>
-      <div className="container">
-        <div className={styles.row}>
+    <nav className={styles.navbar}>
+      <div className={styles.container}>
+        <Link href="/admin/teachers" className={styles.logo}>
+          <Image
+            src="/bridgelang.png"
+            alt="BridgeLang Logo"
+            width={40}
+            height={40}
+          />
+          <span className={styles.logoText}>BridgeLang Admin</span>
+        </Link>
 
-          {/* Brand */}
-          <div className={styles.brand}>BridgeLang Admin</div>
+        <button
+          className={styles.mobileToggle}
+          onClick={() => setOpen(!open)}
+          aria-label="Toggle navigation"
+        >
+          <span className={styles.hamburger}></span>
+          <span className={styles.hamburger}></span>
+          <span className={styles.hamburger}></span>
+        </button>
 
-          {/* Hamburger button (mobile) */}
-          <button
-            className={styles.hamburger}
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
-          >
-            <span className={open ? styles.lineOpen : styles.line}></span>
-            <span className={open ? styles.lineOpen : styles.line}></span>
-            <span className={open ? styles.lineOpen : styles.line}></span>
-          </button>
-
-          {/* Desktop nav */}
-          <nav className={styles.navDesktop}>
-            <Link href="/admin/teachers">Teachers</Link>
-            <Link href="/admin/students">Students</Link>
-            <Link href="/admin/reviews">Reviews</Link>
-            <Link href="/admin/reports">Reports</Link>
-            <button className={styles.logout} onClick={logout}>Logout</button>
-          </nav>
-        </div>
+        <ul className={`${styles.menu} ${open ? styles.menuOpen : ''}`}>
+          <li>
+            <Link href="/admin/teachers" className={styles.link}>Teachers</Link>
+          </li>
+          <li>
+            <Link href="/admin/students" className={styles.link}>Students</Link>
+          </li>
+          <li>
+            <Link href="/admin/reviews" className={styles.link}>Reviews</Link>
+          </li>
+          <li>
+            <Link href="/admin/reports" className={styles.link}>Reports</Link>
+          </li>
+          <li style={{ marginLeft: 'auto' }}>
+            <button
+              onClick={logout}
+              className={styles.logoutBtn}
+            >
+              Logout
+            </button>
+          </li>
+        </ul>
       </div>
-
-      {/* Slide-in mobile menu */}
-      <div className={`${styles.mobileMenu} ${open ? styles.open : ''}`}>
-        <nav className={styles.mobileNav}>
-          <Link href="/admin/teachers" onClick={() => setOpen(false)}>Teachers</Link>
-          <Link href="/admin/students" onClick={() => setOpen(false)}>Students</Link>
-          <Link href="/admin/reviews" onClick={() => setOpen(false)}>Reviews</Link>
-          <Link href="/admin/reports" onClick={() => setOpen(false)}>Reports</Link>
-          <button onClick={logout} className={styles.logoutMobile}>
-            Logout
-          </button>
-        </nav>
-      </div>
-
-      {/* Dark overlay */}
-      {open && <div className={styles.overlay} onClick={() => setOpen(false)} />}
-    </header>
+    </nav>
   );
 }

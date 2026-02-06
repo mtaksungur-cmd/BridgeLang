@@ -152,18 +152,29 @@ export default function TeacherProfilePage() {
 
       const studentId = auth.currentUser.uid;
       const teacherId = id;
-      const chatId = `${studentId}_${teacherId}`;
 
-      const chatRef = doc(db, "chats", chatId);
-      const snap = await getDoc(chatRef);
+      const q = query(
+        collection(db, 'conversations'),
+        where('participants', 'array-contains', studentId)
+      );
+      const snapshot = await getDocs(q);
 
-      if (!snap.exists()) {
-        await setDoc(chatRef, {
-          studentId,
-          teacherId,
+      let existingConv = null;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.participants.includes(teacherId)) {
+          existingConv = doc.id;
+        }
+      });
+
+      if (!existingConv) {
+        const convRef = doc(collection(db, 'conversations'));
+        await setDoc(convRef, {
           participants: [studentId, teacherId],
           createdAt: serverTimestamp(),
+          lastMessageAt: serverTimestamp(),
         });
+        existingConv = convRef.id;
 
         await fetch("/api/decrement", {
           method: "POST",
@@ -172,7 +183,7 @@ export default function TeacherProfilePage() {
         });
       }
 
-      router.push(`/student/chats/${chatId}`);
+      router.push(`/student/chats`);
     } catch (err) {
       console.error("Chat error:", err);
     }
@@ -242,7 +253,6 @@ export default function TeacherProfilePage() {
             </table>
           </div>
 
-          {/* 🔹 Intro Video – only show if teacher allows profile visibility */}
           {teacher.intro_video_consent_profile === true && teacher.introVideoUrl ? (
             <div className={styles.videoContainer}>
               <div className={styles.videoFrame}>
@@ -264,7 +274,6 @@ export default function TeacherProfilePage() {
           )}
         </div>
 
-        {/* Sağ panel */}
         <div className={styles.availabilityPanel}>
           <h4>Weekly Availability</h4>
           {teacher.availability && Object.keys(teacher.availability).length > 0 ? (
@@ -309,7 +318,6 @@ export default function TeacherProfilePage() {
         )}
       </div>
 
-      {/* YORUMLAR */}
       <div className={styles.reviews}>
         {reviews.filter(r => !r.hidden).length > 0 && (
           <div className={styles.reviewList}>

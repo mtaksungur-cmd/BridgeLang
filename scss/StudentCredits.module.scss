@@ -13,7 +13,7 @@
   font-size: 1.6rem;
   font-weight: 700;
   margin-bottom: v.$spacer;
-  color: v.$primary-color;
+  color: v.$primary-blue;
 }
 
 .plan,
@@ -58,7 +58,7 @@
 
 .buyBtn {
   margin-top: 12px;
-  background: v.$primary-color;
+  background: v.$primary-blue;
   color: #fff;
   border: 0;
   border-radius: 8px;
@@ -68,13 +68,13 @@
   transition: background 0.2s ease;
 
   &:hover {
-    background: v.$hover-color;
+    background: v.$accent-blue;
   }
 }
 
 .msg {
   margin-top: 8px;
-  color: v.$accent-color;
+  color: v.$danger-coral;
 }
 
 .loading {

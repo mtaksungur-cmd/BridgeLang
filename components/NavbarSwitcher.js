@@ -17,6 +17,10 @@ export default function NavbarSwitcher() {
   const router = useRouter();
   const isAdminRoute = router.pathname.startsWith('/admin');
 
+  // Hide navbar on auth pages (they have custom headers)
+  const authPages = ['/login', '/student/register', '/teacher/apply', '/teacher/register'];
+  const isAuthPage = authPages.includes(router.pathname);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -48,6 +52,9 @@ export default function NavbarSwitcher() {
     });
     return () => unsub();
   }, []);
+
+  // Don't render navbar on auth pages
+  if (isAuthPage) return null;
 
   if (isAdminRoute) {
     if (loading) return <div style={{ height: 48 }} />;

@@ -9,17 +9,44 @@ import TeacherOnboardingVideo from "../components/videos/TeacherOnboardingVideo"
 
 /* ------------------ SCREENSHOTS ------------------ */
 const SHOTS_STUDENT = [
-  { src: "/screenshots/student/step-1.png", caption: "Step 1 – Start with Free Access" },
-  { src: "/screenshots/student/step-2.png", caption: "Step 2 – Find Your Tutor" },
-  { src: "/screenshots/student/step-3.png", caption: "Step 3 – Book a 15-Min Intro or Full Lesson" },
-  { src: "/screenshots/student/step-4.png", caption: "Step 4 – Start Learning with Confidence" },
-  { src: "/screenshots/student/step-5.png", caption: "Step 5 – Progress and Get Rewarded" },
+  {
+    src: "/screenshots/student/step-1.png",
+    caption: "Step 1 – Start with Free Access",
+    description: "No subscription. No upfront cost. Browse tutors, view profiles, and message before booking. Get started for free or try a 15-min intro lesson for £4.99."
+  },
+  {
+    src: "/screenshots/student/step-2.png",
+    caption: "Step 2 – Find the Tutor That Fits You",
+    description: "Browse verified UK-based tutors. No commitment—switch tutors anytime, even on the Free Plan."
+  },
+  {
+    src: "/screenshots/student/step-3.png",
+    caption: "Step 3 – Book Your First Lesson",
+    description: "Choose 15/30/45/60-minute lessons. Times shown in UK time (GMT). Pay only for the lesson you book—no membership fees."
+  },
+  {
+    src: "/screenshots/student/step-4.png",
+    caption: "Step 4 – Join Your Live Lesson",
+    description: "Check your camera and microphone before joining. No downloads needed—runs directly in your browser."
+  }
 ];
 
 const SHOTS_TEACHER = [
-  { src: "/screenshots/teacher/step-1.png", caption: "Step 1 – Apply to Teach" },
-  { src: "/screenshots/teacher/step-2.png", caption: "Step 2 – Build Your Profile & Manage Teaching" },
-  { src: "/screenshots/teacher/step-3.png", caption: "Step 3 – Connect Your Payments" },
+  {
+    src: "/screenshots/teacher/step-1.png",
+    caption: "Step 1 – Create Your Teaching Profile",
+    description: "UK-focused learners. Fair pricing—you set your rates. Secure payments via Stripe Connect."
+  },
+  {
+    src: "/screenshots/teacher/step-2.png",
+    caption: "Step 2 – Complete Your Profile & Set Your Lesson Details",
+    description: "Choose lesson durations (30/45/60 min), set your prices, and manage your weekly availability."
+  },
+  {
+    src: "/screenshots/teacher/step-3.png",
+    caption: "Step 3 – Connect Your Payments Securely",
+    description: "Payments handled securely via Stripe Connect. Your earnings are paid directly to your bank account."
+  }
 ];
 
 /* ------------------ COMPONENT ------------------ */
@@ -121,6 +148,9 @@ export default function HowItWorks() {
                       </div>
                       <div className={`carousel-caption ${styles.captionAlways}`}>
                         <p className={styles.captionText}>{s.caption}</p>
+                        {s.description && (
+                          <p className={styles.captionDescription}>{s.description}</p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -165,6 +195,9 @@ export default function HowItWorks() {
                       </div>
                       <div className={`carousel-caption ${styles.captionAlways}`}>
                         <p className={styles.captionText}>{s.caption}</p>
+                        {s.description && (
+                          <p className={styles.captionDescription}>{s.description}</p>
+                        )}
                       </div>
                     </div>
                   ))}

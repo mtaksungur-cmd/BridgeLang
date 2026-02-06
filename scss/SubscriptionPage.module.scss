@@ -1,7 +1,7 @@
 @use '../styles/variables' as v;
 
 .container {
-  padding: v.$spacer-lg;
+  padding: 2rem;
   margin: auto;
   max-width: 1000px;
   text-align: center;
@@ -10,59 +10,59 @@
 .title {
   font-size: 1.75rem;
   font-weight: 700;
-  margin-bottom: v.$spacer;
-  color: v.$primary-color;
+  margin-bottom: 1rem;
+  color: v.$primary-blue;
 }
 
 .planList {
   display: flex;
-  gap: v.$spacer-lg;
+  gap: 2rem;
   justify-content: center;
   margin-bottom: 2rem;
 }
 
 .planCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  background: v.$card-white;
+  border: 1px solid v.$border-light;
+  border-radius: v.$radius-card;
   width: 240px;
   padding: 1.75rem 1.5rem;
   text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: v.$shadow-card;
+  transition: v.$transition-slow;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+    box-shadow: v.$shadow-card-hover;
   }
 
   &.active {
-    border: 2px solid v.$primary-color;
-    box-shadow: 0 0 12px rgba(v.$primary-color, 0.25);
+    border: 2px solid v.$primary-blue;
+    box-shadow: 0 0 12px rgba(74, 105, 189, 0.25);
   }
 
   h3 {
-    color: v.$primary-color;
+    color: v.$primary-blue;
     font-size: 1.25rem;
     margin-bottom: 0.5rem;
     font-weight: 600;
   }
 
   .planPrice {
-    font-size: .8rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    color: #111;
+    color: v.$text-dark;
     margin-bottom: 1rem;
   }
 
   .planDescription {
-  margin-top: 0.8rem;
-  font-size: 0.9rem;
-  color: #555;
-  line-height: 1.4;
-  text-align: center;
-  font-style: italic;
-}
+    margin-top: 0.8rem;
+    font-size: 0.9rem;
+    color: v.$text-medium;
+    line-height: 1.4;
+    text-align: center;
+    font-style: italic;
+  }
 
   .planFeatures {
     text-align: left;
@@ -74,7 +74,7 @@
       position: relative;
       padding-left: 1.25rem;
       margin-bottom: 0.4rem;
-      color: #444;
+      color: v.$text-medium;
       font-size: 0.9rem;
       line-height: 1.4;
 
@@ -82,7 +82,7 @@
         content: "•";
         position: absolute;
         left: 0;
-        color: v.$accent-color;
+        color: v.$danger-coral;
         font-weight: bold;
       }
     }
@@ -92,16 +92,16 @@
     margin-top: 0.5rem;
     padding: 0.6rem 1.5rem;
     border: none;
-    border-radius: 8px;
-    background: v.$accent-color;
-    color: #fff;
+    border-radius: v.$radius-button;
+    background: v.$danger-coral;
+    color: white;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: v.$transition-base;
 
     &:hover:not(:disabled) {
-      background: darken(v.$accent-color, 8%);
-      transform: translateY(-1px);
+      opacity: 0.9;
+
     }
 
     &:disabled {
@@ -111,11 +111,10 @@
   }
 }
 
-/* 🔹 Policy Info Box */
 .policyBox {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid v.$border-light;
+  border-radius: v.$radius-input;
   padding: 1.5rem 1.75rem;
   max-width: 700px;
   margin: 2rem auto;
@@ -123,30 +122,29 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 
   h3 {
-    color: v.$primary-color;
+    color: v.$primary-blue;
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 0.75rem;
   }
 
   ul {
-    padding-left: .4rem;
+    padding-left: 0.4rem;
     list-style: disc;
 
     li {
       margin-bottom: 0.4rem;
       font-size: 0.9rem;
-      color: #333;
+      color: v.$text-dark;
       line-height: 1.5;
 
       b {
-        color: v.$accent-color;
+        color: v.$danger-coral;
       }
     }
   }
 }
 
-/* 🔹 Responsive */
 @media (max-width: 768px) {
   .planList {
     flex-direction: column;
@@ -162,11 +160,11 @@
     h3 {
       text-align: center;
     }
-    li{
+
+    li {
       text-align: left;
-      font-size: 800;
-      align-items: left;
-      list-style: none;
+      font-size: 0.9rem;
+      list-style: disc;
     }
   }
 }

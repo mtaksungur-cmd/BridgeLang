@@ -1,252 +1,323 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { db, auth } from '../../lib/firebase';
-import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firestore';
-import Link from 'next/link';
-import Image from 'next/image';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useRouter } from 'next/router';
-import styles from "../../scss/TeachersList.module.scss";
+import { MapPin, Star, Briefcase, Globe, Award, Video, Car, Search, Filter, X, Users } from 'lucide-react';
+import { formatTimeAgo } from '../../lib/formatTimeAgo';
+import SeoHead from '../../components/SeoHead';
 
-const badgeDescriptions = {
-  '🆕 New Teacher': '(first 30 days)',
-  '💼 Active Teacher': '(8+ lessons in last 3 months)',
-  '🌟 5-Star Teacher': '(avg rating ≥ 4.8 in last 20 lessons)',
-};
-
-export default function TeachersList() {
+export default function Teachers() {
   const [allTeachers, setAllTeachers] = useState([]);
-  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activePlan, setActivePlan] = useState("");
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-      setIsLoggedIn(!!user);
-    });
-
-    return () => unsubscribeAuth();
-  }, []);
+  // Calculate active (online) teachers
+  const activeTeachersCount = useMemo(() => {
+    return allTeachers.filter(t => t.isOnline === true).length;
+  }, [allTeachers]);
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      const q = query(
-        collection(db, 'users'),
-        where('role', '==', 'teacher'),
-        where('status', '==', 'approved')
-      );
-      const snap = await getDocs(q);
-      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      const reviewMap = {};
-      for (const t of data) {
-        const rq = query(collection(db, 'reviews'), where('teacherId', '==', t.id));
-        const rs = await getDocs(rq);
-        reviewMap[t.id] = rs.docs.map(d => d.data().rating);
-      }
-
-      const withRatings = data.map(t => {
-        const ratings = reviewMap[t.id] || [];
-        const avg = ratings.length
-          ? (ratings.reduce((s, r) => s + r, 0) / ratings.length).toFixed(1)
-          : null;
-        const badges = t.badges || [];
-        const latestBadge = badges.length ? badges[badges.length - 1] : null;
-        return { ...t, avgRating: avg, reviewCount: ratings.length, latestBadge, badges };
-      });
-
-      withRatings.sort((a, b) => {
-        if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount;
-        return (b.avgRating || 0) - (a.avgRating || 0);
-      });
-
-      setAllTeachers(withRatings);
-      setTeachers(withRatings);
-      setLoading(false);
-    };
-
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        setActivePlan("free");
-        return;
-      }
-
       try {
-        const sSnap = await getDoc(doc(db, "users", user.uid));
-        if (sSnap.exists()) {
-          const data = sSnap.data();
-          setActivePlan(data.subscriptionPlan || "free");
-        }
-      } catch (err) {
-        console.error("checkPlan error:", err);
+        // Check auth
+        const user = auth.currentUser;
+        console.log('Current user:', user ? user.uid : 'NOT LOGGED IN');
+
+        // Fetch all teachers first
+        const q = query(collection(db, 'users'), where('role', '==', 'teacher'));
+        const snap = await getDocs(q);
+        const allDocs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        console.log('Total teachers fetched:', allDocs.length);
+
+        // Filter for approved/verified teachers
+        const teachers = allDocs.filter(t => t.status === 'approved' || t.verified === true);
+        console.log('Approved/verified teachers:', teachers.length, teachers);
+        setAllTeachers(teachers);
+      } catch (error) {
+        console.error('❌ ERROR fetching teachers:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+      } finally {
+        setLoading(false);
       }
-    });
-
+    };
     fetchTeachers();
-
-    return () => unsubscribe();
   }, []);
 
-  const citiesForCountry = useMemo(() => {
-    const set = new Set(
-      allTeachers
-        .filter(t => !country || (t.country || '').toLowerCase() === country.toLowerCase())
-        .map(t => (t.city || '').trim())
-        .filter(Boolean)
-    );
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [allTeachers, country]);
-
-  useEffect(() => {
-    const f = allTeachers.filter(t => {
-      const ctry = (t.country || '').toLowerCase();
-      const cty = (t.city || '').toLowerCase();
-      const okCountry = country ? ctry === country.toLowerCase() : true;
-      const okCity = city ? cty === city.toLowerCase() : true;
-      return okCountry && okCity;
+  const filtered = useMemo(() => {
+    return allTeachers.filter(t => {
+      if (country && t.country !== country) return false;
+      if (city && t.city !== city) return false;
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        const nameMatch = t.name?.toLowerCase().includes(search);
+        const bioMatch = t.bio?.toLowerCase().includes(search);
+        const specsMatch = t.teachingSpecializations?.toLowerCase().includes(search);
+        if (!nameMatch && !bioMatch && !specsMatch) return false;
+      }
+      return true;
     });
-    setTeachers(f);
-  }, [allTeachers, country, city]);
+  }, [allTeachers, country, city, searchTerm]);
 
-  const clearFilters = () => {
-    setCountry('');
-    setCity('');
-  };
+  const uniqueCountries = useMemo(() => [...new Set(allTeachers.map(t => t.country).filter(Boolean))], [allTeachers]);
+  const uniqueCities = useMemo(() => [...new Set(allTeachers.filter(t => !country || t.country === country).map(t => t.city).filter(Boolean))], [allTeachers, country]);
 
-  if (loading) return <p className={styles.loading}>Loading teachers...</p>;
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.container}>
-      <h2>Browse Our Tutors</h2>
-      <p className={styles.subtitle}>
-        All BridgeLang tutors are fully verified and approved for quality and professionalism.
-      </p>
-
-      <p className={styles.highlight}>
-        New to BridgeLang? Start with a <strong>30-minute</strong> lesson,
-        even on the <strong>Free Plan</strong> — no pressure, no commitment.
-      </p>
-
-      <div className={styles.filters}>
-        <div className={styles.filterItem}>
-          <label htmlFor="country">Country</label>
-          <input
-            id="country"
-            type="text"
-            placeholder="e.g., England"
-            value={country}
-            onChange={(e) => { setCountry(e.target.value); setCity(''); }}
-          />
-        </div>
-
-        <div className={styles.filterItem}>
-          <label htmlFor="city">City</label>
-          <input
-            id="city"
-            type="text"
-            placeholder="e.g., London"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            list="cities"
-            disabled={!country && citiesForCountry.length === 0}
-          />
-          <datalist id="cities">
-            {citiesForCountry.map(ct => <option key={ct} value={ct} />)}
-          </datalist>
-        </div>
-
-        <div className={styles.filterActions}>
-          <button className={styles.clearBtn} onClick={clearFilters} disabled={!country && !city}>
-            Clear
-          </button>
-          <div className={styles.resultCount}>
-            {teachers.length} result{teachers.length === 1 ? '' : 's'}
+    <>
+      <SeoHead
+        title="Find Your Teacher"
+        description="Browse qualified teachers and book personalized lessons on BridgeLang."
+      />
+      <div style={{ minHeight: '100vh', background: '#f8fafc' }} className="animate-fade-in">
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          {/* Header */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.5rem' }}>Find Your Teacher</h1>
+            <p style={{ fontSize: '0.9375rem', color: '#64748b' }}>Browse {filtered.length} qualified teachers</p>
           </div>
+
+          {/* Search & Filter Bar */}
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {/* Search */}
+              <div style={{ flex: '1 1 300px', position: 'relative' }}>
+                <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Search by name, specialty..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 3rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.9375rem' }}
+                />
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm('')} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}>
+                    <X style={{ width: '16px', height: '16px', color: '#64748b' }} />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                style={{ padding: '0.75rem 1.25rem', background: showFilters ? '#f1f5f9' : 'white', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.9375rem', fontWeight: '500', color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Filter style={{ width: '18px', height: '18px' }} />
+                Filters
+              </button>
+            </div>
+
+            {/* Expandable Filters */}
+            {showFilters && (
+              <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid #f1f5f9', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '500', color: '#64748b', marginBottom: '0.5rem' }}>Country</label>
+                  <select value={country} onChange={(e) => { setCountry(e.target.value); setCity(''); }} style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}>
+                    <option value="">All Countries</option>
+                    {uniqueCountries.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '500', color: '#64748b', marginBottom: '0.5rem' }}>City</label>
+                  <select value={city} onChange={(e) => setCity(e.target.value)} disabled={!country} style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.875rem', cursor: country ? 'pointer' : 'not-allowed', background: country ? 'white' : '#f8fafc' }}>
+                    <option value="">All Cities</option>
+                    {uniqueCities.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                {(country || city) && (
+                  <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <button onClick={() => { setCountry(''); setCity(''); }} style={{ padding: '0.625rem 1rem', background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.875rem', fontWeight: '500', color: '#64748b', cursor: 'pointer' }}>
+                      Clear Filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Active Users Banner */}
+          {activeTeachersCount > 0 && (
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+              <div className="active-users-banner">
+                <Users style={{ width: '16px', height: '16px' }} />
+                <span>
+                  <strong>{activeTeachersCount}</strong> teachers currently active
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Results */}
+          {filtered.length === 0 ? (
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '4rem 2rem', textAlign: 'center' }}>
+              <p style={{ fontSize: '1rem', color: '#64748b', marginBottom: '0.5rem' }}>No teachers found</p>
+              <p style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Try adjusting your filters</p>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1.5rem'
+            }}>
+              {filtered.map(teacher => (
+                <div
+                  key={teacher.id}
+                  className="card-hover"
+                  style={{
+                    background: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}
+                >
+                  {/* Header with Photo & Basic Info */}
+                  <div style={{ padding: '1.5rem', paddingBottom: '1rem', flex: '0 0 auto' }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      {/* Avatar with gradient glow */}
+                      <div className="avatar-glow" style={{ width: '64px', height: '64px', flexShrink: 0 }}>
+                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: teacher.profilePhotoUrl ? `url(${teacher.profilePhotoUrl}) center/cover` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'start', gap: '0.5rem', marginBottom: '0.375rem' }}>
+                          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{teacher.name}</h3>
+                          {/* Online/Offline Status */}
+                          {teacher.isOnline ? (
+                            <span className="status-badge status-online">
+                              <span className="status-dot"></span>
+                              Online
+                            </span>
+                          ) : teacher.lastSeen && (
+                            <span className="status-badge status-offline">
+                              {formatTimeAgo(teacher.lastSeen)}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', color: '#64748b', marginBottom: '0.5rem' }}>
+                          <MapPin style={{ width: '14px', height: '14px' }} />
+                          {teacher.city}, {teacher.country}
+                        </div>
+
+                        {/* Intro Lesson Badge */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.25rem 0.625rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600', color: '#1e40af', marginBottom: '0.375rem' }}>
+                          <Award style={{ width: '12px', height: '12px' }} />
+                          15-min intro available (£4.99)
+                        </div>
+
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: '#f0fdf4', borderRadius: '6px', fontSize: '0.875rem', fontWeight: '600', color: '#166534' }}>
+                          £{teacher.pricing30 || 15}/30min
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Rating */}
+                    {teacher.rating && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Star style={{ width: '16px', height: '16px', fill: '#fbbf24', color: '#fbbf24' }} />
+                          <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a' }}>{teacher.rating.toFixed(1)}</span>
+                        </div>
+                        <span style={{ fontSize: '0.8125rem', color: '#94a3b8' }}>({teacher.totalReviews || 0} reviews)</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Details Grid - flexible height */}
+                  <div style={{ padding: '0 1.5rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.8125rem', color: '#475569', flex: '1 1 auto' }}>
+                    {teacher.experienceYears && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                        <Briefcase style={{ width: '16px', height: '16px', color: '#64748b', flexShrink: 0 }} />
+                        <span>{teacher.experienceYears} years experience</span>
+                      </div>
+                    )}
+
+                    {teacher.languagesSpoken && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                        <Globe style={{ width: '16px', height: '16px', color: '#64748b', flexShrink: 0 }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teacher.languagesSpoken}</span>
+                      </div>
+                    )}
+
+                    {teacher.teachingSpecializations && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                          <Award style={{ width: '16px', height: '16px', color: '#64748b', flexShrink: 0 }} />
+                          <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.025em' }}>Specializations</span>
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', paddingLeft: '1.5rem' }}>
+                          {teacher.teachingSpecializations.split(',').slice(0, 3).map((spec, idx) => {
+                            const badgeColors = ['badge-purple', 'badge-blue', 'badge-green', 'badge-orange', 'badge-pink'];
+                            const colorClass = badgeColors[idx % badgeColors.length];
+                            return (
+                              <span
+                                key={idx}
+                                className={`badge-vibrant ${colorClass}`}
+                              >
+                                {spec.trim()}
+                              </span>
+                            );
+                          })}
+                          {teacher.teachingSpecializations.split(',').length > 3 && (
+                            <span style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem', color: '#64748b' }}>
+                              +{teacher.teachingSpecializations.split(',').length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {teacher.deliveryMethod && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                        <Video style={{ width: '16px', height: '16px', color: '#64748b', flexShrink: 0 }} />
+                        <span>{teacher.deliveryMethod}</span>
+                      </div>
+                    )}
+
+                    {teacher.willingToTravel && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                        <Car style={{ width: '16px', height: '16px', color: '#64748b', flexShrink: 0 }} />
+                        <span>Willing to travel</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CTA - always at bottom */}
+                  <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #f1f5f9', background: '#fafbfc', marginTop: 'auto' }}>
+                    <button
+                      onClick={() => router.push(`/student/teacher/${teacher.id}`)}
+                      className="btn-primary"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        fontSize: '0.9375rem',
+                        fontWeight: '600',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      View Profile
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-
-      <div className={styles.grid}>
-        {teachers.map(t => {
-          const cityTxt = t.city || '—';
-          const countryTxt = t.country || '—';
-          const price30 = t.pricing30 || 0;
-
-          return (
-            <div key={t.id} className={styles.card}>
-              <div className={styles.cardHeader}>
-                {t.profilePhotoUrl && (
-                  <Image
-                    src={t.profilePhotoUrl}
-                    alt={t.name}
-                    className={styles.avatar}
-                    width={60}
-                    height={60}
-                  />
-                )}
-                <div className={styles.headerInfo}>
-                  <Link href={`/student/teachers/${t.id}`} className={styles.teacherName}>
-                    {t.name}
-                  </Link>
-                  {t.verified && (
-                    <p className={styles.verified}>Verified</p>
-                  )}
-                </div>
-              </div>
-
-              <div className={styles.priceSection}>
-                <span className={styles.priceLabel}>From</span>
-                <span className={styles.priceAmount}>£{price30}</span>
-                <span className={styles.priceDuration}>30 min</span>
-              </div>
-
-              <div className={styles.availability}>
-                <span className={styles.availIcon}>🕐</span>
-                <span>30 min</span>
-                <span className={styles.separator}>|</span>
-                <span>45 min</span>
-                <span className={styles.separator}>|</span>
-                <span>60 min</span>
-              </div>
-
-              {t.intro && (
-                <p className={styles.bio}>{t.intro.substring(0, 100)}...</p>
-              )}
-
-              {t.avgRating && (
-                <div className={styles.ratingRow}>
-                  <span className={styles.stars}>⭐⭐⭐⭐⭐</span>
-                  <span className={styles.ratingValue}>{t.avgRating}</span>
-                  <span className={styles.reviewCount}>{t.reviewCount} Reviews</span>
-                </div>
-              )}
-
-              <div className={styles.badgeContainer}>
-                <span className={styles.introBadge}>
-                  15-min Intro
-                </span>
-                {t.badges && t.badges.filter(b => b !== '🆕 New Teacher').map((b, i) => (
-                  <span key={i} className={styles.badge}>
-                    {b.replace(/[🆕💼🌟]/g, '').trim()}
-                  </span>
-                ))}
-              </div>
-
-              <button
-                className={styles.bookBtn}
-                onClick={() => router.push(`/student/teachers/${t.id}`)}
-              >
-                Book a 30-min Lesson
-              </button>
-
-              <Link href={`/student/teachers/${t.id}`} className={styles.viewProfile}>
-                View profile
-              </Link>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    </>
   );
 }

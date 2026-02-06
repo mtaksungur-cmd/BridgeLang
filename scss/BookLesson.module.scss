@@ -10,12 +10,15 @@
   font-size: 1.6rem;
   font-weight: 700;
   margin-bottom: v.$spacer;
-  color: v.$primary-color;
+  color: v.$primary-blue;
 }
 
 .teacher {
   margin-bottom: v.$spacer;
-  span { color: #555; }
+
+  span {
+    color: #555;
+  }
 }
 
 .row {
@@ -76,9 +79,7 @@
     background: #eef4ff;
   }
 
-  &:active {
-    transform: translateY(1px);
-  }
+  &:active {}
 }
 
 .slotBtnDisabled {
@@ -87,7 +88,9 @@
   cursor: not-allowed;
   border-color: #eee;
 
-  &:hover { background: #f4f4f4; }
+  &:hover {
+    background: #f4f4f4;
+  }
 }
 
 .credits {
@@ -96,5 +99,5 @@
 
 .msg {
   margin-top: v.$spacer;
-  color: v.$accent-color; // hata mesajları kırmızı palete düşsün
+  color: v.$danger-coral; // hata mesajları kırmızı palete düşsün
 }

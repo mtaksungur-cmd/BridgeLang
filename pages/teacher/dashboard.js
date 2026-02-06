@@ -1,830 +1,674 @@
-// pages/teacher/dashboard.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { db, auth } from '../../lib/firebase';
-import {
-  doc,
-  getDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  arrayUnion,
-} from 'firebase/firestore';
-import Image from 'next/image';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, limit } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import styles from '../../scss/TeacherDashboard.module.scss';
-
-const BADGE_DEFS = [
-  {
-    key: '🆕 New Teacher',
-    desc: 'Granted automatically during the first 30 days after registration.',
-  },
-  {
-    key: '💼 Active Teacher',
-    desc: 'Taught at least 8 approved lessons in the last 3 months.',
-  },
-  {
-    key: '🌟 5-Star Teacher',
-    desc: 'Average rating of 4.8 or higher in the last 20 lessons.',
-  },
-];
-
-function normalizeText(str) {
-  if (!str) return '';
-  return str
-    .normalize('NFKC')
-    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
-    .trim();
-}
+import {
+  Calendar, MessageSquare, TrendingUp, Award, User, Clock,
+  DollarSign, BookOpen, Star, ChevronRight, AlertCircle
+} from 'lucide-react';
+import SeoHead from '../../components/SeoHead';
+import EarningsBreakdown from '../../components/EarningsBreakdown';
 
 export default function TeacherDashboard() {
   const [data, setData] = useState(null);
-  const [form, setForm] = useState(null);
-
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [msg, setMsg] = useState('');
-
-  const [reviews, setReviews] = useState([]);
-  const [reviewUsers, setReviewUsers] = useState({});
-
-  // ✅ intro video için lokal state
-  const [pendingIntroVideoFile, setPendingIntroVideoFile] = useState(null);
-  const [pendingIntroVideoDelete, setPendingIntroVideoDelete] = useState(false);
-  const [introPreviewUrl, setIntroPreviewUrl] = useState('');
+  const [upcomingLessons, setUpcomingLessons] = useState([]);
+  const [pendingBookings, setPendingBookings] = useState([]);
+  const [recentMessages, setRecentMessages] = useState([]);
+  const [weeklyEarnings, setWeeklyEarnings] = useState(0);
+  const [monthlyEarnings, setMonthlyEarnings] = useState(0);
 
   const router = useRouter();
 
-  // ----------------------------
-  // LOAD TEACHER + BADGES + REVIEWS
-  // ----------------------------
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) return router.push('/login');
 
-      const ref = doc(db, 'users', user.uid);
-      const snap = await getDoc(ref);
-      if (!snap.exists()) return router.push('/login');
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) return router.push('/login');
 
-      const userData = snap.data();
+        const userData = userSnap.data();
+        if (userData.role !== 'teacher') return router.push('/student/dashboard');
+        if (!userData?.stripeOnboarded) return router.push('/teacher/stripe-connect');
 
-      if (userData.role !== 'teacher') return router.push('/student/dashboard');
-      if (!userData?.stripeOnboarded)
-        return router.push('/teacher/stripe-connect');
+        // Fetch all bookings for analytics
+        const allBookingsQ = query(
+          collection(db, 'bookings'),
+          where('teacherId', '==', user.uid),
+          where('status', '==', 'approved')
+        );
+        const allBookingsSnap = await getDocs(allBookingsQ);
+        const allLessons = allBookingsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      const now = new Date();
-      const createdAt =
-        userData.createdAt?.toDate?.() ||
-        (userData.createdAt ? new Date(userData.createdAt) : now);
-      const diffDays = Math.floor(
-        (Date.now() - createdAt.getTime()) / 86400000,
-      );
+        // Calculate stats
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      const cutoffActive = new Date();
-      cutoffActive.setDate(now.getDate() - 90);
+        const weeklyLessons = allLessons.filter(l => {
+          const createdAt = l.createdAt?.toDate?.() || new Date(l.createdAt);
+          return createdAt >= weekAgo;
+        });
 
-      const bookingsQ = query(
-        collection(db, 'bookings'),
-        where('teacherId', '==', user.uid),
-        where('status', '==', 'approved'),
-      );
-      const bookingsSnap = await getDocs(bookingsQ);
-      const lessons = bookingsSnap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
+        const monthlyLessons = allLessons.filter(l => {
+          const createdAt = l.createdAt?.toDate?.() || new Date(l.createdAt);
+          return createdAt >= monthAgo;
+        });
 
-      const activeLessonCount = lessons.filter((b) => {
-        const d = b.createdAt?.toDate?.() || new Date(b.createdAt);
-        return d >= cutoffActive;
-      }).length;
+        const weeklyEarned = weeklyLessons.reduce((sum, l) => sum + (l.amountPaid || l.amount || 0), 0);
+        const monthlyEarned = monthlyLessons.reduce((sum, l) => sum + (l.amountPaid || l.amount || 0), 0);
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayLessons = allLessons.filter(l => {
+          const createdAt = l.createdAt?.toDate?.() || new Date(l.createdAt);
+          return createdAt >= todayStart;
+        });
+        const todayEarned = todayLessons.reduce((sum, l) => sum + (l.amountPaid || l.amount || 0), 0);
+        const totalEarned = allLessons.reduce((sum, l) => sum + (l.amountPaid || l.amount || 0), 0);
 
-      const sortedByDate = lessons
-        .map((b) => ({
-          ...b,
-          d: b.createdAt?.toDate?.() || new Date(b.createdAt),
-        }))
-        .sort((a, b) => b.d - a.d);
+        setWeeklyEarnings({ today: todayEarned, week: weeklyEarned, month: monthlyEarned, total: totalEarned });
 
-      const recent20 = sortedByDate.slice(0, 20);
+        // Fetch upcoming lessons (simplified to avoid composite index)
+        const upcomingQ = query(
+          collection(db, 'bookings'),
+          where('teacherId', '==', user.uid),
+          limit(50)
+        );
+        const upcomingSnap = await getDocs(upcomingQ);
+        const upcomingList = [];
 
-      const reviewQ = query(
-        collection(db, 'reviews'),
-        where('teacherId', '==', user.uid),
-      );
-      const reviewSnap = await getDocs(reviewQ);
-      const reviewsArr = reviewSnap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
-      setReviews(reviewsArr);
-
-      const userMap = {};
-      for (const r of reviewsArr) {
-        if (r.studentId && !userMap[r.studentId]) {
-          const s = await getDoc(doc(db, 'users', r.studentId));
-          if (s.exists()) userMap[r.studentId] = s.data();
+        for (const docSnap of upcomingSnap.docs) {
+          const booking = { id: docSnap.id, ...docSnap.data() };
+          const lessonDate = new Date(booking.date);
+          // ✅ FIX: Show confirmed AND approved future lessons
+          if ((booking.status === 'confirmed' || booking.status === 'approved') && lessonDate > now) {
+            const studentSnap = await getDoc(doc(db, 'users', booking.studentId));
+            upcomingList.push({
+              ...booking,
+              student: studentSnap.exists() ? studentSnap.data() : { name: 'Unknown' }
+            });
+          }
         }
+
+        // Sort by date and take first 3
+        upcomingList.sort((a, b) => new Date(a.date) - new Date(b.date));
+        setUpcomingLessons(upcomingList.slice(0, 3));
+
+        // Fetch pending bookings (simplified to avoid composite index)
+        const pendingQ = query(
+          collection(db, 'bookings'),
+          where('teacherId', '==', user.uid),
+          limit(50)
+        );
+        const pendingSnap = await getDocs(pendingQ);
+        const pendingList = [];
+
+        for (const docSnap of pendingSnap.docs) {
+          const booking = { id: docSnap.id, ...docSnap.data() };
+          // ✅ Show bookings that need teacher approval:
+          // - status 'pending' (old system)
+          // - status 'confirmed' with teacherApproved false (new system)
+          if (booking.status === 'pending' || (booking.status === 'confirmed' && !booking.teacherApproved)) {
+            const studentSnap = await getDoc(doc(db, 'users', booking.studentId));
+            pendingList.push({
+              ...booking,
+              student: studentSnap.exists() ? studentSnap.data() : { name: 'Unknown' }
+            });
+          }
+        }
+
+        // Sort by createdAt (most recent first)
+        pendingList.sort((a, b) => {
+          const dateA = new Date(a.createdAt?.toDate?.() || a.createdAt || 0);
+          const dateB = new Date(b.createdAt?.toDate?.() || b.createdAt || 0);
+          return dateB - dateA;
+        });
+        setPendingBookings(pendingList.slice(0, 5));
+
+        // Fetch recent conversations
+        const convsQ = query(
+          collection(db, 'conversations'),
+          where('participants', 'array-contains', user.uid),
+          limit(3)
+        );
+        const convsSnap = await getDocs(convsQ);
+        const convList = [];
+        for (const convDoc of convsSnap.docs) {
+          const convData = convDoc.data();
+          const otherUserId = convData.participants.find(id => id !== user.uid);
+          if (otherUserId) {
+            const otherUserSnap = await getDoc(doc(db, 'users', otherUserId));
+            convList.push({
+              id: convDoc.id,
+              otherUser: otherUserSnap.exists() ? otherUserSnap.data() : { name: 'Unknown' }
+            });
+          }
+        }
+        setRecentMessages(convList);
+
+        // Calculate avgRating from reviews
+        const reviewsQ = query(collection(db, 'reviews'), where('teacherId', '==', user.uid));
+        const reviewsSnap = await getDocs(reviewsQ);
+        const reviews = reviewsSnap.docs.map(d => d.data());
+        const avgRating = reviews.length > 0
+          ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+          : 0;
+
+        setData({
+          ...userData,
+          uid: user.uid,
+          totalLessons: allLessons.length,
+          avgRating,
+          totalEarnings: userData.totalEarnings || 0
+        });
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Dashboard error:', error);
+        setLoading(false);
       }
-      setReviewUsers(userMap);
-
-      const recent20Ids = recent20.map((l) => l.id);
-      const recent20Reviews = reviewsArr.filter((r) =>
-        recent20Ids.includes(r.lessonId),
-      );
-      const recent20Avg = recent20Reviews.length
-        ? recent20Reviews.reduce((a, b) => a + (b.rating || 0), 0) /
-          recent20Reviews.length
-        : 0;
-
-      const earnedBadges = [];
-      if (diffDays <= 30) earnedBadges.push('🆕 New Teacher');
-      if (activeLessonCount >= 8) earnedBadges.push('💼 Active Teacher');
-      if (recent20Avg >= 4.8 && recent20.length >= 20)
-        earnedBadges.push('🌟 5-Star Teacher');
-
-      const studentIds = [...new Set(lessons.map((b) => b.studentId))];
-      const repeatStudentIds = studentIds.filter(
-        (id) => lessons.filter((b) => b.studentId === id).length > 1,
-      );
-      const repeatRate = studentIds.length
-        ? repeatStudentIds.length / studentIds.length
-        : 0;
-
-      const avgRating = reviewsArr.length
-        ? reviewsArr.reduce((sum, r) => sum + (r.rating || 0), 0) /
-          reviewsArr.length
-        : 0;
-
-      const totalEarnings = userData.totalEarnings || 0;
-
-      await updateDoc(ref, {
-        badges: earnedBadges,
-        totalLessons: lessons.length,
-        repeatRate,
-        avgRating,
-        totalEarnings,
-      });
-
-      const fullData = {
-        ...userData,
-        uid: user.uid,
-        totalLessons: lessons.length,
-        repeatRate,
-        avgRating,
-        totalEarnings,
-        badges: earnedBadges,
-      };
-
-      const introPath =
-        fullData.intro_video_path || fullData.introVideoUrl || null;
-
-      setData({
-        ...fullData,
-        intro_video_path: introPath,
-      });
-
-      setForm({
-        bio: fullData.bio || '',
-        city: fullData.city || '',
-        postcode: fullData.postcode || '',
-        homeAddress: fullData.homeAddress || '',
-        educationLevel: fullData.educationLevel || '',
-        experienceYears: fullData.experienceYears ?? '',
-        languagesTaught: fullData.languagesTaught || '',
-        languagesSpoken: fullData.languagesSpoken || '',
-        teachingSpecializations: fullData.teachingSpecializations || '',
-        studentAges: fullData.studentAges || '',
-        deliveryMethod: fullData.deliveryMethod || '',
-        willingToTravel: !!fullData.willingToTravel,
-        pricing30: fullData.pricing30 ?? '',
-        pricing45: fullData.pricing45 ?? '',
-        pricing60: fullData.pricing60 ?? '',
-      });
-
-      setDirty(false);
-      setLoading(false);
     });
 
-    return () => {
-      unsubscribe();
-      if (introPreviewUrl) {
-        URL.revokeObjectURL(introPreviewUrl);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => unsubscribe();
   }, [router]);
 
-  // ----------------------------
-  // PROFILE PHOTO UPLOAD (hemen DB'ye)
-  // ----------------------------
-  const handlePhotoChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !data?.uid) return;
-    setUploadingPhoto(true);
-    setMsg('');
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #e2e8f0',
+          borderTopColor: '#3b82f6',
+          borderRadius: '50%',
+          animation: 'spin 0.7s linear infinite'
+        }} />
+        <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await res.json();
-      if (!res.ok || !result.url) throw new Error('Upload failed');
-
-      await updateDoc(doc(db, 'users', data.uid), {
-        profilePhotoUrl: result.url,
-      });
-      setData((prev) => ({ ...prev, profilePhotoUrl: result.url }));
-      setMsg('✅ Profile photo updated!');
-    } catch (err) {
-      console.error(err);
-      setMsg('❌ Failed to upload photo.');
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
-  // ----------------------------
-  // INTRO VIDEO — DOSYA SEÇ (sadece state, DB yok)
-  // ----------------------------
-  const handleIntroFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'video/mp4') {
-      alert('Intro video must be an MP4 file.');
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      alert('Intro video must not exceed 50MB.');
-      return;
-    }
-
-    if (introPreviewUrl) {
-      URL.revokeObjectURL(introPreviewUrl);
-    }
-    const url = URL.createObjectURL(file);
-
-    setIntroPreviewUrl(url);
-    setPendingIntroVideoFile(file);
-    setPendingIntroVideoDelete(false);
-    setDirty(true);
-    setMsg('');
-  };
-
-  // ----------------------------
-  // INTRO VIDEO — SİLMEYİ İŞARETLE
-  // ----------------------------
-  const handleIntroDeleteMark = () => {
-    const hasCurrentVideo =
-      !!data?.intro_video_path || !!data?.introVideoUrl || !!form?.intro_video_path;
-    if (!hasCurrentVideo && !pendingIntroVideoFile) return;
-
-    if (!confirm('Remove your current intro video? It will be deleted after you click "Save Changes".'))
-      return;
-
-    if (introPreviewUrl) {
-      URL.revokeObjectURL(introPreviewUrl);
-      setIntroPreviewUrl('');
-    }
-    setPendingIntroVideoFile(null);
-    setPendingIntroVideoDelete(true);
-    setDirty(true);
-    setMsg('');
-  };
-
-  // ----------------------------
-  // HANDLE FORM CHANGE (TEXT / NUMBER)
-  // ----------------------------
-  const handleChange = (key, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-    setDirty(true);
-  };
-
-  // ----------------------------
-  // SAVE PROFILE + VIDEO CHANGES
-  // ----------------------------
-  const handleSave = async () => {
-    if (!data?.uid || !form) return;
-    if (!dirty && !pendingIntroVideoFile && !pendingIntroVideoDelete) return;
-
-    setSaving(true);
-    setMsg('');
-
-    try {
-      // Profil alanları
-      const payload = {
-        bio: normalizeText(form.bio),
-        city: normalizeText(form.city),
-        postcode: normalizeText(form.postcode),
-        homeAddress: normalizeText(form.homeAddress),
-        educationLevel: normalizeText(form.educationLevel),
-        languagesTaught: normalizeText(form.languagesTaught),
-        languagesSpoken: normalizeText(form.languagesSpoken),
-        teachingSpecializations: normalizeText(
-          form.teachingSpecializations,
-        ),
-        studentAges: normalizeText(form.studentAges),
-        deliveryMethod: normalizeText(form.deliveryMethod),
-        willingToTravel: !!form.willingToTravel,
-        pricing30: form.pricing30 === '' ? null : Number(form.pricing30),
-        pricing45: form.pricing45 === '' ? null : Number(form.pricing45),
-        pricing60: form.pricing60 === '' ? null : Number(form.pricing60),
-      };
-
-      const historyEntries = [];
-
-      // ---- INTRO VIDEO kısımı ----
-      if (pendingIntroVideoFile || pendingIntroVideoDelete) {
-        if (pendingIntroVideoFile) {
-          const fd = new FormData();
-          fd.append('file', pendingIntroVideoFile);
-
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: fd,
-          });
-          const result = await res.json();
-          if (!res.ok || !result.url) {
-            throw new Error('Intro video upload failed');
-          }
-
-          payload.intro_video_path = result.url;
-          payload.introVideoUrl = result.url;
-
-          historyEntries.push({
-            type: data.intro_video_path || data.introVideoUrl ? 'replace' : 'upload',
-            timestamp: new Date().toISOString(),
-          });
-        } else if (pendingIntroVideoDelete) {
-          payload.intro_video_path = null;
-          payload.introVideoUrl = null;
-
-          historyEntries.push({
-            type: 'delete',
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
-
-      const updateData = { ...payload };
-
-      if (historyEntries.length) {
-        const nowIso = new Date().toISOString();
-        updateData.intro_video_last_update = nowIso;
-        updateData.intro_video_history = arrayUnion(...historyEntries);
-      }
-
-      await updateDoc(doc(db, 'users', data.uid), updateData);
-
-      setData((prev) => ({
-        ...prev,
-        ...updateData,
-      }));
-
-      // local state reset
-      setDirty(false);
-      setPendingIntroVideoFile(null);
-      setPendingIntroVideoDelete(false);
-      if (introPreviewUrl) {
-        URL.revokeObjectURL(introPreviewUrl);
-        setIntroPreviewUrl('');
-      }
-
-      setMsg('✅ Changes saved successfully.');
-    } catch (e) {
-      console.error(e);
-      setMsg('❌ Failed to save changes.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) return <p className={styles.loading}>Loading…</p>;
-  if (!data || !form) return null;
-
-  const hasCurrentIntroVideo =
-    !!data.intro_video_path || !!data.introVideoUrl;
-
-  const introVideoSrc = data.intro_video_path || data.introVideoUrl || '';
+  if (!data) return null;
 
   return (
-    <div className={styles.wrap}>
-      {/* HEADER */}
-      <header className={styles.header}>
-        <h2>👨‍🏫 Teacher Dashboard</h2>
-      </header>
+    <>
+      <SeoHead title="Teacher Dashboard" description="Manage your teaching on BridgeLang" />
 
-      {/* PROFILE SECTION */}
-      <section className={styles.profile}>
-        <div className={styles.profile__left}>
-          <Image
-            className={styles.profile__avatar}
-            src={data.profilePhotoUrl}
-            alt="Profile"
-            width={160}
-            height={160}
-          />
-
-          <label className={styles.profile__uploadLabel}>
-            <span>Change Profile Photo</span>
-            <input type="file" accept="image/*" onChange={handlePhotoChange} />
-          </label>
-
-          {uploadingPhoto && <p className={styles.info}>Processing…</p>}
-          {msg && (
-            <p className={msg.startsWith('✅') ? styles.ok : styles.err}>
-              {msg}
-            </p>
-          )}
-        </div>
-
-        {/* RIGHT SIDE INFO */}
-        <div className={styles.profile__right}>
-          <div className={styles.statGrid}>
-            {/* Name */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Name</div>
-              <div className={styles.stat__value}>{data.name}</div>
-            </div>
-
-            {/* Email */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Email</div>
-              <div className={styles.stat__value}>{data.email}</div>
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Total Earnings</div>
-              <div className={styles.stat__value}>
-                £{(data.totalEarnings || 0).toFixed(2)}
+      <div style={{ minHeight: '100vh', background: '#f8fafc', paddingBottom: '3rem' }}>
+        {/* Header */}
+        <div style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '2rem 1.5rem' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                  Welcome back, {data.name}!
+                </h1>
+                <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
+                  Here's what's happening with your teaching
+                </p>
               </div>
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Total Lessons</div>
-              <div className={styles.stat__value}>{data.totalLessons}</div>
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Average Rating</div>
-              <div className={styles.stat__value}>
-                {data.avgRating ? data.avgRating.toFixed(1) : '0.0'} ⭐
-              </div>
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Repeat Rate</div>
-              <div className={styles.stat__value}>
-                {Math.round((data.repeatRate || 0) * 100)}%
-              </div>
-            </div>
-
-            {/* BIO */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Bio</div>
-              <textarea
-                value={form.bio}
-                onChange={(e) => handleChange('bio', e.target.value)}
-                onInput={(e) => handleChange('bio', e.target.value)}
-                className={styles.input}
-              />
-            </div>
-
-            {/* CITY */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>City</div>
-              <input
-                value={form.city}
-                onChange={(e) => handleChange('city', e.target.value)}
-                className={styles.input}
-              />
-            </div>
-
-            {/* POSTCODE */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Postcode</div>
-              <input
-                value={form.postcode}
-                onChange={(e) =>
-                  handleChange('postcode', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* ADDRESS */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Address</div>
-              <input
-                value={form.homeAddress}
-                onChange={(e) =>
-                  handleChange('homeAddress', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* EDUCATION LEVEL */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Education Level</div>
-              <input
-                value={form.educationLevel}
-                onChange={(e) =>
-                  handleChange('educationLevel', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* EXPERIENCE YEARS */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Experience (Years)</div>
-              <input
-                type="number"
-                value={form.experienceYears}
-                onChange={(e) =>
-                  handleChange('experienceYears', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* LANGUAGES TAUGHT */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Languages Taught</div>
-              <input
-                value={form.languagesTaught}
-                onChange={(e) =>
-                  handleChange('languagesTaught', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* LANGUAGES SPOKEN */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Languages Spoken</div>
-              <input
-                value={form.languagesSpoken}
-                onChange={(e) =>
-                  handleChange('languagesSpoken', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* SPECIALISATIONS */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>
-                Teaching Specializations
-              </div>
-              <textarea
-                value={form.teachingSpecializations}
-                onChange={(e) =>
-                  handleChange(
-                    'teachingSpecializations',
-                    e.target.value,
-                  )
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* STUDENT AGES */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Student Ages</div>
-              <input
-                value={form.studentAges}
-                onChange={(e) =>
-                  handleChange('studentAges', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* DELIVERY METHOD (TEXT INPUT) */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Delivery Method</div>
-              <input
-                value={form.deliveryMethod}
-                placeholder="e.g. Online or In Person"
-                onChange={(e) =>
-                  handleChange('deliveryMethod', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            {/* WILLING TO TRAVEL */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>Willing To Travel</div>
-              <select
-                value={form.willingToTravel ? 'yes' : 'no'}
-                onChange={(e) =>
-                  handleChange(
-                    'willingToTravel',
-                    e.target.value === 'yes',
-                  )
-                }
-                className={styles.input}
-              >
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </div>
-
-            {/* ------- PRICES ------- */}
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>30 min Price (£)</div>
-              <input
-                type="number"
-                value={form.pricing30}
-                onChange={(e) =>
-                  handleChange('pricing30', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>45 min Price (£)</div>
-              <input
-                type="number"
-                value={form.pricing45}
-                onChange={(e) =>
-                  handleChange('pricing45', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.stat}>
-              <div className={styles.stat__label}>60 min Price (£)</div>
-              <input
-                type="number"
-                value={form.pricing60}
-                onChange={(e) =>
-                  handleChange('pricing60', e.target.value)
-                }
-                className={styles.input}
-              />
-            </div>
-          </div>
-
-          {/* INTRO VIDEO BLOĞU - Save Changes'ten ÖNCE */}
-          <div className={styles.videoCard}>
-            <div className={styles.videoCardHeader}>
-              <h3>Intro Video (optional)</h3>
-              <p>
-                You can upload or replace your short introduction video at any time.
-                This is optional – you can start teaching even without a video.
-              </p>
-            </div>
-
-            {/* Video / Preview durumu */}
-            <div className={styles.videoFrame}>
-              {pendingIntroVideoFile && introPreviewUrl ? (
-                <video
-                  className={styles.videoPlayer}
-                  controls
-                  preload="metadata"
+              <Link href="/account/profile">
+                <button style={{
+                  padding: '0.625rem 1.25rem',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#eff6ff';
+                    e.currentTarget.style.borderColor = '#3b82f6';
+                    e.currentTarget.style.color = '#3b82f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.color = '#475569';
+                  }}
                 >
-                  <source src={introPreviewUrl} type="video/mp4" />
-                </video>
-              ) : pendingIntroVideoDelete && hasCurrentIntroVideo ? (
-                <div className={styles.videoPlaceholder}>
-                  Video will be removed after saving.
-                </div>
-              ) : hasCurrentIntroVideo ? (
-                <video
-                  className={styles.videoPlayer}
-                  controls
-                  preload="metadata"
-                >
-                  <source src={introVideoSrc} type="video/mp4" />
-                </video>
-              ) : (
-                <div className={styles.videoPlaceholder}>
-                  No intro video uploaded.
-                </div>
-              )}
-            </div>
-            <div className={styles.videoActions}>
-              <label className={styles.uploadBtn}>
-                <span>
-                  {hasCurrentIntroVideo ? 'Replace Video' : 'Upload Intro Video'}
-                </span>
-                <input
-                  type="file"
-                  accept="video/mp4"
-                  onChange={handleIntroFileChange}
-                />
-              </label>
-
-              {(hasCurrentIntroVideo || pendingIntroVideoFile) && (
-                <button
-                  type="button"
-                  className={styles.deleteVideoBtn}
-                  onClick={handleIntroDeleteMark}
-                  disabled={saving}
-                >
-                  Delete Video
+                  <User style={{ width: '16px', height: '16px' }} />
+                  Edit Profile
                 </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+
+          {/* Earnings Breakdown */}
+          <div style={{ marginBottom: '2rem' }}>
+            <EarningsBreakdown earnings={weeklyEarnings} />
+          </div>
+
+          {/* Stats Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+
+            {/* Total Lessons */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>Total Lessons</span>
+                <BookOpen style={{ width: '20px', height: '20px', color: '#3b82f6' }} />
+              </div>
+              <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                {data.totalLessons || 0}
+              </p>
+              <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: 0 }}>
+                All time completed
+              </p>
+            </div>
+
+            {/* Average Rating */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>Average Rating</span>
+                <Star style={{ width: '20px', height: '20px', color: '#fbbf24', fill: '#fbbf24' }} />
+              </div>
+              <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                {data.avgRating ? data.avgRating.toFixed(1) : '0.0'}
+              </p>
+              <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: 0 }}>
+                Based on student reviews
+              </p>
+            </div>
+
+            {/* Pending Requests */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>Pending Requests</span>
+                <AlertCircle style={{ width: '20px', height: '20px', color: '#f59e0b' }} />
+              </div>
+              <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                {pendingBookings.length}
+              </p>
+              <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: 0 }}>
+                Awaiting your response
+              </p>
+            </div>
+          </div>
+
+          {/* Main Content Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+
+            {/* Upcoming Lessons */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>Upcoming Lessons</h3>
+                <Calendar style={{ width: '20px', height: '20px', color: '#64748b' }} />
+              </div>
+
+              {upcomingLessons.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                  <Clock style={{ width: '40px', height: '40px', color: '#cbd5e1', margin: '0 auto 0.75rem' }} />
+                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>No upcoming lessons</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {upcomingLessons.map(lesson => (
+                    <div key={lesson.id} style={{
+                      padding: '0.875rem',
+                      background: '#f8fafc',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a' }}>
+                          {lesson.student?.name || 'Student'}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          {lesson.duration}min
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                        {new Date(lesson.date).toLocaleDateString('en-GB', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  <Link href="/teacher/bookings">
+                    <button style={{
+                      marginTop: '0.5rem',
+                      width: '100%',
+                      padding: '0.625rem',
+                      background: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.375rem',
+                      transition: 'all 0.2s'
+                    }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#eff6ff';
+                        e.currentTarget.style.borderColor = '#3b82f6';
+                        e.currentTarget.style.color = '#3b82f6';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#f8fafc';
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                        e.currentTarget.style.color = '#475569';
+                      }}
+                    >
+                      View All
+                      <ChevronRight style={{ width: '14px', height: '14px' }} />
+                    </button>
+                  </Link>
+                </div>
               )}
             </div>
 
-            {data.intro_video_last_update && (
-              <p className={styles.videoLastUpdate}>
-                Last updated:{' '}
-                {new Date(data.intro_video_last_update).toLocaleString('en-GB')}
-              </p>
-            )}
-          </div>
+            {/* Pending Booking Requests */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>Booking Requests</h3>
+                <AlertCircle style={{ width: '20px', height: '20px', color: '#f59e0b' }} />
+              </div>
 
-          {/* SAVE BUTTON (profil + video birlikte) */}
-          <button
-            type="button"
-            className={styles.btnPrimary}
-            onClick={handleSave}
-            disabled={
-              saving ||
-              (!dirty && !pendingIntroVideoFile && !pendingIntroVideoDelete)
-            }
-          >
-            {saving
-              ? 'Saving…'
-              : dirty || pendingIntroVideoFile || pendingIntroVideoDelete
-              ? 'Save Changes'
-              : 'No Changes'}
-          </button>
-        </div>
-      </section>
-
-      {/* BADGES */}
-      <section className={styles.badges}>
-        <h3>Your Badges & Progress</h3>
-        <ul className={styles.badges__list}>
-          {BADGE_DEFS.map((b) => (
-            <li
-              key={b.key}
-              className={`${styles.badges__item} ${
-                data.badges?.includes(b.key)
-                  ? styles['badges__item--on']
-                  : ''
-              }`}
-            >
-              <span className={styles.badges__name}>{b.key}</span>
-              <span className={styles.badges__desc}>{b.desc}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* REVIEWS */}
-      <section className={styles.reviews}>
-        <h3>Student Reviews</h3>
-        {reviews.length === 0 ? (
-          <p className={styles.muted}>No reviews yet.</p>
-        ) : (
-          <div className={styles.reviewList}>
-            {reviews.map((r) => {
-              const student = reviewUsers[r.studentId];
-              return (
-                <div key={r.id} className={styles.reviewCard}>
-                  <div className={styles.reviewHeader}>
-                    {student?.profilePhotoUrl && (
-                      <Image
-                        src={student.profilePhotoUrl}
-                        className={styles.reviewAvatar}
-                        alt={student?.name}
-                        width={40}
-                        height={40}
-                      />
-                    )}
-                    <div>
-                      <strong>{student?.name || 'Anonymous'}</strong>
-                      <div>⭐ {r.rating}</div>
-                    </div>
-                  </div>
-                  <p>{r.comment}</p>
+              {pendingBookings.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                  <Award style={{ width: '40px', height: '40px', color: '#cbd5e1', margin: '0 auto 0.75rem' }} />
+                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>No pending requests</p>
                 </div>
-              );
-            })}
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {pendingBookings.slice(0, 3).map(booking => (
+                    <div key={booking.id} style={{
+                      padding: '0.875rem',
+                      background: '#fef3c7',
+                      borderRadius: '8px',
+                      border: '1px solid #fde047'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a' }}>
+                          {booking.student?.name || 'Student'}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#92400e', fontWeight: '600' }}>
+                          £{(booking.amountPaid || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.8125rem', color: '#78350f', marginBottom: '0.5rem' }}>
+                        {booking.duration}min · {new Date(booking.date).toLocaleDateString('en-GB')}
+                      </div>
+                    </div>
+                  ))}
+                  <Link href="/teacher/lessons">
+                    <button style={{
+                      marginTop: '0.5rem',
+                      width: '100%',
+                      padding: '0.625rem',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      color: 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.375rem',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 2px 8px rgba(59,130,246,0.25)'
+                    }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(59,130,246,0.35)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,0.25)';
+                      }}
+                    >
+                      Review Requests
+                      <ChevronRight style={{ width: '14px', height: '14px' }} />
+                    </button>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Messages */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>Recent Messages</h3>
+                <MessageSquare style={{ width: '20px', height: '20px', color: '#64748b' }} />
+              </div>
+
+              {recentMessages.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                  <MessageSquare style={{ width: '40px', height: '40px', color: '#cbd5e1', margin: '0 auto 0.75rem' }} />
+                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>No messages yet</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {recentMessages.map(conv => (
+                    <div key={conv.id} style={{
+                      padding: '0.875rem',
+                      background: '#f8fafc',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                      onClick={() => router.push('/teacher/chats')}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#eff6ff'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          flexShrink: 0
+                        }}>
+                          {(conv.otherUser?.name || 'S')[0].toUpperCase()}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {conv.otherUser?.name || 'Unknown'}
+                          </div>
+                          <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                            Student
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <Link href="/teacher/chats">
+                    <button style={{
+                      marginTop: '0.5rem',
+                      width: '100%',
+                      padding: '0.625rem',
+                      background: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.375rem',
+                      transition: 'all 0.2s'
+                    }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#eff6ff';
+                        e.currentTarget.style.borderColor = '#3b82f6';
+                        e.currentTarget.style.color = '#3b82f6';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#f8fafc';
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                        e.currentTarget.style.color = '#475569';
+                      }}
+                    >
+                      View All Messages
+                      <ChevronRight style={{ width: '14px', height: '14px' }} />
+                    </button>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </section>
-    </div>
+
+          {/* Quick Actions */}
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', marginBottom: '1.25rem' }}>Quick Actions</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <Link href="/account/profile">
+                <button style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#eff6ff';
+                    e.currentTarget.style.borderColor = '#3b82f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                  }}
+                >
+                  <User style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
+                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
+                    Edit Profile
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                    Update your info
+                  </div>
+                </button>
+              </Link>
+
+              <Link href="/teacher/bookings">
+                <button style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#eff6ff';
+                    e.currentTarget.style.borderColor = '#3b82f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                  }}
+                >
+                  <Calendar style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
+                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
+                    Manage Bookings
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                    View all lessons
+                  </div>
+                </button>
+              </Link>
+
+              <Link href="/teacher/chats">
+                <button style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#eff6ff';
+                    e.currentTarget.style.borderColor = '#3b82f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                  }}
+                >
+                  <MessageSquare style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
+                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
+                    Messages
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                    Chat with students
+                  </div>
+                </button>
+              </Link>
+
+              <Link href="/account/settings">
+                <button style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#eff6ff';
+                    e.currentTarget.style.borderColor = '#3b82f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                  }}
+                >
+                  <User style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
+                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
+                    Settings
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                    Account preferences
+                  </div>
+                </button>
+              </Link>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </>
   );
 }
