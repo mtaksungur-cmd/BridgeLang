@@ -73,20 +73,26 @@ export default function TeacherApply() {
       const email = form.email.trim().toLowerCase();
 
       // Check if this email was previously deleted
-      const checkRes = await fetch('/api/auth/check-deleted-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const checkData = await checkRes.json();
-      if (checkData.deleted) {
-        setError('This email address has been previously removed and cannot be used to register again.');
-        setSubmitting(false);
-        return;
+      try {
+        const checkRes = await fetch('/api/auth/check-deleted-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          if (checkData.deleted) {
+            setError('This email address has been previously removed and cannot be used to register again.');
+            setSubmitting(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Deleted email check failed, continuing registration:', e);
       }
 
       const { user } = await createUserWithEmailAndPassword(auth, email, form.password);
-      await setDoc(doc(db, 'users', user.uid), {
+      await setDoc(doc(db, 'pendingTeachers', user.uid), {
         name: form.name.trim(), email, country: form.country, city: form.city || '',
         role: 'teacher', approved: false, status: 'pending', emailVerified: false,
         specialties: form.specialty, teachingSpecializations: form.specialty.join(', '),

@@ -1,6 +1,12 @@
 import { adminDb } from '../../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
+    if (!adminDb) {
+        // Firebase Admin not initialized — return safe defaults
+        if (req.method === 'GET') return res.status(200).json({ otpEnabled: false });
+        return res.status(503).json({ error: 'Service unavailable' });
+    }
+
     if (req.method === 'GET') {
         try {
             const settingsDoc = await adminDb.collection('platformSettings').doc('auth').get();

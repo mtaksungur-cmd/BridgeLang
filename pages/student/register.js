@@ -126,16 +126,22 @@ export default function StudentRegister() {
       }
 
       // Check if email was previously deleted
-      const checkRes = await fetch('/api/auth/check-deleted-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const checkData = await checkRes.json();
-      if (checkData.deleted) {
-        setError('This email address is associated with a previously deleted account and cannot be used to register again.');
-        setSubmitting(false);
-        return;
+      try {
+        const checkRes = await fetch('/api/auth/check-deleted-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          if (checkData.deleted) {
+            setError('This email address is associated with a previously deleted account and cannot be used to register again.');
+            setSubmitting(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Deleted email check failed, continuing registration:', e);
       }
 
       const { user } = await createUserWithEmailAndPassword(auth, email, form.password);

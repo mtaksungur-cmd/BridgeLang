@@ -34,7 +34,21 @@ export default function LoginPage() {
       if (user && stage === 'login') {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
-          const role = userDoc.data()?.role;
+          const userData = userDoc.data();
+
+          // Task 3.3: If user not in users collection, check pendingTeachers
+          if (!userData) {
+            const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
+            if (pendingDoc.exists()) {
+              await signOut(auth);
+              router.push('/teacher/pending-approval');
+              return;
+            }
+            setCheckingAuth(false);
+            return;
+          }
+
+          const role = userData?.role;
 
           if (role === 'teacher') router.push('/teacher/dashboard');
           else if (role === 'student') router.push('/student/dashboard');
@@ -94,9 +108,16 @@ export default function LoginPage() {
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
       await reload(user);
 
-      const settingsRes = await fetch('/api/admin/settings/auth');
-      const settingsData = await settingsRes.json();
-      const otpEnabled = settingsData.otpEnabled || false;
+      let otpEnabled = false;
+      try {
+        const settingsRes = await fetch('/api/admin/settings/auth');
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          otpEnabled = settingsData.otpEnabled || false;
+        }
+      } catch (e) {
+        console.warn('Failed to fetch auth settings, defaulting OTP to disabled:', e);
+      }
 
       if (!otpEnabled) {
         let userData = null;
@@ -108,6 +129,16 @@ export default function LoginPage() {
           userData = userDoc.data();
           role = userData?.role || 'student';
           status = userData?.status || 'active';
+
+          // Task 3.1 & 3.2: If user not found in users, check pendingTeachers
+          if (!userData) {
+            const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
+            if (pendingDoc.exists()) {
+              await signOut(auth);
+              router.push('/teacher/pending-approval');
+              return;
+            }
+          }
         } catch (permError) {
           console.warn('Permission error during login check:', permError.message);
           // If we get a permission error, it's very likely a paused/restricted account
