@@ -23,6 +23,7 @@ export default function TeacherDashboard() {
   const router = useRouter();
 
   useEffect(() => {
+    if (!auth) { setLoading(false); return; }
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) return router.push('/login');
 

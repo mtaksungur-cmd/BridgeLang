@@ -29,6 +29,10 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (!auth) {
+      setCheckingAuth(false);
+      return;
+    }
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user && stage === 'login') {
         try {
