@@ -29,14 +29,12 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const user = auth.currentUser;
+    const unsub = onAuthStateChanged(auth, async (user) => {
       if (user && stage === 'login') {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           const userData = userDoc.data();
 
-          // Task 3.3: If user not in users collection, check pendingTeachers
           if (!userData) {
             const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
             if (pendingDoc.exists()) {
@@ -61,9 +59,9 @@ export default function LoginPage() {
       } else {
         setCheckingAuth(false);
       }
-    };
+    });
 
-    checkAuth();
+    return () => unsub();
   }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
