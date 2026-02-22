@@ -22,65 +22,77 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     if (!auth) { setLoading(false); return; }
+
+    // Safety timeout — if data doesn't load in 10s, stop loading
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 10000);
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) { router.push('/login'); return; }
+      if (!user) { clearTimeout(timeout); router.push('/login'); return; }
 
       try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (!userSnap.exists()) { router.push('/login'); return; }
+        if (!userSnap.exists()) { clearTimeout(timeout); router.push('/login'); return; }
 
         const userData = userSnap.data();
         if (userData.role !== 'student') {
+          clearTimeout(timeout);
           router.push('/teacher/dashboard');
           return;
         }
 
         if (userData.status === 'pending_consent') {
+          clearTimeout(timeout);
           router.push('/login');
           return;
         }
 
         // Fetch student's booked lessons
-        const bookingsQuery = query(
-          collection(db, 'bookings'),
-          where('studentId', '==', user.uid),
-          where('status', 'in', ['confirmed', 'approved', 'pending'])
-        );
-        const bookingsSnap = await getDocs(bookingsQuery);
-        const bookingsData = [];
+        let bookingsData = [];
+        try {
+          const bookingsQuery = query(
+            collection(db, 'bookings'),
+            where('studentId', '==', user.uid),
+            where('status', 'in', ['confirmed', 'approved', 'pending'])
+          );
+          const bookingsSnap = await getDocs(bookingsQuery);
 
-        for (const bookingDoc of bookingsSnap.docs) {
-          const booking = { id: bookingDoc.id, ...bookingDoc.data() };
-          // Fetch teacher name
-          if (booking.teacherId) {
-            try {
-              const teacherSnap = await getDoc(doc(db, 'users', booking.teacherId));
-              if (teacherSnap.exists()) {
-                booking.teacherName = teacherSnap.data().name || 'Unknown Tutor';
+          for (const bookingDoc of bookingsSnap.docs) {
+            const booking = { id: bookingDoc.id, ...bookingDoc.data() };
+            if (booking.teacherId) {
+              try {
+                const teacherSnap = await getDoc(doc(db, 'users', booking.teacherId));
+                if (teacherSnap.exists()) {
+                  booking.teacherName = teacherSnap.data().name || 'Unknown Tutor';
+                }
+              } catch (e) {
+                booking.teacherName = 'Unknown Tutor';
               }
-            } catch (e) {
-              booking.teacherName = 'Unknown Tutor';
             }
+            bookingsData.push(booking);
           }
-          bookingsData.push(booking);
-        }
 
-        // Sort by date descending (newest first)
-        bookingsData.sort((a, b) => {
-          const dateA = a.date || '';
-          const dateB = b.date || '';
-          return dateB.localeCompare(dateA);
-        });
+          bookingsData.sort((a, b) => {
+            const dateA = a.date || '';
+            const dateB = b.date || '';
+            return dateB.localeCompare(dateA);
+          });
+        } catch (bookingError) {
+          console.error('Bookings fetch error:', bookingError);
+        }
 
         setLessons(bookingsData);
         setData(userData);
+        clearTimeout(timeout);
         setLoading(false);
       } catch (error) {
         console.error('Dashboard error:', error);
+        clearTimeout(timeout);
         setLoading(false);
       }
     });
-    return () => unsubscribe();
+    return () => { unsubscribe(); clearTimeout(timeout); };
   }, [router]);
 
   if (loading) return <div style={{textAlign:'center', padding:'5rem'}}>Loading...</div>;
