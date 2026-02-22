@@ -11,7 +11,7 @@ const PLANS = [
     price: "£0",
     period: "forever",
     features: [
-      "View unlimited teacher profiles",
+      "10 teacher profile views",
       "Up to 5 messages before booking",
       "25% Review Discount"
     ],
@@ -23,7 +23,7 @@ const PLANS = [
     price: "£4.99",
     period: "1-month access",
     features: [
-      "View unlimited teacher profiles",
+      "30 teacher profile views",
       "Up to 10 messages before booking",
       "30% Review Discount"
     ],
@@ -36,7 +36,7 @@ const PLANS = [
     price: "£9.99",
     period: "1-month access",
     features: [
-      "View unlimited teacher profiles",
+      "100 teacher profile views",
       "Up to 20 messages before booking",
       "35% Review Discount"
     ],
@@ -49,7 +49,7 @@ const PLANS = [
     price: "£14.99",
     period: "1-month access",
     features: [
-      "View unlimited teacher profiles",
+      "Unlimited teacher views",
       "Unlimited messages before booking",
       "40% Review Discount",
       "Priority Support"
@@ -264,11 +264,6 @@ export default function SubscriptionPage() {
                       <span style={{ fontSize: '2rem', fontWeight: '700', color: '#0f172a' }}>
                         {plan.price}
                       </span>
-                      {plan.period !== 'forever' && (
-                        <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                          / month
-                        </span>
-                      )}
                     </div>
                     <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: '0.25rem 0 0 0' }}>
                       {plan.period}

@@ -177,8 +177,8 @@ export default function TermsOfUse() {
 
             <h3 id="B1">B.1 Subscription Plans, Recurring Billing and Renewal</h3>
             <p><strong>B.1.1</strong> BridgeLang offers various subscription plans for Students, each providing a specific number of lesson credits and access to the Platform&apos;s services.</p>
-            <p><strong>B.1.2</strong> Subscription plans are billed monthly on a calendar-month basis through the Student&apos;s chosen payment method.</p>
-            <p><strong>B.1.3</strong> Plans will automatically renew at the end of each billing cycle unless cancelled by the Student prior to the renewal date.</p>
+            <p><strong>B.1.2</strong> Subscription plans are purchased on a one-time basis for a period of one (1) month through the Student&apos;s chosen payment method.</p>
+            <p><strong>B.1.3</strong> Plans do not automatically renew. Upon expiry of the one-month period, the Student must manually purchase a new plan to maintain premium access.</p>
             <p><strong>B.1.4</strong> Students may cancel a subscription at any time via their account dashboard; however, except as required under law or expressly provided in these Terms, no prorated or partial refunds will be given for any unused portion of a subscription cancelled mid-cycle.</p>
             <p><strong>B.1.5</strong> Unless stated otherwise, prices are in GBP and include VAT where applicable. Where payment is made in a non-GBP currency, any conversion or bank charges shall be borne by the Student.</p>
 

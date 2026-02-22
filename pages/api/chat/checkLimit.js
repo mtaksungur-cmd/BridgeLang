@@ -1,11 +1,5 @@
 import { adminDb } from '../../../lib/firebaseAdmin';
-
-const PLAN_LIMITS = {
-    free: 5,
-    starter: 10,
-    pro: 20,
-    vip: 9999
-};
+import { PLAN_LIMITS } from '../../../lib/planLimits';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
@@ -42,26 +36,25 @@ export default async function handler(req, res) {
         const userSnap = await adminDb.collection('users').doc(studentId).get();
         const user = userSnap.data() || {};
         const plan = user.subscriptionPlan || 'free';
-        const limit = PLAN_LIMITS[plan] || 5;
+        const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
-        const msgsSnap = await adminDb.collection('chats').doc(chatId)
+        const msgsSnap = await adminDb.collection('conversations').doc(chatId)
             .collection('messages')
-            .where('sender', '==', studentId)
-            .count()
+            .where('senderId', '==', studentId)
             .get();
 
-        const count = msgsSnap.data().count;
+        const count = msgsSnap.size;
 
-        if (count >= limit) {
+        if (count >= limits.messagesLeft && plan !== 'vip') {
             return res.status(200).json({
                 allowed: false,
                 reason: 'limit_reached',
                 plan,
-                limit
+                limit: limits.messagesLeft
             });
         }
 
-        return res.status(200).json({ allowed: true, count, limit });
+        return res.status(200).json({ allowed: true, count, limit: limits.messagesLeft });
 
     } catch (err) {
         console.error('checkLimit error:', err);

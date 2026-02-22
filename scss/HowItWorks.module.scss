@@ -45,6 +45,16 @@
 /* Carousel */
 .carouselWrap {
   position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  z-index: 1; // Base z-index
+}
+
+// Ensure the role switch is above everything and clickable
+.page {
+  position: relative;
+  z-index: 1;
 }
 
 .carouselInner {
@@ -53,16 +63,11 @@
 
 /* 
   shotBox: Görsel konteyneri
-  - Mobilde oran (16:9), tablet ve üstünde geniş oran (21:9)
-  - Desktop’ta “yükseklik clamp” ile akışkan ama kontrollü yükseklik
-  - İçerideki img 'contain' ile ASLA taşmaz, tam sığar (gerekirse letterbox/pillarbox).
 */
 .shotBox {
   position: relative;
   width: 100%;
-  background: #0b0c0f;
-  /* letterbox alanları koyu göstermesi için */
-  border-radius: 8px;
+  background: #f1f5f9;
   overflow: hidden;
 
   /* Default (mobile): 16:9 kutu */
@@ -74,77 +79,94 @@
   }
 
   @media (min-width: 992px) {
-    /* Desktop: oran yerine akışkan yükseklik,
-       büyük ekranlarda basık görünmesin, küçüklerde aşırı büyümesin */
     aspect-ratio: auto;
     height: clamp(420px, 45vw, 760px);
     max-height: 760px;
-  }
-
-  @media (min-width: 1400px) {
-    height: clamp(440px, 38vw, 800px);
-    max-height: 800px;
   }
 }
 
 /* 
   shotImg: Görselin kendisi
-  - Her zaman kutunun içinde kalır (contain)
-  - En ve boy %100; taşma YOK
 */
 .shotImg {
   width: 100%;
   height: 100%;
   display: block;
   object-fit: contain;
-  /* kritik: taşma yok, tam sığar */
   object-position: center;
 }
 
-/* Caption mobilde de görünsün */
+/* Caption Area */
 .captionAlways {
   display: block !important;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 0.5rem 0.75rem;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  padding: 1rem !important;
   text-align: center;
-  pointer-events: none;
-  /* ok tıklamalarıyla çakışmasın */
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.captionHeader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .captionText {
-  display: inline-block;
   margin: 0;
-  font-weight: 600;
-  font-size: .95rem;
-  background: rgba(0, 0, 0, .6);
-  color: #fff;
-  padding: .35rem .6rem;
-  border-radius: .5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #1e293b;
+  background: transparent;
+  padding: 0;
+}
 
-  @media (min-width: 768px) {
-    font-size: 1rem;
-    padding: .4rem .75rem;
+.infoBtn {
+  background: #4a6fbd;
+  color: white;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #3c5aa0;
+    transform: scale(1.1);
+  }
+}
+
+.infoCollapse {
+  max-height: 0;
+  opacity: 0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+
+  &.show {
+    max-height: 150px;
+    margin-top: 0.75rem;
+    opacity: 1;
   }
 }
 
 .captionDescription {
-  display: inline-block;
-  margin: 0.5rem 0 0 0;
+  display: block;
+  margin: 0 auto;
   font-weight: 400;
-  font-size: .85rem;
-  background: rgba(0, 0, 0, .55);
-  color: #f3f4f6;
-  padding: .3rem .55rem;
-  border-radius: .4rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  background: transparent;
+  padding: 0;
   line-height: 1.5;
-  max-width: 90%;
-
-  @media (min-width: 768px) {
-    font-size: .9rem;
-    padding: .35rem .65rem;
-    max-width: 80%;
-  }
+  max-width: 700px;
 }

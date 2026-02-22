@@ -3,7 +3,7 @@ import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged, updatePassword, updateEmail } from 'firebase/auth';
 import { useRouter } from 'next/router';
-import { User, Lock, Bell, CreditCard, Globe, Shield, Download, Trash2, Save } from 'lucide-react';
+import { User, Lock, Bell, CreditCard, Globe, Shield, Download, Trash2, Save, PauseCircle } from 'lucide-react';
 
 export default function Settings() {
     const [user, setUser] = useState(null);
@@ -143,6 +143,66 @@ export default function Settings() {
         } catch (error) {
             console.error('Preferences error:', error);
             setMessage('✓ Preferences saved locally');
+            setTimeout(() => setMessage(''), 3000);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handlePauseAccount = async () => {
+        if (!confirm('Are you sure you want to pause your account? You will be logged out and can reactivate it anytime via email.')) return;
+
+        setSaving(true);
+        setMessage('');
+        try {
+            const res = await fetch('/api/account/pause', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.uid })
+            });
+
+            if (res.ok) {
+                await auth.signOut();
+                router.push('/login?message=paused');
+            } else {
+                throw new Error('Failed to pause account');
+            }
+        } catch (error) {
+            console.error('Pause error:', error);
+            setMessage('❌ Error: Could not pause account');
+            setTimeout(() => setMessage(''), 3000);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!confirm('PERMANENTLY DELETE your account? This cannot be undone.')) return;
+        
+        setSaving(true);
+        setMessage('');
+        try {
+            const endpoint = userData?.role === 'teacher' ? '/api/admin/deleteTeacher' : '/api/admin/deleteStudent';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    studentId: user.uid, 
+                    teacherId: user.uid,
+                    studentEmail: user.email,
+                    studentName: userData?.name
+                })
+            });
+
+            if (res.ok) {
+                await auth.signOut();
+                router.push('/login?message=deleted');
+            } else {
+                throw new Error('Delete failed');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            setMessage('❌ Error: Could not delete account');
             setTimeout(() => setMessage(''), 3000);
         } finally {
             setSaving(false);
@@ -656,25 +716,56 @@ export default function Settings() {
                                     </div>
 
                                     <div style={{ paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                                        <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#f59e0b', marginBottom: '0.5rem' }}>
+                                            Pause Account
+                                        </h3>
+                                        <p style={{ fontSize: '0.8125rem', color: '#64748b', marginBottom: '1rem' }}>
+                                            Temporarily disable your account. You can reactivate it anytime.
+                                        </p>
+                                        <button 
+                                            onClick={handlePauseAccount}
+                                            style={{
+                                                padding: '0.625rem 1.25rem',
+                                                background: '#fffbeb',
+                                                border: '1px solid #fcd34d',
+                                                borderRadius: '6px',
+                                                fontSize: '0.875rem',
+                                                fontWeight: '500',
+                                                color: '#d97706',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem'
+                                            }}
+                                        >
+                                            <PauseCircle style={{ width: '16px', height: '16px' }} />
+                                            Pause Account
+                                        </button>
+                                    </div>
+
+                                    <div style={{ paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
                                         <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#dc2626', marginBottom: '0.5rem' }}>
                                             Delete Account
                                         </h3>
                                         <p style={{ fontSize: '0.8125rem', color: '#64748b', marginBottom: '1rem' }}>
                                             Permanently delete your account and all associated data
                                         </p>
-                                        <button style={{
-                                            padding: '0.625rem 1.25rem',
-                                            background: '#fef2f2',
-                                            border: '1px solid #fecaca',
-                                            borderRadius: '6px',
-                                            fontSize: '0.875rem',
-                                            fontWeight: '500',
-                                            color: '#dc2626',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem'
-                                        }}>
+                                        <button 
+                                            onClick={handleDeleteAccount}
+                                            style={{
+                                                padding: '0.625rem 1.25rem',
+                                                background: '#fef2f2',
+                                                border: '1px solid #fecaca',
+                                                borderRadius: '6px',
+                                                fontSize: '0.875rem',
+                                                fontWeight: '500',
+                                                color: '#dc2626',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem'
+                                            }}
+                                        >
                                             <Trash2 style={{ width: '16px', height: '16px' }} />
                                             Delete Account
                                         </button>

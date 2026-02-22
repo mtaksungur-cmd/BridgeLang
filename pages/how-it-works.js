@@ -2,217 +2,193 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import Link from "next/link";
 import styles from "../scss/HowItWorks.module.scss";
 
 import StudentOnboardingVideo from "../components/videos/StudentOnboardingVideo";
 import TeacherOnboardingVideo from "../components/videos/TeacherOnboardingVideo";
 
-/* ------------------ SCREENSHOTS ------------------ */
+/* ————— SCREENSHOTS ————— */
 const SHOTS_STUDENT = [
   {
-    src: "/screenshots/student/step-1.png",
+    src: "/screenshots/student/step-1.png?v=3",
     caption: "Step 1 – Start with Free Access",
-    description: "No subscription. No upfront cost. Browse tutors, view profiles, and message before booking. Get started for free or try a 15-min intro lesson for £4.99."
+    description: "No subscription. No upfront cost. Browse verified tutor profiles and message them before booking. Start for free or try a 15-min intro lesson for £4.99."
   },
   {
-    src: "/screenshots/student/step-2.png",
+    src: "/screenshots/student/step-2.png?v=3",
     caption: "Step 2 – Find the Tutor That Fits You",
-    description: "Browse verified UK-based tutors. No commitment—switch tutors anytime, even on the Free Plan."
+    description: "Browse verified UK-based tutors. From £15/30min. You can switch tutors anytime — even on the Free Plan."
   },
   {
-    src: "/screenshots/student/step-3.png",
-    caption: "Step 3 – Book Your First Lesson",
-    description: "Choose 15/30/45/60-minute lessons. Times shown in UK time (GMT). Pay only for the lesson you book—no membership fees."
+    src: "/screenshots/student/step-3.png?v=3",
+    caption: "Step 3 – Book your first lesson in minutes",
+    description: "Choose 15/30/45/60-minute lessons. Pay only for the lesson you book — no membership fees. Intro lesson credit applies to your next booking."
   },
   {
-    src: "/screenshots/student/step-4.png",
+    src: "/screenshots/student/step-4.png?v=3",
     caption: "Step 4 – Join Your Live Lesson",
-    description: "Check your camera and microphone before joining. No downloads needed—runs directly in your browser."
+    description: "Join directly in your browser. Check your camera and microphone before the lesson starts. No downloads needed."
+  },
+  {
+    src: "/screenshots/student/step-5.png?v=3",
+    caption: "Step 5 – Progress and Get Rewarded",
+    description: "Earn loyalty rewards as you learn. Your consistency is valued and rewarded with discounts on future lessons."
   }
 ];
 
 const SHOTS_TEACHER = [
   {
-    src: "/screenshots/teacher/step-1.png",
+    src: "/screenshots/teacher/step-1.png?v=3",
     caption: "Step 1 – Create Your Teaching Profile",
-    description: "UK-focused learners. Fair pricing—you set your rates. Secure payments via Stripe Connect."
+    description: "Connect with UK-based learners. Set your own rates and availability. Secure payments via Stripe Connect."
   },
   {
-    src: "/screenshots/teacher/step-2.png",
-    caption: "Step 2 – Complete Your Profile & Set Your Lesson Details",
-    description: "Choose lesson durations (30/45/60 min), set your prices, and manage your weekly availability."
+    src: "/screenshots/teacher/step-2.png?v=3",
+    caption: "Step 2 – Complete Your Profile Details",
+    description: "Choose lesson durations (30/45/60 min), set your prices, and manage your weekly schedule with ease."
   },
   {
-    src: "/screenshots/teacher/step-3.png",
+    src: "/screenshots/teacher/step-3.png?v=3",
     caption: "Step 3 – Connect Your Payments Securely",
-    description: "Payments handled securely via Stripe Connect. Your earnings are paid directly to your bank account."
+    description: "Receive your earnings directly to your bank account. Stripe handles all security and tax documentation."
+  },
+  {
+    src: "/screenshots/teacher/step-4.png?v=3",
+    caption: "Step 4 – Start Teaching & Growing",
+    description: "Accept lesson requests, teach learners across the UK, and build your reputation with student reviews."
   }
 ];
 
-/* ------------------ COMPONENT ------------------ */
 export default function HowItWorks() {
   const router = useRouter();
+  const [activeInfo, setActiveInfo] = useState({});
   const [role, setRole] = useState("student");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const qRole = typeof router.query.role === "string" ? router.query.role : "student";
-    setRole(qRole === "teacher" ? "teacher" : "student");
-  }, [router.query.role]);
+    if (router.isReady) {
+      if (router.query.role === "teacher") setRole("teacher");
+      else setRole("student");
+    }
+  }, [router.isReady, router.query.role]);
 
   const SHOTS = useMemo(() => (role === "teacher" ? SHOTS_TEACHER : SHOTS_STUDENT), [role]);
 
-  const switchRole = (next) => {
-    if (!mounted) return;
-    setRole(next);
-    const qs = new URLSearchParams(window.location.search);
-    qs.set("role", next);
-    const url = `${window.location.pathname}?${qs.toString()}`;
-    window.history.replaceState(null, "", url);
+  const toggleInfo = (index, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveInfo(prev => ({ ...prev, [index]: !prev[index] }));
   };
+
+  const handleRoleSwitch = (e, targetRole) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setRole(targetRole);
+    router.push(`/how-it-works?role=${targetRole}`, undefined, { shallow: true });
+    setActiveInfo({});
+  };
+
+  if (!mounted) return null;
 
   return (
     <>
       <Head>
-        <title>
-          How It Works — {role === "teacher" ? "For Teachers" : "For Students"} | BridgeLang
-        </title>
-        <meta
-          name="description"
-          content="How BridgeLang works for students and teachers: subscriptions, lessons, payments, and rewards."
-        />
+        <title>How It Works — {role === "teacher" ? "For Teachers" : "For Students"} | BridgeLang</title>
       </Head>
 
       <div className={`container py-5 ${styles.page}`}>
-        {/* ROLE SWITCH */}
-        <div className="text-center mb-4">
-          <div className="btn-group" role="group" aria-label="Role switch">
-            <button
-              type="button"
-              className={`btn ${role === "student" ? "btn-primary" : "btn-outline-primary"}`}
-              onClick={() => switchRole("student")}
+        {/* ROLE SWITCH - REVERTED TO SIMPLE VERSION AS REQUESTED */}
+        <div className="text-center mb-5">
+          <div className="btn-group shadow-sm" role="group" aria-label="Role switch" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+            <Link
+              href="/how-it-works?role=student"
+              className={`btn btn-lg px-4 ${role === "student" ? "btn-primary" : "btn-outline-primary"}`}
+              style={{ borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px', transition: 'all 0.2s', pointerEvents: 'auto' }}
+              onClick={(e) => { e.preventDefault(); handleRoleSwitch(e, "student"); }}
+              shallow
             >
               I’m a Student
-            </button>
-            <button
-              type="button"
-              className={`btn ${role === "teacher" ? "btn-primary" : "btn-outline-primary"}`}
-              onClick={() => switchRole("teacher")}
+            </Link>
+            <Link
+              href="/how-it-works?role=teacher"
+              className={`btn btn-lg px-4 ${role === "teacher" ? "btn-primary" : "btn-outline-primary"}`}
+              style={{ borderTopRightRadius: '12px', borderBottomRightRadius: '12px', transition: 'all 0.2s', pointerEvents: 'auto' }}
+              onClick={(e) => { e.preventDefault(); handleRoleSwitch(e, "teacher"); }}
+              shallow
             >
               I’m a Teacher
-            </button>
+            </Link>
           </div>
         </div>
 
-        {/* HEADER */}
         <header className="text-center mb-4">
           <h1 className="h3 fw-bold mb-2">How It Works – BridgeLang</h1>
           <p className="text-muted mb-0">
             {role === "teacher"
-              ? "Teach real-life English to learners in the UK — online or in person. Build your profile, manage your lessons and receive secure payouts via Stripe Connect."
-              : "Learn real-life English for your life in the UK — with verified tutors who understand British workplaces, healthcare, education and everyday communication. Choose your plan, book lessons your way and enjoy loyalty rewards as you build lasting confidence."}
+              ? "Teach real-life English to learners in the UK — online or in person."
+              : "Learn real-life English for your life in the UK — with verified tutors who understand British culture."}
           </p>
         </header>
 
-        {/* STUDENT CONTENT */}
         {role === "student" ? (
           <>
-            {/* STUDENT VIDEO */}
             <StudentOnboardingVideo videoId="P2y8ftutxX0" />
-
-            <section className={styles.card}>
-              <h2 className={styles.h2}>For Students</h2>
-              <p>
-                Create your free account to access verified tutors with real UK experience.
-                Whether you are preparing for a job interview, GP appointment, workplace communication or daily conversations, BridgeLang helps you learn the English you truly need for life in the UK.
-              </p>
+            <section className={styles.card} style={{marginTop:'2rem'}}>
+              <h2 className={styles.h2}>How students learn</h2>
               <ul className={styles.list}>
-                <li><strong>Step 1 – Start with Free Access:</strong> You begin on a free plan. Explore tutors and book your first lesson without upgrading.</li>
-                <li><strong>Step 2 – Find Your Tutor:</strong> Browse verified UK-based tutors and choose one that fits your goals, level and schedule.</li>
-                <li><strong>Step 3 – Book Your Lesson:</strong> Start with a 15-minute intro for just £4.99 or book a full lesson. Secure payments are handled safely via Stripe.</li>
-                <li><strong>Step 4 – Start Learning with Confidence:</strong> Practise real English you will use in everyday UK life, work and public services — online or face-to-face.</li>
-                <li><strong>Step 5 – Progress and Get Rewarded:</strong> As you continue learning, earn loyalty rewards that support consistency and long-term progress.</li>
+                <li><strong>Step 1:</strong> Start with Free access and explore verified profiles.</li>
+                <li><strong>Step 2:</strong> Find a tutor and book a 15-min intro for only £4.99.</li>
+                <li><strong>Step 3:</strong> Join your live lesson directly in your browser.</li>
               </ul>
-            </section>
-
-            {/* STUDENT CAROUSEL */}
-            <section className="mt-4">
-              <h3 className={`${styles.h3} text-center mb-3`}>See How Learning Works on BridgeLang</h3>
-              <div id="roleShots" className={`carousel slide ${styles.carouselWrap}`} data-bs-ride="carousel">
-                <div className={`carousel-inner rounded shadow-sm ${styles.carouselInner}`}>
-                  {SHOTS.map((s, i) => (
-                    <div className={`carousel-item ${i === 0 ? "active" : ""}`} key={s.src}>
-                      <div className={styles.shotBox}>
-                        <img src={s.src} className={styles.shotImg} alt={s.caption} />
-                      </div>
-                      <div className={`carousel-caption ${styles.captionAlways}`}>
-                        <p className={styles.captionText}>{s.caption}</p>
-                        {s.description && (
-                          <p className={styles.captionDescription}>{s.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <button className="carousel-control-prev" type="button" data-bs-target="#roleShots" data-bs-slide="prev">
-                  <span className="carousel-control-prev-icon"></span>
-                </button>
-                <button className="carousel-control-next" type="button" data-bs-target="#roleShots" data-bs-slide="next">
-                  <span className="carousel-control-next-icon"></span>
-                </button>
-              </div>
             </section>
           </>
         ) : (
           <>
-            {/* TEACHER VIDEO */}
             <TeacherOnboardingVideo videoId="opff15raLa4" />
-
-            {/* TEACHER CONTENT */}
-            <section className={styles.card}>
-              <h2 className={styles.h2}>For Teachers</h2>
-              <p>
-                BridgeLang makes scheduling, communication and secure payments simple so you can focus on delivering high-quality, real-life English lessons.
-              </p>
+            <section className={styles.card} style={{marginTop:'2rem'}}>
+              <h2 className={styles.h2}>How teachers grow</h2>
               <ul className={styles.list}>
-                <li><strong>Step 1 – Apply to Teach:</strong> Submit your application with your experience and qualifications to join our verified tutor community.</li>
-                <li><strong>Step 2 – Build Your Profile:</strong> Upload your photo and bio, set your lesson rates, choose your lesson types, and start connecting with UK-based learners.</li>
-                <li><strong>Step 3 – Connect Payments:</strong> Stripe Connect securely manages payouts so you get paid on time, every time.</li>
+                <li><strong>Step 1:</strong> Create your profile and set your own rates.</li>
+                <li><strong>Step 2:</strong> Connect payments securely via Stripe.</li>
+                <li><strong>Step 3:</strong> Start teaching UK-focused learners online.</li>
               </ul>
             </section>
+          </>
+        )}
 
-            {/* TEACHER CAROUSEL */}
-            <section className="mt-4">
-              <h3 className={`${styles.h3} text-center mb-3`}>See How UK-Focused Learning Happens on BridgeLang</h3>
-              <div id="roleShots" className={`carousel slide ${styles.carouselWrap}`} data-bs-ride="carousel">
+        <section className="mt-5">
+           <h3 className={`${styles.h3} text-center mb-3`}>See the platform in action</h3>
+           <div key={role} id="roleShots" className={`carousel slide ${styles.carouselWrap}`} data-bs-ride="carousel" data-bs-interval="8000">
                 <div className={`carousel-inner rounded shadow-sm ${styles.carouselInner}`}>
                   {SHOTS.map((s, i) => (
-                    <div className={`carousel-item ${i === 0 ? "active" : ""}`} key={s.src}>
+                    <div className={`carousel-item ${i === 0 ? "active" : ""}`} key={`${role}-${i}`}>
                       <div className={styles.shotBox}>
                         <img src={s.src} className={styles.shotImg} alt={s.caption} />
                       </div>
-                      <div className={`carousel-caption ${styles.captionAlways}`}>
-                        <p className={styles.captionText}>{s.caption}</p>
-                        {s.description && (
-                          <p className={styles.captionDescription}>{s.description}</p>
-                        )}
+                      <div className={styles.captionAlways}>
+                        <div className={styles.captionHeader}>
+                          <p className={styles.captionText}>{s.caption}</p>
+                          <button className={styles.infoBtn} onClick={(e) => toggleInfo(i, e)}>
+                            {activeInfo[i] ? '✕' : 'ⓘ'}
+                          </button>
+                        </div>
+                        <div className={`${styles.infoCollapse} ${activeInfo[i] ? styles.show : ''}`}>
+                             <p className={styles.captionDescription}>{s.description}</p>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-
-                <button className="carousel-control-prev" type="button" data-bs-target="#roleShots" data-bs-slide="prev">
+                <button className="carousel-control-prev" type="button" data-bs-target="#roleShots" data-bs-slide="prev" style={{zIndex: 5}}>
                   <span className="carousel-control-prev-icon"></span>
                 </button>
-                <button className="carousel-control-next" type="button" data-bs-target="#roleShots" data-bs-slide="next">
+                <button className="carousel-control-next" type="button" data-bs-target="#roleShots" data-bs-slide="next" style={{zIndex: 5}}>
                   <span className="carousel-control-next-icon"></span>
                 </button>
-              </div>
-            </section>
-          </>
-        )}
+           </div>
+        </section>
       </div>
     </>
   );

@@ -73,9 +73,15 @@ export default function TeacherProfilePage() {
 
   // 🔹 Görüntüleme hakkı azalt
   useEffect(() => {
-    if (!id || !auth.currentUser) return;
+    if (!id || !auth.currentUser || loading) return;
     const key = `viewed_${auth.currentUser.uid}_${id}`;
     if (localStorage.getItem(key)) return;
+
+    // Eğer limit 0 ise ve daha önce bakılmamışsa
+    if (viewLimit !== null && viewLimit <= 0) {
+      return; // UI'da uyarı verilecek
+    }
+
     fetch('/api/decrement', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -86,7 +92,7 @@ export default function TeacherProfilePage() {
         setViewLimit(data.viewLimit ?? null);
         localStorage.setItem(key, "1");
       });
-  }, [id]);
+  }, [id, loading, viewLimit]);
 
   // 🔹 Kayıt: İlgi Gösterildi (Availability Reminder için)
   useEffect(() => {
@@ -191,6 +197,21 @@ export default function TeacherProfilePage() {
 
   if (loading) return <p>Loading...</p>;
   if (!teacher) return <p>Teacher not found.</p>;
+
+  // 🔹 Limit dolmuşsa ve bu öğretmene daha önce bakılmamışsa içeriği gizle
+  const hasViewedBefore = typeof window !== 'undefined' && localStorage.getItem(`viewed_${auth?.currentUser?.uid}_${id}`);
+  if (viewLimit !== null && viewLimit <= 0 && !hasViewedBefore) {
+    return (
+      <div className={styles.container} style={{ textAlign: 'center', padding: '100px 20px' }}>
+        <h2>👀 Profile View Limit Reached</h2>
+        <p>You have used all your profile views for this period.</p>
+        <p>Please upgrade your plan to continue exploring teachers.</p>
+        <button onClick={() => router.push('/pricing')} className={styles.btnSecondary}>
+          Upgrade Plan
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>

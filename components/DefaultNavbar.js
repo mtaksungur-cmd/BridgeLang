@@ -57,18 +57,21 @@ export default function DefaultNavbar() {
 
         <ul className={`${styles.menu} ${mobileMenuOpen ? styles.menuOpen : ''}`}>
           <li>
-            <Link href="/how-it-works" className={styles.link}>How It Works</Link>
+            <Link href="/how-it-works?role=student" className={styles.link} onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
           </li>
           <li>
-            <Link href="/student/teachers" className={styles.link}>
+            <Link href="/pricing" className={styles.link} onClick={() => setMobileMenuOpen(false)}>Pricing & Plans</Link>
+          </li>
+          <li>
+            <Link href="/student/teachers" className={styles.link} onClick={() => setMobileMenuOpen(false)}>
               Meet Our UK-Based Tutors
             </Link>
           </li>
           <li>
-            <Link href="/faq" className={styles.link}>FAQ</Link>
+            <Link href="/faq" className={styles.link} onClick={() => setMobileMenuOpen(false)}>FAQ</Link>
           </li>
           <li>
-            <Link href="/testimonials/student" className={styles.link}>
+            <Link href="/testimonials/student" className={styles.link} onClick={() => setMobileMenuOpen(false)}>
               What Learners Experience
             </Link>
           </li>
@@ -95,13 +98,13 @@ export default function DefaultNavbar() {
               onMouseLeave={handleMouseLeave}
             >
               <li>
-                <Link className={styles.dropdownItem} href="/student/register">
+                <Link className={styles.dropdownItem} href="/student/register" onClick={() => { setMobileMenuOpen(false); setDropdownOpen(false); }}>
                   Join as a Student
                 </Link>
               </li>
               <li>
-                <Link className={styles.dropdownItem} href="/teacher/apply">
-                  Apply as a Tutor
+                <Link className={styles.dropdownItem} href="/teacher/apply" onClick={() => { setMobileMenuOpen(false); setDropdownOpen(false); }}>
+                  Join as a Tutor
                 </Link>
               </li>
             </ul>

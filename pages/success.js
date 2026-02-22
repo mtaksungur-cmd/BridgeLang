@@ -1,9 +1,75 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import Script from 'next/script';
-import { Check, Calendar, MessageCircle, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Check, Calendar, MessageCircle, Star, Loader2 } from 'lucide-react';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function Success() {
+  const [planReady, setPlanReady] = useState(false);
+  const [updatedPlan, setUpdatedPlan] = useState(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const sessionId = router.query.session_id;
+    let unsubFirestore = null;
+    let fallbackTimer = null;
+
+    // 1) Stripe session_id varsa → verify-session API ile planı direkt güncelle
+    const verifySession = async () => {
+      if (!sessionId) return false;
+      try {
+        const res = await fetch('/api/payment/verify-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+        const data = await res.json();
+        if (res.ok && data.plan) {
+          setUpdatedPlan(data.plan);
+          setPlanReady(true);
+          return true;
+        }
+      } catch (err) {
+        console.error('verify-session error:', err);
+      }
+      return false;
+    };
+
+    // 2) Auth hazır olunca verify et, sonra Firestore dinle
+    const unsubAuth = onAuthStateChanged(auth, async (user) => {
+      // session_id varsa önce verify-session dene
+      const verified = await verifySession();
+      if (verified) return;
+
+      if (!user) {
+        fallbackTimer = setTimeout(() => setPlanReady(true), 3000);
+        return;
+      }
+
+      // Firestore'dan real-time dinle (webhook fallback)
+      unsubFirestore = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (data.justUpgraded) {
+          setUpdatedPlan(data.subscriptionPlan);
+          setPlanReady(true);
+        }
+      });
+
+      fallbackTimer = setTimeout(() => setPlanReady(true), 15000);
+    });
+
+    return () => {
+      unsubAuth();
+      if (unsubFirestore) unsubFirestore();
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
+  }, [router.query]);
+
   return (
     <>
       <Head>
@@ -80,6 +146,46 @@ export default function Success() {
 
             {/* Content */}
             <div style={{ padding: '2.5rem 2rem' }}>
+              {/* Plan Update Status */}
+              {!planReady && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '1rem',
+                  background: '#eff6ff',
+                  borderRadius: '8px',
+                  border: '1px solid #bfdbfe',
+                  marginBottom: '1.5rem',
+                }}>
+                  <Loader2 style={{ width: '20px', height: '20px', color: '#3b82f6', animation: 'spin 1s linear infinite' }} />
+                  <span style={{ fontSize: '0.875rem', color: '#1e40af', fontWeight: '500' }}>
+                    Updating your plan...
+                  </span>
+                  <style jsx>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                </div>
+              )}
+
+              {planReady && updatedPlan && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '1rem',
+                  background: '#f0fdf4',
+                  borderRadius: '8px',
+                  border: '1px solid #bbf7d0',
+                  marginBottom: '1.5rem',
+                }}>
+                  <Check style={{ width: '20px', height: '20px', color: '#22c55e' }} />
+                  <span style={{ fontSize: '0.875rem', color: '#166534', fontWeight: '500' }}>
+                    Your plan has been updated to {updatedPlan.toUpperCase()}
+                  </span>
+                </div>
+              )}
+
               <p style={{
                 fontSize: '1.0625rem',
                 color: '#374151',
@@ -87,7 +193,7 @@ export default function Success() {
                 lineHeight: '1.6',
                 textAlign: 'center',
               }}>
-                Your booking has been confirmed. We've sent a confirmation email with all the details.
+                Your payment has been confirmed. We've sent a confirmation email with all the details.
               </p>
 
               {/* Info Cards */}

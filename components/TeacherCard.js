@@ -1,80 +1,68 @@
-import Image from 'next/image';
+import React from 'react';
+import { Star, CheckCircle2, Clock } from 'lucide-react';
+import styles from '../scss/TutorsPagePremium.module.scss';
 import Link from 'next/link';
-import styles from '../scss/TeacherCard.module.scss';
 
 export default function TeacherCard({ teacher }) {
-    const {
-        id,
-        name,
-        photoURL,
-        location,
-        teaches,
-        pricing30,
-        verified,
-        rating,
-        reviewCount,
-    } = teacher;
-
     return (
-        <div className={styles.card}>
-            <div className={styles.header}>
-                <h3 className={styles.name}>{name}</h3>
-                {verified && (
-                    <div className={styles.verifiedBadge}>
-                        <svg className={styles.checkIcon} viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span>Verified Tutor</span>
+        <div className={styles.tutorCard}>
+            <div className={styles.cardTop}>
+                <div style={{ width: 48, height: 48, background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: '700', color: '#475569' }}>
+                    {teacher.name?.charAt(0)}
+                </div>
+                <div className={styles.nameBox}>
+                    <h3>
+                        {teacher.name} 
+                        <CheckCircle2 size={16} className={styles.verified} fill="currentColor" />
+                        <span className={styles.flag}>🇬🇧</span>
+                    </h3>
+                </div>
+            </div>
+
+            <div className={styles.pricingSection}>
+                <div className={styles.priceRow}>
+                    <span className={styles.label}>From</span>
+                    <span className={styles.amount}>£{teacher.pricing30 || 15}</span>
+                    <span className={styles.unit}>· 30 min</span>
+                </div>
+                <div className={styles.durations}>
+                    <Clock size={14} />
+                    <span>30 min</span>
+                    <span>|</span>
+                    <span>45 min</span>
+                    <span>|</span>
+                    <span>60 min</span>
+                </div>
+            </div>
+
+            <div className={styles.cardContent}>
+                <div className={styles.headline}>
+                    {teacher.specialties?.[0] || 'English Teacher'} · IELTS Prep Specialist
+                </div>
+
+                <div className={styles.ratingRow}>
+                    <div className={styles.stars}>
+                        {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={14} fill={i < 4 ? "#fbbf24" : "none"} color="#fbbf24" />
+                        ))}
                     </div>
-                )}
-            </div>
-
-            <div className={styles.avatarWrapper}>
-                <Image
-                    src={photoURL || '/default-avatar.png'}
-                    alt={name}
-                    width={200}
-                    height={200}
-                    className={styles.avatar}
-                />
-            </div>
-
-            <div className={styles.info}>
-                <div className={styles.infoRow}>
-                    <span className={styles.label}>Location:</span>
-                    <span className={styles.value}>{location}</span>
+                    <span className={styles.ratingText}>4.8</span>
+                    <span className={styles.reviewCount}>108 reviews</span>
                 </div>
-                <div className={styles.infoRow}>
-                    <span className={styles.label}>Teaches:</span>
-                    <span className={styles.value}>{teaches}</span>
-                </div>
+
+                <p className={styles.bio}>
+                    {teacher.bio || "Friendly, experienced tutor helping students achieve their English goals."}
+                </p>
             </div>
 
-            <div className={styles.pricing}>
-                <span className={styles.priceLabel}>From</span>
-                <span className={styles.priceValue}>£{pricing30}</span>
-                <span className={styles.duration}>/ 30 min</span>
+            <div className={styles.cardFooter}>
+                <Link href={`/student/book/${teacher.id}`} className={styles.btnBook}>
+                    Book a 30-min Lesson
+                </Link>
+                <Link href={`/student/teacher/${teacher.id}`} className={styles.btnProfile}>
+                    View profile
+                </Link>
             </div>
-
-            {rating && (
-                <div className={styles.rating}>
-                    <span className={styles.stars}>{'★'.repeat(Math.floor(rating))}</span>
-                    <span className={styles.ratingValue}>{rating}</span>
-                    <span className={styles.reviewCount}>({reviewCount} reviews)</span>
-                </div>
-            )}
-
-            <div className={styles.availability}>
-                15-minute intro available (£6.99)
-            </div>
-
-            <Link href={`/student/teacher/${id}`} className={styles.viewButton}>
-                View profile
-            </Link>
-
-            <p className={styles.footnote}>
-                You can change tutors anytime.
-            </p>
         </div>
     );
 }

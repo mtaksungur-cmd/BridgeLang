@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
+import { PLAN_LIMITS } from '../lib/planLimits';
 
 export default function WelcomeBanner({ plan, onDismiss }) {
     const [show, setShow] = useState(true);
@@ -13,24 +14,40 @@ export default function WelcomeBanner({ plan, onDismiss }) {
 
     if (!show) return null;
 
+    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.starter;
+
     const planConfig = {
         starter: {
             title: 'Welcome to BridgeLang+!',
             emoji: '🎉',
             color: '#10b981',
-            benefits: ['60 teacher views/month', '20 messages', 'Priority support']
+            benefits: [
+              `${limits.viewLimit} teacher views`, 
+              `${limits.messagesLeft} messages`, 
+              'Priority support'
+            ]
         },
         pro: {
             title: 'Welcome to BridgeLang PRO!',
             emoji: '⚡',
             color: '#2563eb',
-            benefits: ['Unlimited teacher views', 'Unlimited messages', '24/7 VIP support', '20% discount on lessons']
+            benefits: [
+              `${limits.viewLimit} teacher views`, 
+              `${limits.messagesLeft} messages`, 
+              '24/7 VIP support', 
+              '35% discount on lessons'
+            ]
         },
         vip: {
             title: 'Welcome to BridgeLang VIP!',
             emoji: '👑',
             color: '#8b5cf6',
-            benefits: ['Everything in PRO', 'Personal learning advisor', '30% discount on lessons', 'Exclusive teacher access']
+            benefits: [
+              'Unlimited teacher views', 
+              'Unlimited messages', 
+              'Personal learning advisor', 
+              '40% discount on lessons'
+            ]
         }
     };
 

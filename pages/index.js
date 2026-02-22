@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "../scss/Home.module.scss";
@@ -88,7 +89,31 @@ const trustPoints = [
   }
 ];
 
+const steps = [
+  {
+    title: "1) Search & Message",
+    desc: "Browse verified UK tutors, check availability and send a safe in-app message to discuss your goals."
+  },
+  {
+    title: "2) Book & Pay",
+    desc: "Pick a time that works for you. All payments are processed securely via Stripe with no hidden fees."
+  },
+  {
+    title: "3) Learn & Review",
+    desc: "Meet your tutor online via BridgeLang Live — or in person. Leave a quick review to help others start their English journey."
+  }
+];
+
 export default function Home() {
+  const [learnerCount, setLearnerCount] = useState(142);
+  const [activeStep, setActiveStep] = useState(null);
+
+  useEffect(() => {
+    // Social Proof - randomized count for the session
+    const randomBoost = Math.floor(Math.random() * 21); // 0 to 20
+    setLearnerCount(140 + randomBoost);
+  }, []);
+
   return (
     <>
       <SeoHead />
@@ -106,13 +131,39 @@ export default function Home() {
                   <p className={styles.heroLead}>
                     Learn practical English for everyday life in the UK with trusted, UK-based tutors.
                   </p>
-                  <div className={styles.heroBtns}>
-                    <Link href="/student/register" className={styles.btnPrimary}>
-                      Start Learning Today
-                    </Link>
-                    <Link href="/how-it-works" className={styles.btnSecondary}>
-                      How It Works
-                    </Link>
+                  <div className="flex flex-col items-center lg:items-start">
+                    <div className={styles.heroBtns}>
+                      <Link href="/student/register" className={styles.btnPrimary}>
+                        Start Learning Today
+                      </Link>
+                      <Link 
+                        href="#how-it-works" 
+                        className={styles.btnPrimary} 
+                        style={{ 
+                          borderRadius: '9999px', 
+                          minHeight: '48px', 
+                          height: 'auto', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          overflow: 'visible',
+                          fontWeight: '700',
+                          padding: '0 32px'
+                        }}
+                      >
+                        How It Works
+                      </Link>
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-6 p-3 bg-white/60 backdrop-blur-md rounded-2xl border border-[#4a6fbd]/10 w-fit shadow-sm">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#28c76f] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#28c76f]"></span>
+                      </span>
+                      <p className="text-sm font-medium text-[#4a5568] m-0">
+                        <span className="font-bold text-[#4a6fbd]">{learnerCount} learners</span> started their journey today.
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className={styles.heroImage}>
@@ -187,7 +238,7 @@ export default function Home() {
         </section>
 
         {/* ——— HOW IT WORKS ——— */}
-        <section className={styles.howItWorks}>
+        <section className={styles.howItWorks} id="how-it-works">
           <div className={styles.container}>
             <h2 className={styles.sectionTitle}>How It Works</h2>
             <div className={styles.stepsGrid}>
@@ -215,12 +266,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ——— PRICING TABLE ——— */}
-        <section style={{ padding: '3rem 0' }}>
-          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem' }}>
-            <PricingTable />
-          </div>
-        </section>
+        {/* ——— PRICING TABLE REMOVED FROM HOME ——— */}
 
         {/* ——— TUTOR HIGHLIGHTS ——— */}
         <section className={styles.tutorHighlights}>
@@ -251,7 +297,7 @@ export default function Home() {
               <p>
                 Read our quick FAQ to learn about refunds, rescheduling and safety.
               </p>
-              <Link href="/faq">
+              <Link href="/faq" className={styles.btnSecondary} style={{ borderRadius: '9999px', minHeight: '48px', height: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px', overflow: 'visible' }}>
                 Read FAQ
               </Link>
             </div>
@@ -264,7 +310,7 @@ export default function Home() {
             <div className={styles.finalCta}>
               <h2>Ready to start?</h2>
               <p>
-                Create your free account and book your first lesson today.
+                Create your Free account and book your first lesson today.
               </p>
               <Link href="/student/register" className={styles.btnPrimary}>
                 Create account

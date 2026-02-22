@@ -960,14 +960,11 @@ a {
   }
 }
 
-// ——— Print Styles ———
-@media print {
-  body {
-    background: white;
-  }
+.accordion-collapse {
+  transition: height 0.35s ease !important;
+}
 
-  .card-premium {
-    box-shadow: none;
-    border: 1px solid v.$border-light;
-  }
+.accordion-body {
+  opacity: 1 !important;
+  visibility: visible !important;
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, orderBy, addDoc, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, addDoc, onSnapshot, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Send, Search, MessageSquare, Settings } from 'lucide-react';
 import SeoHead from '../../components/SeoHead';
 
@@ -95,11 +95,39 @@ export default function StudentChats() {
     if (!newMessage.trim() || !selectedConv) return;
 
     try {
+      // 🔹 Check Message Limit before sending
+      const otherUserId = selectedConv.otherUser?.id;
+      if (otherUserId) {
+        const checkRes = await fetch('/api/messages/check-limit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId: currentUser.id, teacherId: otherUserId })
+        });
+        
+        if (checkRes.status === 403) {
+          const checkData = await checkRes.json();
+          alert(checkData.error || 'Message limit reached.');
+          return;
+        }
+      }
+
       await addDoc(collection(db, 'conversations', selectedConv.id, 'messages'), {
         text: newMessage.trim(),
         senderId: currentUser.id,
         createdAt: new Date()
       });
+
+      // Update conversation's lastMessageAt
+      await updateDoc(doc(db, 'conversations', selectedConv.id), {
+        lastMessageAt: new Date()
+      });
+
+      // Decrement messagesLeft if not unlimited
+      await fetch('/api/decrement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, type: 'message' })
+      }).catch(err => console.error('Decrement failed:', err));
 
       // Send notification to the other user
       const recipientId = selectedConv.otherUser?.id;

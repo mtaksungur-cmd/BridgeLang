@@ -22,6 +22,7 @@ export default async function handler(req, res) {
   });
 
   await adminDb.collection('users').doc(sid).update({
+    status: 'active',
     parentConsent: {
       confirmedAt: Date.now(),
     },

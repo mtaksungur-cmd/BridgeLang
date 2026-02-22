@@ -115,14 +115,19 @@
     background: white;
     color: v.$primary-blue;
     border: 2px solid v.$primary-blue;
-    border-radius: v.$radius-button;
-    padding: 12px 28px;
+    border-radius: 9999px;
+    padding: 12px 32px;
     font-weight: 600;
     font-size: v.$font-size-base;
     cursor: pointer;
     transition: v.$transition-base;
     text-decoration: none;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    box-sizing: border-box;
+    overflow: visible;
 
     &:hover {
       background: #f7fafc;
@@ -194,8 +199,8 @@
     border: none;
 
     &:hover {
-
       box-shadow: v.$shadow-card-hover;
+      transform: translateY(-5px);
     }
   }
 
@@ -314,7 +319,6 @@
     transition: v.$transition-slow;
 
     &:hover {
-
       box-shadow: v.$shadow-card-hover;
     }
 

@@ -1,5 +1,5 @@
-// pages/api/messages/check-limit.js
 import { adminDb } from '../../../lib/firebaseAdmin';
+import { PLAN_LIMITS } from '../../../lib/planLimits';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
@@ -31,30 +31,22 @@ export default async function handler(req, res) {
             });
         }
 
-        // Check plan-based limits
-        const planLimits = {
-            free: 5,
-            starter: 10,
-            pro: 20,
-            vip: Infinity  // Unlimited
-        };
+        const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+        const messagesLeft = studentData.messagesLeft ?? limits.messagesLeft;
 
-        const limit = planLimits[plan] || 5;
-        const messagesLeft = studentData.messagesLeft ?? limit;
-
-        if (messagesLeft > 0 || limit === Infinity) {
+        if (messagesLeft > 0 || plan === 'vip') {
             return res.status(200).json({
                 canMessage: true,
-                unlimited: limit === Infinity,
-                messagesLeft: limit === Infinity ? 'unlimited' : messagesLeft,
-                limit: limit === Infinity ? 'unlimited' : limit
+                unlimited: plan === 'vip',
+                messagesLeft: plan === 'vip' ? 'unlimited' : messagesLeft,
+                limit: plan === 'vip' ? 'unlimited' : limits.messagesLeft
             });
         }
 
         return res.status(403).json({
             canMessage: false,
             messagesLeft: 0,
-            limit,
+            limit: limits.messagesLeft,
             error: 'Message limit reached. Complete a lesson or upgrade your plan.'
         });
 

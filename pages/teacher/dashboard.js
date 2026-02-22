@@ -33,6 +33,12 @@ export default function TeacherDashboard() {
 
         const userData = userSnap.data();
         if (userData.role !== 'teacher') return router.push('/student/dashboard');
+
+        // Check for teacher approval
+        if (userData.approved === false) {
+           return router.push('/teacher/pending-approval');
+        }
+
         if (!userData?.stripeOnboarded) return router.push('/teacher/stripe-connect');
 
         // Fetch all bookings for analytics

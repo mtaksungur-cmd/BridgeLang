@@ -5,6 +5,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { onAuthStateChanged } from 'firebase/auth';
 import { Calendar as CalendarIcon, Clock, MapPin, CreditCard, CheckCircle2, AlertCircle, ChevronLeft, Home, Video, Navigation, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { DateTime } from 'luxon';
 
 export default function BookLessonPage() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function BookLessonPage() {
     if (!teacher) return [];
 
     const allOptions = [
-      { value: 15, label: '15 min', price: '£4.99', isIntro: true },
+      { value: 15, label: 'Intro lesson (15 min)', price: '£4.99', isIntro: true },
       { value: 30, label: '30 min', price: teacher.pricing30 ? `£${teacher.pricing30}` : null },
       { value: 45, label: '45 min', price: teacher.pricing45 ? `£${teacher.pricing45}` : null },
       { value: 60, label: '60 min', price: teacher.pricing60 ? `£${teacher.pricing60}` : null }
@@ -117,8 +118,9 @@ export default function BookLessonPage() {
       ? teacher.availability[day]
       : [];
 
-    const today = new Date();
-    const selected = new Date(selectedDate);
+    // Fix: Everything in UK time
+    const nowUk = DateTime.now().setZone('Europe/London');
+    const selectedDateObj = DateTime.fromISO(selectedDate, { zone: 'Europe/London' });
     const result = [];
 
     slots.forEach(({ start, end }) => {
@@ -132,10 +134,15 @@ export default function BookLessonPage() {
           return t < be && t + duration > bs;
         });
 
-        if (selected.toDateString() === today.toDateString()) {
-          const now = today.getHours() * 60 + today.getMinutes();
-          if (t <= now) continue;
-        }
+        // Filter out past slots based on UK time
+        const slotDateTime = selectedDateObj.set({
+          hour: Math.floor(t / 60),
+          minute: t % 60,
+          second: 0,
+          millisecond: 0
+        });
+
+        if (slotDateTime <= nowUk) continue;
 
         result.push({
           start: toTime(t),
@@ -207,6 +214,7 @@ export default function BookLessonPage() {
         }
         window.location.assign(data.url);
       } else {
+        // Show specific error from server
         setMsg(data?.error || 'Payment could not be initiated');
         setLoading(false);
       }
@@ -263,22 +271,22 @@ export default function BookLessonPage() {
   const renderCalendar = () => {
     const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
     const days = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Fix: Use UK time for "today" to determine disabled dates
+    const todayUk = DateTime.now().setZone('Europe/London').startOf('day');
 
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(<div key={`empty-${i}`} style={{ padding: '0.75rem' }} />);
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-      const isPast = date < today;
-      const isSelected = selectedDate === formatDateToInput(date);
+      const date = DateTime.fromObject({ year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1, day }, { zone: 'Europe/London' });
+      const isPast = date < todayUk;
+      const isSelected = selectedDate === date.toFormat('yyyy-MM-dd');
 
       days.push(
         <button
           key={day}
-          onClick={() => !isPast && handleDateClick(day)}
+          onClick={() => !isPast && setSelectedDate(date.toFormat('yyyy-MM-dd'))}
           disabled={isPast}
           style={{
             padding: '0.875rem',

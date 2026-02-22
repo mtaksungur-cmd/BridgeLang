@@ -1,58 +1,45 @@
-import { adminDb, adminAuth } from '../../../lib/firebaseAdmin';
-import crypto from 'crypto';
+import { adminDb } from '../../../lib/firebaseAdmin';
 import { sendMail } from '../../../lib/mailer';
+import crypto from 'crypto';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+  const { userId } = req.body;
+
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
 
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'Unauthorized' });
+    const userRef = adminDb.collection('users').doc(userId);
+    const userSnap = await userRef.get();
+    
+    if (!userSnap.exists) return res.status(404).json({ error: 'User not found' });
+    const userData = userSnap.data();
 
-    const token = authHeader.split(' ')[1];
-    const decoded = await adminAuth.verifyIdToken(token);
-    const uid = decoded.uid;
-
-    const userRef = adminDb.collection('users').doc(uid);
-    const snap = await userRef.get();
-    if (!snap.exists) return res.status(404).json({ error: 'User not found' });
-    const user = snap.data();
-
-    // 🔹 unpause token oluştur
-    const unpauseToken = crypto.randomBytes(32).toString('hex');
-    const unpauseHash = crypto
-      .createHmac('sha256', process.env.UNPAUSE_TOKEN_SECRET)
-      .update(unpauseToken)
-      .digest('hex');
-
+    const token = crypto.randomBytes(32).toString('hex');
+    
     await userRef.update({
       status: 'paused',
-      pausedAt: Date.now(),
-      unpauseHash,
-      unpauseExpires: Date.now() + 48 * 60 * 60 * 1000, // 48 saat
+      reactivationToken: token,
+      pausedAt: new Date()
     });
 
-    // 🔹 link oluştur
-    const unpauseLink = `${process.env.NEXT_PUBLIC_BASE_URL}/api/account/unpause?token=${unpauseToken}`;
+    const reactivateUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/account/reactivate?token=${token}&uid=${userId}`;
 
     await sendMail({
-      to: user.email,
-      subject: '🔓 Reactivate your BridgeLang account',
+      to: userData.email,
+      subject: 'Your BridgeLang account has been paused',
       html: `
-        <p>Hi ${user.name || ''},</p>
-        <p>Your BridgeLang account has been <b>paused</b>.</p>
-        <p>To reactivate it, click the link below:</p>
-        <p><a href="${unpauseLink}" style="background:#2563eb;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">Reactivate Account</a></p>
-        <p>This link will expire in 48 hours.</p>
-      `,
+        <p>Hi ${userData.name || 'there'},</p>
+        <p>As requested, your account has been temporarily paused. You have been logged out of all devices.</p>
+        <p>To reactivate your account and resume learning, click the link below:</p>
+        <p><a href="${reactivateUrl}" style="display:inline-block;padding:12px 24px;background:#3b82f6;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Reactivate My Account</a></p>
+        <p>If you didn't request this, please contact support immediately.</p>
+      `
     });
 
-    // 🔹 Auth oturumu devre dışı bırak
-    await adminAuth.revokeRefreshTokens(uid);
-
-    return res.json({ ok: true });
+    return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('pause error:', err);
+    console.error('Pause API error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

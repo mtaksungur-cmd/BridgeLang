@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
 import admin from 'firebase-admin';
+import { DateTime } from 'luxon';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
@@ -112,6 +113,25 @@ export default async function handler(req, res) {
 
     console.log('✅ No duplicate bookings');
 
+    // ====== 1 HOUR PRIOR LOCK (Timezone Aware) ======
+    // Bookings are handled in Europe/London time as per UI
+    const bookingDateTime = DateTime.fromFormat(`${date} ${startTime}`, 'yyyy-MM-dd HH:mm', { zone: 'Europe/London' });
+    const nowUk = DateTime.now().setZone('Europe/London');
+    const oneHourFromNowUk = nowUk.plus({ hours: 1 });
+
+    console.log('🕒 Time Check:', {
+      booking: bookingDateTime.toISO(),
+      now: nowUk.toISO(),
+      limit: oneHourFromNowUk.toISO()
+    });
+
+    if (bookingDateTime < oneHourFromNowUk) {
+      console.log('❌ Booking too close to start time (<1h)');
+      return res.status(400).json({
+        error: 'Lessons must be booked at least 1 hour in advance. Please choose a later time slot.'
+      });
+    }
+
     if (lessonType === 'intro') {
       numericPrice = 4.99;
 
@@ -183,16 +203,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Teacher has not connected their payment account. Please contact support.' });
     }
 
-    // Validate that Stripe account actually exists
     let validStripeAccount = false;
-    try {
-      console.log('🔍 Validating Stripe account...');
-      const account = await stripe.accounts.retrieve(stripeAccountId);
-      validStripeAccount = account && account.id === stripeAccountId;
-      console.log('✅ Stripe account validated:', stripeAccountId);
-    } catch (accountErr) {
-      console.error('❌ Stripe account validation failed:', accountErr.message);
-      validStripeAccount = false;
+
+    // Bypass validation for test accounts
+    if (stripeAccountId === 'acct_1test') {
+       validStripeAccount = false; // Just take payment to platform for test teachers
+    } else {
+      // Validate that Stripe account actually exists
+      try {
+        console.log('🔍 Validating Stripe account...');
+        const account = await stripe.accounts.retrieve(stripeAccountId);
+        validStripeAccount = account && account.id === stripeAccountId;
+        console.log('✅ Stripe account validated:', stripeAccountId);
+      } catch (accountErr) {
+        console.error('❌ Stripe account validation failed:', accountErr.message);
+        validStripeAccount = false;
+      }
     }
 
     // Prepare payment_intent_data - only add transfer and fee if account is valid

@@ -99,15 +99,35 @@ export default function LoginPage() {
       const otpEnabled = settingsData.otpEnabled || false;
 
       if (!otpEnabled) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const userData = userDoc.data();
-        const role = userData?.role;
-        const status = userData?.status || 'active';
+        let userData = null;
+        let role = 'student';
+        let status = 'active';
+
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          userData = userDoc.data();
+          role = userData?.role || 'student';
+          status = userData?.status || 'active';
+        } catch (permError) {
+          console.warn('Permission error during login check:', permError.message);
+          // If we get a permission error, it's very likely a paused/restricted account
+          // We should check via an unauthenticated API route if possible, or just assume pause
+          await signOut(auth);
+          setMessage('⏸️ Your account is restricted or paused. Please check your email for a reactivation link.');
+          return;
+        }
 
         if (status === 'paused') {
           await signOut(auth);
           setStage('login');
           setMessage('⏸️ Your account is paused. Please contact support.');
+          return;
+        }
+
+        if (status === 'pending_consent') {
+          await signOut(auth);
+          setStage('login');
+          setMessage('⏳ Your account is awaiting parental consent. A confirmation link has been sent to your parent/guardian\'s email. You can log in once they approve.');
           return;
         }
 

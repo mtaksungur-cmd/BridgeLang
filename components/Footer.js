@@ -66,6 +66,12 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      <style jsx>{`
+        footer {
+          position: relative;
+          z-index: 1;
+        }
+      `}</style>
     </footer>
   );
 }

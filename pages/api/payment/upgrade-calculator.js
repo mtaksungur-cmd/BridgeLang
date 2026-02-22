@@ -43,6 +43,14 @@ export default async function handler(req, res) {
     const diff = Math.max(0, newPrice - oldPrice);
     const payable = Number((diff * remainingRatio).toFixed(2));
 
+    const PLAN_LIMITS = {
+      free: { viewLimit: 10, messagesLeft: 5 },
+      starter: { viewLimit: 30, messagesLeft: 10 },
+      pro: { viewLimit: 100, messagesLeft: 20 },
+      vip: { viewLimit: 9999, messagesLeft: 9999 },
+    };
+    const base = PLAN_LIMITS[newPlan] || PLAN_LIMITS.free;
+
     if (payable <= 0)
       return res.status(400).json({ error: 'No difference to charge' });
 
@@ -66,8 +74,10 @@ export default async function handler(req, res) {
         upgradeTo: newPlan,
         payable,
         bookingType: 'subscription_upgrade',
+        viewLimit: base.viewLimit,
+        messagesLeft: base.messagesLeft,
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
     });
 

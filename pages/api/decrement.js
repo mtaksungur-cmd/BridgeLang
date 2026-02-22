@@ -1,6 +1,8 @@
 import { adminDb } from "../../lib/firebaseAdmin";
+import { PLAN_LIMITS } from "../../lib/planLimits";
 
 export default async function handler(req, res) {
+  console.log('📉 DECREMENT REQUEST:', req.body);
   if (req.method !== "POST") return res.status(405).end();
 
   const { userId, type } = req.body;
@@ -23,11 +25,19 @@ export default async function handler(req, res) {
 
     if (!userSnap.exists) return res.status(404).json({ error: "User not found" });
 
-    const current = userSnap.data()[field];
+    const udata = userSnap.data();
+    let current = udata[field];
 
-    // Sınırsız (null veya undefined) veya zaten 0 ise azaltma!
-    if (current === null || current === undefined || current <= 0) {
-      return res.status(200).json({ [field]: current ?? 0 });
+    const planKey = (udata.subscriptionPlan || "free").toLowerCase();
+
+    // Field eksikse planın varsayılanını alalım
+    if (current === undefined || current === null) {
+      current = PLAN_LIMITS[planKey]?.[field] ?? 0;
+    }
+
+    // Zaten 0 ise veya VIP/Sınırsız (9999) ise azaltma
+    if (current <= 0 || current >= 9999 || planKey === "vip") {
+      return res.status(200).json({ [field]: current });
     }
 
     await userRef.update({ [field]: current - 1 });

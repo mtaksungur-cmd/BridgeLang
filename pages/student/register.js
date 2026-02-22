@@ -1,12 +1,13 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { auth, db } from '../../lib/firebase';
 import Link from 'next/link';
 import Image from 'next/image';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { getErrorMessage, getErrorCode } from '../../utils/firebaseErrors';
-import { Check, ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, User, Globe, Target } from 'lucide-react';
+import styles from '../../scss/StudentRegister.module.scss';
 
 export default function StudentRegister() {
   const [step, setStep] = useState(1);
@@ -16,6 +17,8 @@ export default function StudentRegister() {
     password: '',
     country: 'United Kingdom',
     nativeLanguage: '',
+    birthday: '',
+    parentEmail: '',
     learningGoals: [],
   });
   const [submitting, setSubmitting] = useState(false);
@@ -31,48 +34,21 @@ export default function StudentRegister() {
       'Cambridge Exams',
       'OET (Occupational English Test)',
       'SAT / ACT English',
-      'EAP (English for Academic Purposes)',
-      'Essay Writing / Research Skills',
-      'Academic Presentations'
+      'EAP (English for Academic Purposes)'
     ],
     'Professional & Career Goals': [
       'Business English',
       'Workplace Communication & Writing',
       'Interview Preparation',
       'Presentation Skills',
-      'English for Healthcare / Nursing (NHS)',
-      'English for IT / Engineering / Technology',
-      'English for Hospitality / Tourism',
-      'English for Retail / Customer Service',
-      'CV & Cover Letter Writing'
-    ],
-    'General & Social Goals': [
-      'Everyday English',
-      'Conversational Fluency',
-      'Grammar & Writing Skills',
-      'Pronunciation & Accent Reduction',
-      'Listening & Speaking Confidence',
-      'English for Travel',
-      'Cultural English (films, music, media)',
-      'Modern English Expressions and Fluency'
+      'English for Healthcare / Nursing (NHS)'
     ],
     'Personal & Integration Goals': [
       'English for Immigration / Citizenship',
       'English for Life in the UK',
       'Parent Support English',
       'Social English',
-      'Integration & Cultural Understanding',
-      'English for Hobbies',
-      'Other'
-    ],
-    'Digital & Modern English Goals': [
-      'English for Social Media / Influencers',
-      'English for Content Creators',
-      'English for Remote Work & Freelancing',
-      'English for Online Meetings & Presentations',
-      'English for AI Tools & Digital Literacy',
-      'Email Etiquette & Online Communication',
-      'Networking & Collaboration in English'
+      'Integration & Cultural Understanding'
     ]
   };
 
@@ -99,24 +75,24 @@ export default function StudentRegister() {
 
   const handleNext = () => {
     setError('');
-
     if (step === 1) {
       if (!form.name || !form.email || !form.password) {
         setError('Please fill in all required fields.');
         return;
       }
-      if (form.password.length < 6) {
-        setError('Password must be at least 6 characters.');
+      if (form.password.length < 8) {
+        setError('Password must be at least 8 characters.');
         return;
       }
     }
-
     setStep(step + 1);
+    window.scrollTo(0, 0);
   };
 
   const handlePrev = () => {
     setError('');
     setStep(step - 1);
+    window.scrollTo(0, 0);
   };
 
   const handleSubmit = async (e) => {
@@ -127,28 +103,39 @@ export default function StudentRegister() {
     try {
       const email = form.email.trim().toLowerCase();
 
-      if (form.password.length < 6) {
-        throw new Error('auth/weak-password');
+      // Calculate age
+      const birthDate = new Date(form.birthday);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
       }
 
-      // ✅ CHECK FOR DUPLICATE EMAIL ACROSS ALL ROLES
-      console.log('Checking for existing user with email:', email);
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
-      const usersRef = collection(db, 'users');
-      const emailQuery = query(usersRef, where('email', '==', email));
-      const existingUsers = await getDocs(emailQuery);
+      if (age < 14) {
+        setError('You must be at least 14 years old to join BridgeLang.');
+        setSubmitting(false);
+        return;
+      }
 
-      if (!existingUsers.empty) {
-        const existingUser = existingUsers.docs[0].data();
-        const existingRole = existingUser.role;
+      const isMinor = age < 18;
+      if (isMinor && !form.parentEmail) {
+        setError('Parental email is required for students under 18.');
+        setSubmitting(false);
+        return;
+      }
 
-        if (existingRole === 'student') {
-          throw new Error('This email is already registered as a student account. Please sign in or use a different email.');
-        } else if (existingRole === 'teacher') {
-          throw new Error('This email is already registered as a teacher account. Please sign in or use a different email.');
-        } else {
-          throw new Error('This email is already in use. Please sign in or use a different email.');
-        }
+      // Check if email was previously deleted
+      const checkRes = await fetch('/api/auth/check-deleted-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const checkData = await checkRes.json();
+      if (checkData.deleted) {
+        setError('This email address is associated with a previously deleted account and cannot be used to register again.');
+        setSubmitting(false);
+        return;
       }
 
       const { user } = await createUserWithEmailAndPassword(auth, email, form.password);
@@ -157,462 +144,220 @@ export default function StudentRegister() {
         name: form.name.trim(),
         email,
         country: form.country,
+        birthday: form.birthday,
+        age: age,
+        parentEmail: isMinor ? form.parentEmail : null,
         nativeLanguage: form.nativeLanguage || null,
         learningGoals: form.learningGoals.length > 0 ? form.learningGoals : null,
-        role: 'student',
         subscriptionPlan: 'free',
         viewLimit: 10,
         messagesLeft: 5,
         credits: 0,
         emailVerified: false,
+        status: isMinor ? 'pending_consent' : 'active',
         createdAt: new Date(),
       });
 
-      if (process.env.NEXT_PUBLIC_SEND_AUTH_EMAILS === 'true') {
-        await fetch('/api/auth/send-verify', {
+      // Trigger Parent Consent API if minor
+      if (isMinor) {
+        await fetch('/api/parent-consent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, name: form.name }),
+          body: JSON.stringify({ 
+            studentId: user.uid, 
+            studentName: form.name, 
+            parentEmail: form.parentEmail,
+            dob: form.birthday
+          }),
         }).catch(console.error);
       }
-
-      await fetch('/api/mail/student-welcome', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email }),
-      }).catch(console.error);
 
       await signOut(auth);
       setSuccess(true);
     } catch (err) {
-      console.error(err);
       setError(getErrorMessage(getErrorCode(err)));
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (success) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <header style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem' }}>
-          <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center' }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-              <Image src="/bridgelang.png" alt="BridgeLang" width={40} height={40} />
-              <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>BridgeLang</span>
-            </Link>
-          </div>
-        </header>
+  const steps = [
+    { id: 1, label: 'Account Details', icon: <User size={18} /> },
+    { id: 2, label: 'Preferences', icon: <Globe size={18} /> },
+    { id: 3, label: 'Learning Goals', icon: <Target size={18} /> }
+  ];
 
-        <div style={{ flex: '1', background: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-          <div style={{ width: '100%', maxWidth: '540px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '3rem', textAlign: 'center' }}>
-            <div style={{ width: '80px', height: '80px', background: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-              <Check style={{ width: '40px', height: '40px', color: '#22c55e' }} />
-            </div>
-            <h2 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', marginBottom: '1rem' }}>
-              Welcome to BridgeLang!
-            </h2>
-            <p style={{ fontSize: '1rem', color: '#64748b', marginBottom: '2rem', lineHeight: '1.6' }}>
-              Your account has been created successfully. Please check your email to verify your account and get started.
-            </p>
-            <Link href="/login">
-              <button style={{
-                padding: '0.75rem 2rem',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '0.9375rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-                onMouseEnter={(e) => e.target.style.background = '#2563eb'}
-                onMouseLeave={(e) => e.target.style.background = '#3b82f6'}
-              >
-                Sign In
-              </button>
-            </Link>
-          </div>
+  if (success) {
+    const birthDate = new Date(form.birthday);
+    const today = new Date();
+    let successAge = today.getFullYear() - birthDate.getFullYear();
+    const sm = today.getMonth() - birthDate.getMonth();
+    if (sm < 0 || (sm === 0 && today.getDate() < birthDate.getDate())) successAge--;
+    const isMinorSuccess = successAge < 18;
+
+    return (
+      <div className={styles.registerPage}>
+        <div className={styles.successCard}>
+          <div className={styles.icon}><Check size={40} /></div>
+          {isMinorSuccess ? (
+            <>
+              <h2>Almost there!</h2>
+              <p>Your account has been created, but since you are under 18, we need your parent/guardian's consent before you can log in.</p>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.5rem' }}>
+                A confirmation email has been sent to <strong>{form.parentEmail}</strong>. Once they approve, you'll be able to sign in and start learning.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2>Welcome to BridgeLang!</h2>
+              <p>Your student account has been created successfully. You can now log in and start exploring tutors.</p>
+              <Link href="/login" className={styles.btnNext} style={{ width: '100%', justifyContent: 'center' }}>Sign In</Link>
+            </>
+          )}
         </div>
       </div>
     );
   }
 
-  const totalSteps = 3;
-  const progress = (step / totalSteps) * 100;
-
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Platform Header */}
-      <header style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-            <Image src="/bridgelang.png" alt="BridgeLang" width={40} height={40} />
-            <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>BridgeLang</span>
-          </Link>
-        </div>
+    <div className={styles.registerPage}>
+      <header className={styles.header}>
+        <Link href="/" style={{ display: 'inline-block', marginBottom: '1.5rem' }}>
+          <Image src="/bridgelang.png" alt="Logo" width={50} height={50} />
+        </Link>
+        <h1>Create your account</h1>
+        <p>Join thousands of learners building their future in the UK.</p>
       </header>
 
-      {/* Main Content */}
-      <div style={{ flex: '1', background: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div style={{ width: '100%', maxWidth: step === 3 ? '720px' : '560px' }}>
-          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-            {/* Progress Bar */}
-            <div style={{ marginBottom: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#64748b' }}>
-                  Step {step} of {totalSteps}
-                </span>
-                <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                  {Math.round(progress)}% Complete
-                </span>
-              </div>
-              <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{
-                  width: `${progress}%`,
-                  height: '100%',
-                  background: '#3b82f6',
-                  transition: 'width 0.3s ease'
-                }} />
-              </div>
+      <div className={styles.registerCard}>
+        <aside className={styles.sidebar}>
+          {steps.map((s) => (
+            <div key={s.id} className={`${styles.stepItem} ${step === s.id ? styles.active : ''} ${step > s.id ? styles.completed : ''}`}>
+              <div className={styles.stepIcon}>{step > s.id ? <Check size={16} /> : s.icon}</div>
+              <span className={styles.stepLabel}>{s.label}</span>
             </div>
+          ))}
+        </aside>
 
-            {/* Title */}
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.5rem' }}>
-                {step === 1 ? 'Create Your Account' : step === 2 ? 'Learning Preferences' : 'Your Learning Goals'}
-              </h1>
-              <p style={{ fontSize: '0.9375rem', color: '#64748b' }}>
-                {step === 1 ? 'Enter your basic information' : step === 2 ? 'Tell us about yourself' : 'Select all that apply (optional)'}
-              </p>
-            </div>
+        <main className={styles.content}>
+          <form onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
+            {error && <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fee2e2', color: '#991b1b', borderRadius: '10px', marginBottom: '2rem', fontSize: '0.875rem' }}>{error}</div>}
 
-            {/* Error Message */}
-            {error && (
-              <div style={{
-                padding: '0.875rem 1rem',
-                marginBottom: '1.5rem',
-                borderRadius: '8px',
-                fontSize: '0.875rem',
-                background: '#fee2e2',
-                border: '1px solid #fca5a5',
-                color: '#991b1b'
-              }}>
-                {error}
+            {step === 1 && (
+              <div className={styles.formGrid}>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Full Name</label>
+                  <input type="text" name="name" value={form.name} onChange={handleChange} placeholder="e.g. John Smith" required />
+                </div>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Email Address</label>
+                  <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="e.g. john@example.com" required />
+                </div>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Password</label>
+                  <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="Password must be at least 8 characters" required />
+                </div>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Country</label>
+                  <select name="country" value={form.country} onChange={handleChange} required>
+                    <option value="England">England</option>
+                    <option value="Scotland">Scotland</option>
+                    <option value="Wales">Wales</option>
+                    <option value="Northern Ireland">Northern Ireland</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Date of Birth</label>
+                  <input type="date" name="birthday" value={form.birthday} onChange={handleChange} required />
+                  <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
+                    Users aged 14–17 require parental consent.
+                  </p>
+                </div>
+                {form.birthday && (() => {
+                  const birthDate = new Date(form.birthday);
+                  const age = new Date().getFullYear() - birthDate.getFullYear();
+                  if (age >= 14 && age < 18) {
+                    return (
+                      <div className={`${styles.inputGroup} ${styles.fullWidth}`} style={{ marginTop: '1rem', padding: '1rem', background: '#fffbeb', borderRadius: '12px', border: '1px solid #fef3c7' }}>
+                        <label style={{ color: '#92400e' }}>Parent/Guardian Email Address *</label>
+                        <input 
+                          type="email" 
+                          name="parentEmail" 
+                          value={form.parentEmail} 
+                          onChange={handleChange} 
+                          placeholder="e.g. parent@example.com" 
+                          required 
+                          style={{ borderColor: '#fcd34d' }}
+                        />
+                        <p style={{ fontSize: '0.75rem', color: '#b45309', marginTop: '0.5rem' }}>
+                          A consent link will be sent to your parent/guardian.
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+                <div className={styles.fullWidth}>
+                  <label className={styles.checkboxGroup}>
+                    <input type="checkbox" required />
+                    <span>I agree to the <Link href="/terms" style={{color:'#4a6fbd', fontWeight:'600'}}>Terms & Conditions</Link> and <Link href="/privacy" style={{color:'#4a6fbd', fontWeight:'600'}}>Privacy Policy</Link></span>
+                  </label>
+                </div>
               </div>
             )}
 
-            <form onSubmit={step === totalSteps ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
-              {/* Step 1: Basic Info */}
-              {step === 1 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
-                      Full Name <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={form.name}
-                      onChange={handleChange}
-                      required
-                      placeholder="John Smith"
-                      style={{
-                        width: '100%',
-                        height: '44px',
-                        padding: '0 0.875rem',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        fontSize: '0.9375rem',
-                        color: '#0f172a',
-                        background: 'white',
-                        outline: 'none'
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
-                      Email Address <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="john@example.com"
-                      style={{
-                        width: '100%',
-                        height: '44px',
-                        padding: '0 0.875rem',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        fontSize: '0.9375rem',
-                        color: '#0f172a',
-                        background: 'white',
-                        outline: 'none'
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
-                      Password <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: '0 0 0.375rem 0' }}>
-                      At least 6 characters
-                    </p>
-                    <input
-                      type="password"
-                      name="password"
-                      value={form.password}
-                      onChange={handleChange}
-                      required
-                      minLength={6}
-                      placeholder="••••••••"
-                      style={{
-                        width: '100%',
-                        height: '44px',
-                        padding: '0 0.875rem',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        fontSize: '0.9375rem',
-                        color: '#0f172a',
-                        background: 'white',
-                        outline: 'none'
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
-                      Country
-                    </label>
-                    <select
-                      name="country"
-                      value={form.country}
-                      onChange={handleChange}
-                      style={{
-                        width: '100%',
-                        height: '44px',
-                        padding: '0 0.875rem',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        fontSize: '0.9375rem',
-                        color: '#0f172a',
-                        background: 'white',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option>United Kingdom</option>
-                      <option>Turkey</option>
-                      <option>United States</option>
-                      <option>Canada</option>
-                      <option>Australia</option>
-                      <option>Germany</option>
-                      <option>France</option>
-                      <option>Spain</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
+            {step === 2 && (
+              <div className={styles.formGrid}>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Native Language (Optional)</label>
+                  <input type="text" name="nativeLanguage" value={form.nativeLanguage} onChange={handleChange} placeholder="e.g. Turkish, Arabic, French" />
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Step 2: Basic Preferences */}
-              {step === 2 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
-                      Native Language
-                    </label>
-                    <select
-                      name="nativeLanguage"
-                      value={form.nativeLanguage}
-                      onChange={handleChange}
-                      style={{
-                        width: '100%',
-                        height: '44px',
-                        padding: '0 0.875rem',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        fontSize: '0.9375rem',
-                        color: '#0f172a',
-                        background: 'white',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="">Select...</option>
-                      <option>English</option>
-                      <option>Spanish</option>
-                      <option>Arabic</option>
-                      <option>Mandarin</option>
-                      <option>Turkish</option>
-                      <option>French</option>
-                      <option>German</option>
-                      <option>Portuguese</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Learning Goals */}
-              {step === 3 && (
-                <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {step === 3 && (
+              <div className={styles.formGrid}>
+                <div className={styles.fullWidth}>
+                  <label style={{display:'block', fontSize:'0.9375rem', fontWeight:'700', color:'#1e293b', marginBottom:'1.5rem'}}>Select what matters most to you</label>
                   {Object.entries(learningGoalCategories).map(([category, goals]) => (
-                    <div key={category} style={{ marginBottom: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                      <button
-                        type="button"
-                        onClick={() => toggleCategory(category)}
-                        style={{
-                          width: '100%',
-                          padding: '0.875rem 1rem',
-                          background: expandedCategories[category] ? '#f8fafc' : 'white',
-                          border: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          cursor: 'pointer',
-                          fontSize: '0.9375rem',
-                          fontWeight: '600',
-                          color: '#0f172a',
-                          transition: 'background 0.2s'
-                        }}
-                      >
+                    <div key={category} className={`${styles.categoryCard} ${expandedCategories[category] ? styles.expanded : ''}`}>
+                      <button type="button" className={styles.categoryHeader} onClick={() => toggleCategory(category)}>
                         <span>{category}</span>
-                        {expandedCategories[category] ?
-                          <ChevronUp style={{ width: '18px', height: '18px', color: '#64748b' }} /> :
-                          <ChevronDown style={{ width: '18px', height: '18px', color: '#64748b' }} />
-                        }
+                        {expandedCategories[category] ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
                       </button>
                       {expandedCategories[category] && (
-                        <div style={{ padding: '0.75rem 1rem', background: 'white', borderTop: '1px solid #f1f5f9' }}>
+                        <div className={styles.goalList}>
                           {goals.map(goal => (
-                            <label key={goal} style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              padding: '0.5rem 0',
-                              cursor: 'pointer',
-                              fontSize: '0.875rem',
-                              color: '#475569'
-                            }}>
-                              <input
-                                type="checkbox"
-                                checked={form.learningGoals.includes(goal)}
-                                onChange={() => toggleGoal(goal)}
-                                style={{
-                                  width: '16px',
-                                  height: '16px',
-                                  marginRight: '0.75rem',
-                                  cursor: 'pointer',
-                                  accentColor: '#3b82f6'
-                                }}
-                              />
-                              {goal}
+                            <label key={goal} className={styles.goalItem}>
+                              <input type="checkbox" checked={form.learningGoals.includes(goal)} onChange={() => toggleGoal(goal)} />
+                              <span>{goal}</span>
                             </label>
                           ))}
                         </div>
                       )}
                     </div>
                   ))}
-
-                  {form.learningGoals.length > 0 && (
-                    <div style={{ marginTop: '1rem', padding: '0.875rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px' }}>
-                      <p style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem' }}>
-                        Selected: {form.learningGoals.length} goal{form.learningGoals.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  )}
-
-                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #3b82f6' }}>
-                    <p style={{ fontSize: '0.8125rem', color: '#475569', margin: '0', lineHeight: '1.5' }}>
-                      By creating an account, you agree to our{' '}
-                      <Link href="/terms" style={{ color: '#3b82f6', textDecoration: 'none' }}>Terms & Conditions</Link>
-                      {' '}and{' '}
-                      <Link href="/privacy" style={{ color: '#3b82f6', textDecoration: 'none' }}>Privacy Policy</Link>.
-                    </p>
-                  </div>
                 </div>
-              )}
-
-              {/* Navigation Buttons */}
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                {step > 1 && (
-                  <button
-                    type="button"
-                    onClick={handlePrev}
-                    style={{
-                      flex: '1',
-                      height: '48px',
-                      background: 'white',
-                      color: '#64748b',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      fontSize: '0.9375rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => { e.target.style.borderColor = '#94a3b8'; e.target.style.background = '#f8fafc'; }}
-                    onMouseLeave={(e) => { e.target.style.borderColor = '#cbd5e1'; e.target.style.background = 'white'; }}
-                  >
-                    <ChevronLeft style={{ width: '18px', height: '18px' }} />
-                    Previous
-                  </button>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    flex: '1',
-                    height: '48px',
-                    background: submitting ? '#94a3b8' : '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.9375rem',
-                    fontWeight: '600',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={(e) => { if (!submitting) e.target.style.background = '#2563eb'; }}
-                  onMouseLeave={(e) => { if (!submitting) e.target.style.background = '#3b82f6'; }}
-                >
-                  {submitting ? 'Creating account...' : step === totalSteps ? 'Create Account' : 'Next'}
-                  {!submitting && step < totalSteps && <ChevronRight style={{ width: '18px', height: '18px' }} />}
-                </button>
               </div>
-            </form>
+            )}
 
-            {/* Footer */}
-            <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #f1f5f9', textAlign: 'center', fontSize: '0.875rem', color: '#64748b' }}>
-              Already have an account?{' '}
-              <Link href="/login" style={{ color: '#3b82f6', fontWeight: '500', textDecoration: 'none' }}>
-                Sign In
-              </Link>
-            </div>
-          </div>
-        </div>
+            <footer className={styles.footer}>
+              {step > 1 ? (
+                <button type="button" onClick={handlePrev} className={styles.btnBack}>
+                  <ChevronLeft size={20} /> Previous
+                </button>
+              ) : <div />}
+              
+              <button type="submit" disabled={submitting} className={styles.btnNext}>
+                {submitting ? 'Creating account...' : step === 3 ? 'Register' : 'Next'} 
+                {step < 3 && <ChevronRight size={20} />}
+              </button>
+            </footer>
+          </form>
+        </main>
       </div>
+      <p style={{marginTop:'2rem', fontSize:'0.875rem', color:'#64748b'}}>Already have an account? <Link href="/login" style={{color:'#4a6fbd', fontWeight:'700'}}>Sign In</Link></p>
     </div>
   );
 }

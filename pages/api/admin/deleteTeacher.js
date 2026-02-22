@@ -1,4 +1,5 @@
 import { adminDb, adminAuth } from '../../../lib/firebaseAdmin';
+import crypto from 'crypto';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end('Method not allowed');
@@ -10,6 +11,15 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Silinen e-postayı kaydet (tekrar kayıt engeli)
+    if (teacherEmail) {
+      const emailHash = crypto.createHash('sha256').update(teacherEmail.trim().toLowerCase()).digest('hex');
+      await adminDb.collection('deletedEmails').doc(emailHash).set({
+        email: teacherEmail.trim().toLowerCase(),
+        deletedAt: Date.now(),
+      });
+    }
+
     // 🔹 users/{teacherId} dokümanını sil
     await adminDb.collection('users').doc(teacherId).delete();
 

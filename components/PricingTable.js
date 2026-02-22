@@ -1,8 +1,23 @@
 import React from 'react';
 import styles from '../scss/PricingTable.module.scss';
 import { InformationCircleIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { toast } from 'react-hot-toast';
 
 export default function PricingTable() {
+    const showInfo = () => {
+        toast('Use messages to confirm availability or ask lesson-related questions before booking.', {
+            icon: 'ℹ️',
+            duration: 5000,
+            position: 'top-center',
+            style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+                fontSize: '14px',
+            },
+        });
+    };
+
     return (
         <section className={styles.section}>
             <div className="container">
@@ -16,83 +31,95 @@ export default function PricingTable() {
                 </div>
 
                 <div className={styles.tableContainer}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th className={styles.featureCol}>Feature</th>
-                                <th>Free</th>
-                                <th>Starter</th>
-                                <th>Pro</th>
-                                <th className={styles.vipCol}>VIP</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="fw-bold">Price</td>
-                                <td>
-                                    <span className={styles.price}>
-                                        £0 <small>(one-time access)</small>
-                                    </span>
-                                    <div className={styles.planDesc}>Explore tutors and start at your own pace.</div>
-                                </td>
-                                <td>
-                                    <span className={styles.price}>
-                                        £4.99 <small>(1-month access)</small>
-                                    </span>
-                                    <div className={styles.planDesc}>A simple step into regular learning.</div>
-                                </td>
-                                <td>
-                                    <span className={styles.price}>
-                                        £9.99 <small>(1-month access)</small>
-                                    </span>
-                                    <div className={styles.planDesc}>Designed for consistent progress.</div>
-                                </td>
-                                <td className={`${styles.vipCol} ${styles.vipCell}`}>
-                                    <span className={styles.price}>
-                                        £14.99 <small>(1-month access)</small>
-                                    </span>
-                                    <div className={styles.planDesc}>Maximum flexibility for committed learners.</div>
-                                </td>
-                            </tr>
+                    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th className={styles.featureCol}>Feature</th>
+                                    <th>Free</th>
+                                    <th>Starter</th>
+                                    <th>Pro</th>
+                                    <th className={styles.vipCol}>VIP</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className="fw-bold">Price</td>
+                                    <td>
+                                        <span className={styles.price}>
+                                            £0 <small>(one-time access)</small>
+                                        </span>
+                                        <div className={styles.planDesc}>Explore tutors and start at your own pace.</div>
+                                    </td>
+                                    <td>
+                                        <span className={styles.price}>
+                                            £4.99 <small>(1-month access)</small>
+                                        </span>
+                                        <div className={styles.planDesc}>A simple step into regular learning.</div>
+                                    </td>
+                                    <td>
+                                        <span className={styles.price}>
+                                            £9.99 <small>(1-month access)</small>
+                                        </span>
+                                        <div className={styles.planDesc}>Designed for consistent progress.</div>
+                                    </td>
+                                    <td className={`${styles.vipCol} ${styles.vipCell}`}>
+                                        <span className={styles.price}>
+                                            £14.99 <small>(1-month access)</small>
+                                        </span>
+                                        <div className={styles.planDesc}>Maximum flexibility for committed learners.</div>
+                                    </td>
+                                </tr>
 
-                            <tr>
-                                <td className="fw-bold">
-                                    Messages before booking
-                                    <span
-                                        className={styles.tooltipIcon}
-                                        title="Use messages to confirm availability or ask lesson-related questions before booking."
-                                    >
-                                        <InformationCircleIcon width={18} />
-                                    </span>
-                                </td>
-                                <td>Up to 5</td>
-                                <td>Up to 10</td>
-                                <td>Up to 20</td>
-                                <td className={`${styles.vipCol} ${styles.vipCell}`}>Unlimited</td>
-                            </tr>
+                                <tr>
+                                    <td className="fw-bold">Profile views</td>
+                                    <td>Up to 10</td>
+                                    <td>Up to 30</td>
+                                    <td>Up to 100</td>
+                                    <td className={`${styles.vipCol} ${styles.vipCell}`}>Unlimited</td>
+                                </tr>
 
-                            <tr>
-                                <td className="fw-bold">
-                                    Community reward
-                                    <br />
-                                    <span className="text-muted fw-normal small fst-italic">
-                                        A one-time thank-you applied to your 2nd lesson after sharing feedback about the tutor
-                                    </span>
-                                </td>
-                                <td>25% discount</td>
-                                <td>30% discount</td>
-                                <td>35% discount</td>
-                                <td className={`${styles.vipCol} ${styles.vipLast}`}>40% discount</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                <tr>
+                                    <td className="fw-bold">
+                                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                                            Messages before booking
+                                            <button
+                                                type="button"
+                                                onClick={showInfo}
+                                                className={styles.tooltipIcon}
+                                                style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '4px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                aria-label="More Info"
+                                            >
+                                                <InformationCircleIcon width={16} className="text-blue-500" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>Up to 5</td>
+                                    <td>Up to 10</td>
+                                    <td>Up to 20</td>
+                                    <td className={`${styles.vipCol} ${styles.vipCell}`}>Unlimited</td>
+                                </tr>
+
+                                <tr>
+                                    <td className="fw-bold">
+                                        Community reward
+                                        <br />
+                                        <span className="text-muted fw-normal small fst-italic">
+                                            A one-time thank-you applied to your 2nd lesson after sharing feedback about the tutor
+                                        </span>
+                                    </td>
+                                    <td>25% discount</td>
+                                    <td>30% discount</td>
+                                    <td>35% discount</td>
+                                    <td className={`${styles.vipCol} ${styles.vipLast}`}>40% discount</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <div className={styles.includes}>
                         <h4>All plans include</h4>
                         <div className={styles.featuresGrid}>
-                            <div className={styles.featureItem}>
-                                <CheckCircleIcon /> Unlimited tutor profile views
-                            </div>
                             <div className={styles.featureItem}>
                                 <CheckCircleIcon /> Unlimited messages after a lesson
                             </div>

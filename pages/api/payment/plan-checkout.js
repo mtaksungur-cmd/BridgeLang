@@ -8,9 +8,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 const PLAN_PRICES = { starter: 4.99, pro: 9.99, vip: 14.99 };
 const PLAN_ORDER = ['free', 'starter', 'pro', 'vip'];
 const PLAN_LIMITS = {
-  free: { viewLimit: 10, messagesLeft: 3 },
-  starter: { viewLimit: 30, messagesLeft: 8 },
-  pro: { viewLimit: 60, messagesLeft: 20 },
+  free: { viewLimit: 10, messagesLeft: 5 },
+  starter: { viewLimit: 30, messagesLeft: 10 },
+  pro: { viewLimit: 100, messagesLeft: 20 },
   vip: { viewLimit: 9999, messagesLeft: 9999 },
 };
 
@@ -154,7 +154,7 @@ export default async function handler(req, res) {
             viewLimit: base.viewLimit,
             messagesLeft: base.messagesLeft,
           },
-          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
         });
 
@@ -180,6 +180,8 @@ export default async function handler(req, res) {
         }
       }
 
+      const base = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
+
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         customer: customerId,
@@ -202,8 +204,10 @@ export default async function handler(req, res) {
           vipAppliedCouponId: appliedVipCouponId || '',
           vipNextPaymentNo: String(nextPaymentNo),
           renewal: '1',
+          viewLimit: base.viewLimit,
+          messagesLeft: base.messagesLeft,
         },
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
       return res.status(200).json({ url: session.url });
@@ -237,7 +241,7 @@ export default async function handler(req, res) {
           viewLimit: base.viewLimit,
           messagesLeft: base.messagesLeft,
         },
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
       return res.status(200).json({ url: session.url });
@@ -278,7 +282,7 @@ export default async function handler(req, res) {
           viewLimit: base.viewLimit,
           messagesLeft: base.messagesLeft,
         },
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       });
       return res.status(200).json({ url: session.url });

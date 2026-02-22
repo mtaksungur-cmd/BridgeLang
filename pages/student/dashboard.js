@@ -1,46 +1,32 @@
-﻿import { useEffect, useState } from 'react';
+'use client';
+import { useEffect, useState } from 'react';
 import { auth, db } from '../../lib/firebase';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
-import { useSubscriptionGuard } from '../../lib/subscriptionGuard';
-import {
-  BookOpen, Clock, Zap, Calendar, MessageCircle, TrendingUp, Search,
-  Target, Award, ChevronRight, Flame, Settings, Star
+import { 
+  ChevronRight, Clock, MessageSquare, User, BookOpen, 
+  Lightbulb, Settings, LogOut, CheckCircle2, Calendar 
 } from 'lucide-react';
 import SeoHead from '../../components/SeoHead';
-import WelcomeBanner from '../../components/WelcomeBanner';
-import StudentProgress from '../../components/StudentProgress';
+import styles from '../../scss/StudentDashboardPremium.module.scss';
+
+import { PLAN_LIMITS, getPlanLabel } from '../../lib/planLimits';
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
+  const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [upcomingLessons, setUpcomingLessons] = useState([]);
-  const [recentTeachers, setRecentTeachers] = useState([]);
-  const [conversations, setConversations] = useState([]);
-  const [showWelcome, setShowWelcome] = useState(false);
   const router = useRouter();
-
-  const activeUntilMillis =
-    data?.subscription?.activeUntil?._seconds
-      ? data.subscription.activeUntil._seconds * 1000
-      : (data?.subscription?.activeUntilMillis || null);
-  useSubscriptionGuard({ plan: data?.subscriptionPlan, activeUntilMillis, graceDays: 0 });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+      if (!user) { router.push('/login'); return; }
 
       try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (!userSnap.exists()) {
-          router.push('/login');
-          return;
-        }
+        if (!userSnap.exists()) { router.push('/login'); return; }
 
         const userData = userSnap.data();
         if (userData.role !== 'student') {
@@ -48,763 +34,238 @@ export default function StudentDashboard() {
           return;
         }
 
-        if (!userData.emailVerified && user.emailVerified) {
-          await updateDoc(doc(db, 'users', user.uid), { emailVerified: true });
-          userData.emailVerified = true;
+        if (userData.status === 'pending_consent') {
+          router.push('/login');
+          return;
         }
 
-        // Check if user just upgraded (show welcome banner)
-        if (userData.justUpgraded && userData?.justUpgraded) {
-          setShowWelcome(true);
-          // Clear flag after showing
-          await updateDoc(doc(db, 'users', user.uid), { justUpgraded: false });
-        }
-
-        setData(userData);
-
-        // Fetch upcoming lessons with proper Firestore query
-        const bookingsRef = collection(db, 'bookings');
-        const lessonsQ = query(
-          bookingsRef,
+        // Fetch student's booked lessons
+        const bookingsQuery = query(
+          collection(db, 'bookings'),
           where('studentId', '==', user.uid),
-          where('status', 'in', ['pending', 'pending-approval', 'confirmed', 'teacher_approved', 'student_approved', 'approved']),
-          limit(20)
+          where('status', 'in', ['confirmed', 'approved', 'pending'])
         );
-        const lessonsSnap = await getDocs(lessonsQ);
+        const bookingsSnap = await getDocs(bookingsQuery);
+        const bookingsData = [];
 
-        console.log('📚 Total bookings found:', lessonsSnap.docs.length);
-
-        const now = new Date();
-        const approvedLessons = lessonsSnap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .filter(lesson => {
-            console.log('🔍 Checking lesson:', {
-              id: lesson.id,
-              status: lesson.status,
-              date: lesson.date,
-              studentId: lesson.studentId
-            });
-
-            // More flexible date parsing
-            const lessonDate = new Date(lesson.date);
-            const isFutureLesson = lessonDate > now;
-
-            console.log(`  → Status: ${lesson.status}`);
-            console.log(`  → Date: ${lesson.date} → ${lessonDate.toISOString()}`);
-            console.log(`  → Is future? ${isFutureLesson}`);
-            console.log(`  → Will show? ${isFutureLesson}`);
-
-            return isFutureLesson;
-          })
-          .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        console.log('✅ Approved future lessons:', approvedLessons.length);
-
-        // Get teacher data for upcoming lessons
-        const upcomingWithTeachers = await Promise.all(
-          approvedLessons.slice(0, 3).map(async (lesson) => {
-            const teacherSnap = await getDoc(doc(db, 'users', lesson.teacherId));
-            return {
-              ...lesson,
-              teacher: teacherSnap.exists() ? teacherSnap.data() : { name: 'Unknown' }
-            };
-          })
-        );
-        setUpcomingLessons(upcomingWithTeachers);
-
-        // Get recent teachers (from completed lessons)
-        const completedLessons = lessonsSnap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .filter(lesson => lesson.status === 'approved')
-          .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        const teacherIds = [...new Set(completedLessons.map(l => l.teacherId))];
-        const recentTeacherData = await Promise.all(
-          teacherIds.slice(0, 3).map(async (teacherId) => {
-            const teacherSnap = await getDoc(doc(db, 'users', teacherId));
-            return {
-              id: teacherId,
-              ...teacherSnap.data()
-            };
-          })
-        );
-        setRecentTeachers(recentTeacherData);
-
-        // Fetch recent conversations
-        const convsQ = query(
-          collection(db, 'conversations'),
-          where('participants', 'array-contains', user.uid),
-          limit(3)
-        );
-        const convsSnap = await getDocs(convsQ);
-        const convList = [];
-        for (const convDoc of convsSnap.docs) {
-          const convData = convDoc.data();
-          const otherUserId = convData.participants.find(id => id !== user.uid);
-          if (otherUserId) {
-            const otherUserSnap = await getDoc(doc(db, 'users', otherUserId));
-            convList.push({
-              id: convDoc.id,
-              otherUser: otherUserSnap.exists() ? otherUserSnap.data() : { name: 'Unknown' }
-            });
+        for (const bookingDoc of bookingsSnap.docs) {
+          const booking = { id: bookingDoc.id, ...bookingDoc.data() };
+          // Fetch teacher name
+          if (booking.teacherId) {
+            try {
+              const teacherSnap = await getDoc(doc(db, 'users', booking.teacherId));
+              if (teacherSnap.exists()) {
+                booking.teacherName = teacherSnap.data().name || 'Unknown Tutor';
+              }
+            } catch (e) {
+              booking.teacherName = 'Unknown Tutor';
+            }
           }
+          bookingsData.push(booking);
         }
-        setConversations(convList);
 
+        // Sort by date descending (newest first)
+        bookingsData.sort((a, b) => {
+          const dateA = a.date || '';
+          const dateB = b.date || '';
+          return dateB.localeCompare(dateA);
+        });
+
+        setLessons(bookingsData);
+        setData(userData);
         setLoading(false);
       } catch (error) {
         console.error('Dashboard error:', error);
         setLoading(false);
       }
     });
-
     return () => unsubscribe();
   }, [router]);
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid #e2e8f0',
-          borderTopColor: '#3b82f6',
-          borderRadius: '50%',
-          animation: 'spin 0.7s linear infinite'
-        }} />
-        <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
+  if (loading) return <div style={{textAlign:'center', padding:'5rem'}}>Loading...</div>;
   if (!data) return null;
 
-  const plan = data.subscriptionPlan || 'free';
-  const totalLessons = data.totalLessonsCompleted || 0;
-  const currentStreak = data.learningStreak || 0;
+  const planKey = data.subscriptionPlan || 'free';
+  const planLabel = getPlanLabel(planKey);
+  const limits = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
 
-  // Calculate messages left
-  const planLimits = { free: 5, starter: 10, pro: 20, vip: Infinity };
-  const planLimit = planLimits[plan] || 5;
-  const messagesLeft = plan === 'vip' ? Infinity : (data.messagesLeft ?? planLimit);
-
-  // Next lesson countdown
-  const nextLesson = upcomingLessons[0];
-  const getTimeUntilLesson = () => {
-    if (!nextLesson) return null;
-    const now = new Date();
-    const lessonDate = new Date(nextLesson.date);
-    const diffMs = lessonDate - now;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-    if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
-    if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
-    return 'Soon';
-  };
+  const profileViewsLeft = data.viewLimit ?? limits.viewLimit;
+  const messagesLeft = data.messagesLeft ?? limits.messagesLeft;
 
   return (
     <>
       <SeoHead title="Student Dashboard" description="Your learning dashboard on BridgeLang" />
 
-      <div style={{ minHeight: '100vh', background: '#f8fafc', paddingBottom: '3rem' }}>
-        {/* Header */}
-        <div style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '2rem 1.5rem' }}>
-          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
-                  Welcome back, {data.name}!
-                </h1>
-                <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
-                  Continue your learning journey
-                </p>
-              </div>
-              <Link href="/account/settings">
-                <button style={{
-                  padding: '0.625rem 1.25rem',
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#475569',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#eff6ff';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                    e.currentTarget.style.color = '#3b82f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#cbd5e1';
-                    e.currentTarget.style.color = '#475569';
-                  }}
-                >
-                  <Settings style={{ width: '16px', height: '16px' }} />
-                  Settings
-                </button>
-              </Link>
-            </div>
-          </div>
+      <div className={styles.dashboardPage}>
+        {/* Top Banner */}
+        <div className={styles.topBanner}>
+          {planLabel} Plan — 
+          {planKey === 'free' ? ' No membership fees. Only pay for the lessons you take.' : ' Enjoy your premium learning benefits!'}
         </div>
 
-        {/* Content */}
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+        {/* Welcome Section */}
+        <div className={styles.welcomeSection}>
+          <h1>✨ Welcome to BridgeLang!</h1>
+          <p style={{color:'#64748b', fontSize:'1.125rem', marginBottom:'2rem'}}>Ready to get started? Book your first lesson today.</p>
+          <Link href="/student/teachers" className={styles.ctaBtn}>
+            Browse Tutors & Book Your First Lesson
+          </Link>
+        </div>
 
-          {/* Welcome Banner for New Subscriptions */}
-          {showWelcome && data?.subscriptionPlan && (
-            <WelcomeBanner
-              plan={data.subscriptionPlan}
-              onDismiss={() => setShowWelcome(false)}
-            />
-          )}
+        <div className={styles.container}>
+          <h2 className={styles.sectionTitle}>Student Dashboard</h2>
 
-          {/* Stats Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-            {/* Total Lessons */}
-            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>Total Lessons</span>
-                <BookOpen style={{ width: '20px', height: '20px', color: '#3b82f6' }} />
+          <div className={styles.grid}>
+            {/* Left Column */}
+            <div>
+              <div className={styles.card} style={{padding:'2rem'}}>
+                <div className={styles.userProfile} style={{marginBottom:'2rem'}}>
+                   <div style={{width:56, height:56, background:'#4a6fbd', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:'700', fontSize:'1.25rem'}}>
+                    {data.name?.charAt(0) || 'S'}
+                  </div>
+                  <div className={styles.info}>
+                    <h3>{data.name}</h3>
+                    <p>Goal: {data.learningGoals?.[0] || 'English Fluency'}</p>
+                  </div>
+                </div>
+
+                <div className={styles.nextStepBox}>
+                  <div className={styles.stepLabel}><Clock size={16}/> Next Step:</div>
+                  <Link href="/student/teachers" className={styles.stepMain}>
+                    <span>Book your First Lesson</span>
+                    <ChevronRight size={20} color="#cbd5e1" />
+                  </Link>
+                  <button className={styles.browseBtn} onClick={() => router.push('/student/teachers')}>Browse Tutors</button>
+                  <Link href="/account/settings" className={styles.manageLink}>Manage Account</Link>
+                </div>
               </div>
-              <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
-                {totalLessons}
-              </p>
-              <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: 0 }}>
-                Completed so far
-              </p>
+
+              <div className={styles.availabilityReminder}>
+                <div className={styles.header}>
+                   <Calendar size={20} color="#f59e0b" fill="#fef3c7" /> Availability Reminder
+                </div>
+                <div className={styles.proTip}>
+                  <Lightbulb size={18} className={styles.bulb} />
+                  <div>
+                    <strong>Pro tip:</strong> Check tutor availability to book a lesson soon.
+                  </div>
+                </div>
+                <p className={styles.reminderText}>Tutors can fill up fast, so look for tutors with times available in the next few days.</p>
+                <Link href="/student/teachers" className={styles.link}>
+                  Browse available tutors &gt;
+                </Link>
+              </div>
             </div>
 
-            {/* Learning Streak */}
-            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>Learning Streak</span>
-                <Flame style={{ width: '20px', height: '20px', color: '#f59e0b' }} />
-              </div>
-              <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
-                {currentStreak} days
-              </p>
-              <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: 0 }}>
-                Keep it up!
-              </p>
-            </div>
+            {/* Right Column */}
+            <div>
+              <div className={styles.card}>
+                <div className={styles.planDetails}>
+                  <h4>{planLabel} Plan Details</h4>
+                  
+                  <div className={styles.usageItem}>
+                    <span className={styles.label}>Profile Views Left</span>
+                    <span className={styles.value}>{profileViewsLeft >= 9999 ? 'Unlimited' : profileViewsLeft} &gt;</span>
+                  </div>
+                  <div className={styles.infoAlert}>
+                    {planKey === 'vip' ? 'You have unlimited profile views.' : `You can view up to ${limits.viewLimit} tutor profiles on the ${planLabel} Plan.`}
+                  </div>
 
-            {/* Messages Left */}
-            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>Messages Left</span>
-                <MessageCircle style={{ width: '20px', height: '20px', color: '#8b5cf6' }} />
-              </div>
-              <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
-                {messagesLeft === Infinity ? '∞' : messagesLeft}
-              </p>
-              <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: 0 }}>
-                {plan.charAt(0).toUpperCase() + plan.slice(1)} plan
-              </p>
-            </div>
+                  <div className={styles.usageItem} style={{marginTop:'1.5rem'}}>
+                    <span className={styles.label}>Messages Left</span>
+                    <span className={styles.value}>{messagesLeft >= 9999 ? 'Unlimited' : messagesLeft} &gt;</span>
+                  </div>
+                  <div className={styles.infoAlert}>
+                    {planKey === 'vip' ? 'You have unlimited messages.' : `You can message up to ${limits.messagesLeft} tutors on the ${planLabel} Plan.`}
+                  </div>
 
-            {/* Upcoming Lessons */}
-            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>Next Lesson</span>
-                <Clock style={{ width: '20px', height: '20px', color: '#22c55e' }} />
+                  <Link href="/student/subscription" className={styles.showDetails}>Show usage details &gt;</Link>
+                </div>
               </div>
-              <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>
-                {nextLesson ? getTimeUntilLesson() : 'None'}
-              </p>
-              <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: 0 }}>
-                {nextLesson ? `with ${nextLesson.teacher?.name || 'teacher'}` : 'Book a new lesson'}
-              </p>
             </div>
           </div>
 
-          {/* Main Content Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-
-            {/* Upcoming Lessons */}
-            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>Upcoming Lessons</h3>
-                <Calendar style={{ width: '20px', height: '20px', color: '#64748b' }} />
+          {/* Lessons Section */}
+          <div style={{marginTop:'2rem'}}>
+            <div className={styles.card} style={{padding:'2rem'}}>
+              <div style={{display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1.5rem'}}>
+                <BookOpen size={24} color="#3b82f6" />
+                <h3 style={{margin:0, fontSize:'1.25rem', fontWeight:'700', color:'#0f172a'}}>Your Lessons</h3>
+                <span style={{marginLeft:'auto', fontSize:'0.875rem', color:'#64748b'}}>{lessons.length} lesson{lessons.length !== 1 ? 's' : ''}</span>
               </div>
 
-              {upcomingLessons.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                  <Calendar style={{ width: '40px', height: '40px', color: '#cbd5e1', margin: '0 auto 0.75rem' }} />
-                  <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1rem' }}>No upcoming lessons</p>
-                  <Link href="/student/teachers">
-                    <button style={{
-                      padding: '0.625rem 1.25rem',
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      color: 'white',
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(59,130,246,0.25)',
-                      transition: 'all 0.2s'
-                    }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                    >
-                      Find a Teacher
-                    </button>
+              {lessons.length === 0 ? (
+                <div style={{textAlign:'center', padding:'3rem 1rem', background:'#f8fafc', borderRadius:'12px', border:'2px dashed #e2e8f0'}}>
+                  <BookOpen size={40} color="#cbd5e1" style={{marginBottom:'1rem'}} />
+                  <p style={{fontSize:'1rem', fontWeight:'600', color:'#64748b', margin:'0 0 0.5rem'}}>No lessons booked yet</p>
+                  <p style={{fontSize:'0.875rem', color:'#94a3b8', margin:'0 0 1.5rem'}}>Book your first lesson to get started!</p>
+                  <Link href="/student/teachers" style={{
+                    display:'inline-block', padding:'0.75rem 1.5rem', background:'linear-gradient(135deg, #3b82f6, #2563eb)',
+                    color:'white', borderRadius:'10px', fontWeight:'600', fontSize:'0.875rem', textDecoration:'none'
+                  }}>
+                    Browse Tutors
                   </Link>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {upcomingLessons.map(lesson => {
-                    const now = new Date();
-                    const lessonDateTime = new Date(lesson.date + ' ' + lesson.startTime);
-                    const lessonEndTime = new Date(lessonDateTime.getTime() + (lesson.duration || 60) * 60 * 1000);
-                    const diffMs = lessonDateTime - now;
-                    const diffMins = Math.floor(diffMs / (1000 * 60));
-                    const diffMinsFromEnd = Math.floor((lessonEndTime - now) / (1000 * 60));
-                    // ✅ FIX: Video ONLY accessible for APPROVED lessons within time window
-                    // Teacher must approve before video link is accessible!
-                    const isApproved = lesson.status === 'approved';
-                    const isWithinTimeWindow = diffMins >= -15 && diffMins <= 15 && diffMinsFromEnd >= -15;
-                    const canJoin = lesson.meetingLink && isApproved && isWithinTimeWindow;
-                    const startingSoon = diffMins <= 30 && diffMins > 0;
+                <div style={{display:'flex', flexDirection:'column', gap:'1rem'}}>
+                  {lessons.map((lesson) => {
+                    const isPast = lesson.date < new Date().toISOString().split('T')[0];
+                    const statusColors = {
+                      confirmed: {bg:'#dcfce7', color:'#166534', label:'Confirmed'},
+                      approved: {bg:'#dcfce7', color:'#166534', label:'Approved'},
+                      pending: {bg:'#fef3c7', color:'#92400e', label:'Pending'},
+                    };
+                    const statusStyle = statusColors[lesson.status] || statusColors.pending;
 
                     return (
                       <div key={lesson.id} style={{
-                        padding: '1rem',
-                        background: startingSoon ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : '#f8fafc',
-                        borderRadius: '12px',
-                        border: `2px solid ${startingSoon ? '#fcd34d' : '#e2e8f0'}`,
-                        transition: 'all 0.2s'
+                        display:'flex', alignItems:'center', gap:'1.25rem', padding:'1.25rem 1.5rem',
+                        background: isPast ? '#f8fafc' : 'white', borderRadius:'14px',
+                        border: `2px solid ${isPast ? '#e2e8f0' : '#dbeafe'}`,
+                        opacity: isPast ? 0.7 : 1
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '50%',
-                              background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.875rem',
-                              fontWeight: '600',
-                              color: '#4338ca',
-                              flexShrink: 0
-                            }}>
-                              {lesson.teacher?.name?.charAt(0) || 'T'}
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a' }}>
-                                {lesson.teacher?.name || 'Teacher'}
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                {new Date(lesson.date + ' ' + lesson.startTime).toLocaleDateString('en-GB', {
-                                  weekday: 'short',
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </div>
-                            </div>
-                          </div>
-                          <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            color: '#64748b',
-                            background: '#f1f5f9',
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '4px'
-                          }}>
-                            {lesson.duration}min
+                        <div style={{
+                          width:48, height:48, borderRadius:'12px', display:'flex', flexDirection:'column',
+                          alignItems:'center', justifyContent:'center',
+                          background:'linear-gradient(135deg, #eff6ff, #dbeafe)', border:'2px solid #bfdbfe'
+                        }}>
+                          <span style={{fontSize:'0.7rem', fontWeight:'700', color:'#3b82f6', lineHeight:1}}>
+                            {lesson.date ? new Date(lesson.date + 'T00:00:00').toLocaleDateString('en-GB', {month:'short'}).toUpperCase() : ''}
+                          </span>
+                          <span style={{fontSize:'1.125rem', fontWeight:'800', color:'#1e40af', lineHeight:1.2}}>
+                            {lesson.date ? new Date(lesson.date + 'T00:00:00').getDate() : ''}
                           </span>
                         </div>
 
-                        {/* Countdown Timer */}
-                        {diffMins > 0 && diffMins <= 120 && (
-                          <div style={{
-                            padding: '0.5rem',
-                            background: 'rgba(255,255,255,0.5)',
-                            borderRadius: '6px',
-                            marginBottom: '0.5rem',
-                            textAlign: 'center',
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            color: startingSoon ? '#92400e' : '#64748b'
-                          }}>
-                            {diffMins < 60 ? `Starts in ${diffMins} minutes` : `Starts in ${Math.floor(diffMins / 60)}h ${diffMins % 60}m`}
+                        <div style={{flex:1, minWidth:0}}>
+                          <div style={{fontSize:'1rem', fontWeight:'700', color:'#0f172a', marginBottom:'0.25rem'}}>
+                            {lesson.teacherName || 'Tutor'}
                           </div>
-                        )}
+                          <div style={{fontSize:'0.8125rem', color:'#64748b', display:'flex', gap:'1rem', flexWrap:'wrap'}}>
+                            <span><Clock size={13} style={{verticalAlign:'middle', marginRight:4}} />{lesson.startTime}{lesson.endTime ? ` - ${lesson.endTime}` : ''}</span>
+                            <span>{lesson.duration} min</span>
+                            {lesson.location && <span>{lesson.location}</span>}
+                          </div>
+                        </div>
 
-                        {/* Join Lesson Button */}
-                        {canJoin && (
-                          <a
-                            href={lesson.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '0.5rem',
-                              padding: '0.625rem',
-                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                              border: 'none',
-                              borderRadius: '6px',
-                              textAlign: 'center',
-                              color: 'white',
-                              fontSize: '0.8125rem',
-                              fontWeight: '600',
-                              textDecoration: 'none',
-                              transition: 'transform 0.2s',
-                              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                              animation: 'pulse 2s infinite'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                          >
-                            <Video style={{ width: '16px', height: '16px' }} />
-                            Join Lesson Now
-                          </a>
-                        )}
-
-                        <style jsx>{`
-                          @keyframes pulse {
-                            0%, 100% { opacity: 1; }
-                            50% { opacity: 0.9; }
-                          }
-                        `}</style>
+                        <div style={{display:'flex', alignItems:'center', gap:'1rem'}}>
+                          {lesson.amountPaid != null && (
+                            <span style={{fontSize:'0.9375rem', fontWeight:'700', color:'#0f172a'}}>£{lesson.amountPaid.toFixed(2)}</span>
+                          )}
+                          <span style={{
+                            padding:'0.25rem 0.75rem', borderRadius:'20px', fontSize:'0.75rem', fontWeight:'700',
+                            background: statusStyle.bg, color: statusStyle.color
+                          }}>
+                            {isPast ? 'Completed' : statusStyle.label}
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               )}
             </div>
-
-            {/* Recent Teachers */}
-            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>Your Teachers</h3>
-                <Settings style={{ width: '20px', height: '20px', color: '#64748b' }} />
-              </div>
-
-              {recentTeachers.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                  <Settings style={{ width: '40px', height: '40px', color: '#cbd5e1', margin: '0 auto 0.75rem' }} />
-                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>No teachers yet</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {recentTeachers.map(teacher => (
-                    <div
-                      key={teacher.id}
-                      style={{
-                        padding: '0.875rem',
-                        background: '#f8fafc',
-                        borderRadius: '8px',
-                        border: '1px solid #e2e8f0',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s'
-                      }}
-                      onClick={() => router.push(`/student/teacher/${teacher.id}`)}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#eff6ff'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          background: teacher.profilePhotoUrl
-                            ? `url(${teacher.profilePhotoUrl}) center/cover`
-                            : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          flexShrink: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontSize: '0.875rem',
-                          fontWeight: '600'
-                        }}>
-                          {!teacher.profilePhotoUrl && (teacher.name || 'T')[0].toUpperCase()}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {teacher.name}
-                          </div>
-                          {teacher.rating && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                              <Star style={{ width: '12px', height: '12px', fill: '#fbbf24', color: '#fbbf24' }} />
-                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                {teacher.rating.toFixed(1)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <Link href="/student/teachers">
-                    <button style={{
-                      marginTop: '0.5rem',
-                      width: '100%',
-                      padding: '0.625rem',
-                      background: '#f8fafc',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: '#475569',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.375rem',
-                      transition: 'all 0.2s'
-                    }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#eff6ff';
-                        e.currentTarget.style.borderColor = '#3b82f6';
-                        e.currentTarget.style.color = '#3b82f6';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#f8fafc';
-                        e.currentTarget.style.borderColor = '#cbd5e1';
-                        e.currentTarget.style.color = '#475569';
-                      }}
-                    >
-                      Browse All Teachers
-                      <ChevronRight style={{ width: '14px', height: '14px' }} />
-                    </button>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Recent Messages */}
-            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>Recent Messages</h3>
-                <MessageCircle style={{ width: '20px', height: '20px', color: '#64748b' }} />
-              </div>
-
-              {conversations.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                  <MessageCircle style={{ width: '40px', height: '40px', color: '#cbd5e1', margin: '0 auto 0.75rem' }} />
-                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>No messages yet</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {conversations.map(conv => (
-                    <div key={conv.id} style={{
-                      padding: '0.875rem',
-                      background: '#f8fafc',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s'
-                    }}
-                      onClick={() => router.push('/student/chats')}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#eff6ff'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontSize: '0.875rem',
-                          fontWeight: '600',
-                          flexShrink: 0
-                        }}>
-                          {(conv.otherUser?.name || 'T')[0].toUpperCase()}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {conv.otherUser?.name || 'Unknown'}
-                          </div>
-                          <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                            Teacher
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <Link href="/student/chats">
-                    <button style={{
-                      marginTop: '0.5rem',
-                      width: '100%',
-                      padding: '0.625rem',
-                      background: '#f8fafc',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: '#475569',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.375rem',
-                      transition: 'all 0.2s'
-                    }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#eff6ff';
-                        e.currentTarget.style.borderColor = '#3b82f6';
-                        e.currentTarget.style.color = '#3b82f6';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#f8fafc';
-                        e.currentTarget.style.borderColor = '#cbd5e1';
-                        e.currentTarget.style.color = '#475569';
-                      }}
-                    >
-                      View All Messages
-                      <ChevronRight style={{ width: '14px', height: '14px' }} />
-                    </button>
-                  </Link>
-                </div>
-              )}
-            </div>
           </div>
-
-          {/* Quick Actions */}
-          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', marginBottom: '1.25rem' }}>Quick Actions</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <Link href="/student/teachers">
-                <button style={{
-                  width: '100%',
-                  padding: '1rem',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#eff6ff';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                  }}
-                >
-                  <Search style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
-                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
-                    Find Teachers
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                    Browse and book
-                  </div>
-                </button>
-              </Link>
-
-              <Link href="/student/chats">
-                <button style={{
-                  width: '100%',
-                  padding: '1rem',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#eff6ff';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                  }}
-                >
-                  <MessageCircle style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
-                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
-                    Messages
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                    Chat with teachers
-                  </div>
-                </button>
-              </Link>
-
-              <Link href="/student/subscription">
-                <button style={{
-                  width: '100%',
-                  padding: '1rem',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#eff6ff';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                  }}
-                >
-                  <Zap style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
-                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
-                    Subscription
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                    Manage your plan
-                  </div>
-                </button>
-              </Link>
-
-              <Link href="/account/settings">
-                <button style={{
-                  width: '100%',
-                  padding: '1rem',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#eff6ff';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                  }}
-                >
-                  <Settings style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
-                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
-                    Settings
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                    Account preferences
-                  </div>
-                </button>
-              </Link>
-            </div>
-          </div>
-
         </div>
       </div>
     </>

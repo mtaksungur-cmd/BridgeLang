@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to BridgeLang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 overflow-hidden">
+    <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-fade-in">
+            <!-- Left Side: Visual -->
+            <div class="md:w-1/2 bg-blue-600 p-12 text-white flex flex-col justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold mb-4">BridgeLang</h2>
+                    <p class="text-blue-100 text-lg">Connect with the best UK tutors and elevate your English skills today.</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3 text-sm">
+                        <div class="bg-blue-500 p-2 rounded-lg"><i class="fas fa-video"></i></div>
+                        <span>15-Minute Intro Lessons available</span>
+                    </div>
+                    <div class="flex items-center space-x-3 text-sm">
+                        <div class="bg-blue-500 p-2 rounded-lg"><i class="fas fa-shield-halved"></i></div>
+                        <span>GDPR & Data Protection Compliant</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Content -->
+            <div class="md:w-1/2 p-12 flex flex-col justify-center">
+                <h1 class="text-4xl font-bold text-slate-800 mb-2">Welcome!</h1>
+                <p class="text-slate-500 mb-8">Let's start your journey to mastering English.</p>
+
+                <div class="space-y-4">
+                    <div class="p-4 border-2 border-slate-100 rounded-2xl hover:border-blue-200 transition-colors cursor-pointer group">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                    <i class="fas fa-graduation-cap text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold">I'm a Student</h3>
+                                    <p class="text-sm text-slate-400">Explore tutors and start learning</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-slate-300 group-hover:text-blue-500 transition-colors"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-4 border-2 border-slate-100 rounded-2xl hover:border-blue-200 transition-colors cursor-pointer group">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-emerald-50 p-3 rounded-xl text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                                    <i class="fas fa-chalkboard-user text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold">I'm a Tutor</h3>
+                                    <p class="text-sm text-slate-400">Share your expertise with the world</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-slate-300 group-hover:text-emerald-500 transition-colors"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-8 border-t border-slate-100 flex items-center justify-between text-sm text-slate-400">
+                    <span>Already have an account?</span>
+                    <a href="#" class="text-blue-600 font-semibold hover:underline">Log in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

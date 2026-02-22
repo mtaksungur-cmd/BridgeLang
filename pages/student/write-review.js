@@ -189,7 +189,7 @@ export default function WriteReview() {
                                     style={{ marginTop: '0.25rem' }}
                                 />
                                 <span>
-                                    I agree to publicly display my full name and profile photo with this review.
+                                    I agree for my full name and profile photo to be publicly displayed with my review.
                                     <br />
                                     <span style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: '0.25rem', display: 'inline-block' }}>
                                         If unchecked, your review will be anonymized (e.g., "j*** d***")
