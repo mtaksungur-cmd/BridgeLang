@@ -1,18 +1,18 @@
 // pages/verify-email.js
 'use client';
 import { useEffect, useState } from 'react';
-import { applyActionCode, getAuth } from 'firebase/auth';
+import { applyActionCode } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 import { useRouter } from 'next/router';
 import styles from '../scss/VerifyEmail.module.scss';
 
 export default function VerifyEmailPage() {
   const [status, setStatus] = useState('Verifying your email...');
   const router = useRouter();
-  const auth = getAuth();
 
   useEffect(() => {
     const oobCode = router.query.oobCode;
-    if (!oobCode) return;
+    if (!oobCode || !auth) return;
 
     const verifyEmail = async () => {
       try {
