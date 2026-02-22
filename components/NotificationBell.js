@@ -13,6 +13,7 @@ export default function NotificationBell() {
     const [currentUserId, setCurrentUserId] = useState(null);
 
     useEffect(() => {
+        if (!auth) return;
         const unsubAuth = onAuthStateChanged(auth, (user) => {
             setCurrentUserId(user?.uid || null);
         });

@@ -22,6 +22,7 @@ export default function NavbarSwitcher() {
   const isAuthPage = authPages.includes(router.pathname);
 
   useEffect(() => {
+    if (!auth) { setLoading(false); return; }
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         setRole(null);

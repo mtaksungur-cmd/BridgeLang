@@ -13,6 +13,7 @@ export default function StudentNavbar() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         const userDoc = await getDoc(doc(db, 'users', authUser.uid));
