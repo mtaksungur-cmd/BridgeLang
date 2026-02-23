@@ -21,26 +21,31 @@ export default function TeacherDashboard() {
   const [monthlyEarnings, setMonthlyEarnings] = useState(0);
 
   const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     if (!auth) { setLoading(false); return; }
+    let cancelled = false;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) return router.push('/login');
+      if (cancelled) return;
+      if (!user) { setRedirecting(true); router.push('/login'); return; }
 
       try {
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) return router.push('/login');
+        if (!userSnap.exists()) { setRedirecting(true); router.push('/login'); return; }
 
         const userData = userSnap.data();
-        if (userData.role !== 'teacher') return router.push('/student/dashboard');
+        if (userData.role === 'student' || (!userData.role && userData.role !== 'teacher')) { setRedirecting(true); router.push('/student/dashboard'); return; }
+        if (userData.role === 'admin') { setRedirecting(true); router.push('/admin/teachers'); return; }
+        if (userData.role !== 'teacher') { setRedirecting(true); router.push('/login'); return; }
 
         // Check for teacher approval
         if (userData.approved === false) {
-           return router.push('/teacher/pending-approval');
+           setRedirecting(true); router.push('/teacher/pending-approval'); return;
         }
 
-        if (!userData?.stripeOnboarded) return router.push('/teacher/stripe-connect');
+        if (!userData?.stripeOnboarded) { setRedirecting(true); router.push('/teacher/stripe-connect'); return; }
 
         // Fetch all bookings for analytics
         const allBookingsQ = query(
@@ -180,8 +185,8 @@ export default function TeacherDashboard() {
       }
     });
 
-    return () => unsubscribe();
-  }, [router]);
+    return () => { unsubscribe(); cancelled = true; };
+  }, []);
 
   if (loading) {
     return (

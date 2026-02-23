@@ -39,7 +39,15 @@ export default function NavbarSwitcher() {
             setTimeout(() => loadRole(tries - 1), 500);
             return;
           } else {
-            setRole(null);
+            // User not in 'users' — check if they're a pending teacher
+            const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
+            if (pendingSnap.exists()) {
+              // Pending teacher: silently show DefaultNavbar, no error log
+              setRole(null);
+            } else {
+              console.error('NavbarSwitcher: user not found in users or pendingTeachers');
+              setRole(null);
+            }
           }
         } catch (e) {
           console.error('NavbarSwitcher error:', e);

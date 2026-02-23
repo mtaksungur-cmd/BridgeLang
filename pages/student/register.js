@@ -149,6 +149,7 @@ export default function StudentRegister() {
       await setDoc(doc(db, 'users', user.uid), {
         name: form.name.trim(),
         email,
+        role: 'student',
         country: form.country,
         birthday: form.birthday,
         age: age,

@@ -14,7 +14,7 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 import { getErrorMessage, getErrorCode } from '../utils/firebaseErrors';
-import { getDoc, doc } from 'firebase/firestore';
+import { getDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 import OTPInput from '../components/OTPInput';
@@ -33,14 +33,18 @@ export default function LoginPage() {
       setCheckingAuth(false);
       return;
     }
+    let cancelled = false;
     const unsub = onAuthStateChanged(auth, async (user) => {
+      if (cancelled) return;
       if (user && stage === 'login') {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (cancelled) return;
           const userData = userDoc.data();
 
           if (!userData) {
             const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
+            if (cancelled) return;
             if (pendingDoc.exists()) {
               await signOut(auth);
               router.push('/teacher/pending-approval');
@@ -58,14 +62,14 @@ export default function LoginPage() {
           else router.push('/');
         } catch (err) {
           console.error('Error fetching user role:', err);
-          setCheckingAuth(false);
+          if (!cancelled) setCheckingAuth(false);
         }
       } else {
         setCheckingAuth(false);
       }
     });
 
-    return () => unsub();
+    return () => { cancelled = true; unsub(); };
   }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -131,6 +135,15 @@ export default function LoginPage() {
           userData = userDoc.data();
           role = userData?.role || 'student';
           status = userData?.status || 'active';
+
+          // Fix missing role field for existing users
+          if (userData && !userData.role) {
+            try {
+              await updateDoc(doc(db, 'users', user.uid), { role: 'student' });
+            } catch (e) {
+              console.warn('Could not update missing role:', e);
+            }
+          }
 
           // Task 3.1 & 3.2: If user not found in users, check pendingTeachers
           if (!userData) {

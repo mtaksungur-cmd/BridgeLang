@@ -19,6 +19,7 @@ export default function StudentDashboard() {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     if (!auth) { setLoading(false); return; }
@@ -28,23 +29,36 @@ export default function StudentDashboard() {
       setLoading(false);
     }, 10000);
 
+    let cancelled = false;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) { clearTimeout(timeout); router.push('/login'); return; }
+      if (cancelled || redirecting) return;
+      if (!user) { clearTimeout(timeout); setRedirecting(true); router.replace('/login'); return; }
 
       try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (!userSnap.exists()) { clearTimeout(timeout); router.push('/login'); return; }
+        if (cancelled || redirecting) return;
+        if (!userSnap.exists()) { clearTimeout(timeout); setRedirecting(true); router.replace('/login'); return; }
 
         const userData = userSnap.data();
-        if (userData.role !== 'student') {
+        if (userData.role === 'teacher') {
           clearTimeout(timeout);
-          router.push('/teacher/dashboard');
+          setRedirecting(true);
+          router.replace('/teacher/dashboard');
           return;
         }
+        if (userData.role === 'admin') {
+          clearTimeout(timeout);
+          setRedirecting(true);
+          router.replace('/admin/teachers');
+          return;
+        }
+        // If role is 'student' or missing/undefined, stay on student dashboard
 
         if (userData.status === 'pending_consent') {
           clearTimeout(timeout);
-          router.push('/login');
+          setRedirecting(true);
+          router.replace('/login');
           return;
         }
 
@@ -92,10 +106,11 @@ export default function StudentDashboard() {
         setLoading(false);
       }
     });
-    return () => { unsubscribe(); clearTimeout(timeout); };
-  }, [router]);
+    return () => { cancelled = true; unsubscribe(); clearTimeout(timeout); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  if (loading) return <div style={{textAlign:'center', padding:'5rem'}}>Loading...</div>;
+  if (loading || redirecting) return <div style={{textAlign:'center', padding:'5rem'}}>Loading...</div>;
   if (!data) return null;
 
   const planKey = data.subscriptionPlan || 'free';

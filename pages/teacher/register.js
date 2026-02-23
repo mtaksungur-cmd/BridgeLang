@@ -152,7 +152,7 @@ export default function TeacherRegister() {
 
             const { user } = await createUserWithEmailAndPassword(auth, email, form.password);
 
-            await setDoc(doc(db, 'users', user.uid), {
+            await setDoc(doc(db, 'pendingTeachers', user.uid), {
                 name: form.name.trim(),
                 email,
                 country: form.country,
