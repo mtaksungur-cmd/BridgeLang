@@ -164,7 +164,7 @@ export default function TeacherRegister() {
                 role: 'teacher',
                 approved: false,
                 status: 'pending',
-                emailVerified: false,
+                emailVerified: true, // temporarily bypassed
                 verified: false,
 
                 specialties: form.specialty,

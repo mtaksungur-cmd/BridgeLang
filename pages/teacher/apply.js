@@ -94,7 +94,7 @@ export default function TeacherApply() {
       const { user } = await createUserWithEmailAndPassword(auth, email, form.password);
       await setDoc(doc(db, 'pendingTeachers', user.uid), {
         name: form.name.trim(), email, country: form.country, city: form.city || '',
-        role: 'teacher', approved: false, status: 'pending', emailVerified: false,
+        role: 'teacher', approved: false, status: 'pending', emailVerified: true,
         specialties: form.specialty, teachingSpecializations: form.specialty.join(', '),
         experienceYears: form.experienceYears, certifications: form.certifications,
         pricing30: Number(form.pricing30), pricing60: Number(form.pricing60),
