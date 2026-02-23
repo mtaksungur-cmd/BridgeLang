@@ -26,9 +26,21 @@ export default function TeacherDashboard() {
   useEffect(() => {
     if (!auth) { setLoading(false); return; }
     let cancelled = false;
+    let isFirstCall = true;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (cancelled) return;
-      if (!user) { setRedirecting(true); router.push('/login'); return; }
+      if (!user) {
+        // İlk çağrıda auth henüz restore edilmemiş olabilir — kısa bekle
+        if (isFirstCall) {
+          isFirstCall = false;
+          await new Promise(r => setTimeout(r, 1500));
+          if (cancelled) return;
+          // auth restore olduysa artık user var mı tekrar bak
+          if (auth.currentUser) return; // onAuthStateChanged tekrar tetiklenecek
+        }
+        setRedirecting(true); router.push('/login'); return;
+      }
+      isFirstCall = false;
 
       try {
         const userRef = doc(db, 'users', user.uid);
