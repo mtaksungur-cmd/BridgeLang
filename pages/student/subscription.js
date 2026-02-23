@@ -110,7 +110,7 @@ export default function SubscriptionPage() {
       }
     } catch (err) {
       console.error("plan checkout error:", err);
-      alert("Could not start payment.");
+      alert("Something went wrong. Please check your connection and try again.");
     } finally {
       setSaving(false);
     }

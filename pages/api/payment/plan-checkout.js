@@ -70,12 +70,33 @@ async function createVipLoyaltyCouponForNextPayment({ userId, nextPaymentNo }) {
   return coupon.id;
 }
 
+/* ------- Base URL helper -------- */
+function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL !== 'http://localhost:3000') {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+}
+
 /* --------------- Handler ---------------- */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   const { userId, userEmail, planKey, currentPlan } = req.body;
   if (!userId || !userEmail || !planKey)
     return res.status(400).json({ error: 'Missing fields' });
+
+  if (!adminDb) {
+    console.error('plan-checkout error: adminDb is null — Firebase Admin failed to initialize');
+    return res.status(500).json({ error: 'Server configuration error. Please try again later.' });
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('plan-checkout error: STRIPE_SECRET_KEY is not set');
+    return res.status(500).json({ error: 'Payment service not configured.' });
+  }
 
   try {
     const ref = adminDb.collection('users').doc(userId);
@@ -154,8 +175,8 @@ export default async function handler(req, res) {
             viewLimit: base.viewLimit,
             messagesLeft: base.messagesLeft,
           },
-          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+          success_url: `${getBaseUrl()}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${getBaseUrl()}/cancel`,
         });
 
         return res.status(200).json({ url: session.url });
@@ -207,8 +228,8 @@ export default async function handler(req, res) {
           viewLimit: base.viewLimit,
           messagesLeft: base.messagesLeft,
         },
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+        success_url: `${getBaseUrl()}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getBaseUrl()}/cancel`,
       });
       return res.status(200).json({ url: session.url });
     }
@@ -241,8 +262,8 @@ export default async function handler(req, res) {
           viewLimit: base.viewLimit,
           messagesLeft: base.messagesLeft,
         },
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+        success_url: `${getBaseUrl()}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getBaseUrl()}/cancel`,
       });
       return res.status(200).json({ url: session.url });
     }
@@ -256,8 +277,30 @@ export default async function handler(req, res) {
       const payable = Math.max(0, newPrice - credit);
       const base = PLAN_LIMITS[planKey] || PLAN_LIMITS.free;
 
-      // plan değiştiği için ödeme sayacını resetle (senin önceki akışın)
+      // plan değiştiği için ödeme sayacını resetle
       await ref.set({ subscription: { ...(sub || {}), lifetimePayments: 0 } }, { merge: true });
+
+      // Stripe unit_amount 0 kabul etmez — kredi tam karşılıyorsa ödeme almadan direkt upgrade yap
+      if (Math.round(payable * 100) < 1) {
+        const now = new Date();
+        const activeUntil = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        await ref.set({
+          subscriptionPlan: planKey,
+          viewLimit: base.viewLimit,
+          messagesLeft: base.messagesLeft,
+          subscription: {
+            ...sub,
+            planKey,
+            activeUntil: activeUntil.toISOString(),
+            activeUntilMillis: activeUntil.getTime(),
+            lastPaymentAt: now,
+            lifetimePayments: 1,
+            pending_downgrade_to: null,
+          },
+        }, { merge: true });
+        console.log(`✅ Free upgrade applied: ${current} → ${planKey} (uid=${userId}, credit covered full amount)`);
+        return res.status(200).json({ message: `Upgraded to ${planKey.toUpperCase()} successfully!` });
+      }
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
@@ -282,8 +325,8 @@ export default async function handler(req, res) {
           viewLimit: base.viewLimit,
           messagesLeft: base.messagesLeft,
         },
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+        success_url: `${getBaseUrl()}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getBaseUrl()}/cancel`,
       });
       return res.status(200).json({ url: session.url });
     }

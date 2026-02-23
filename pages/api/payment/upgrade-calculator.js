@@ -4,6 +4,17 @@ import { adminDb } from '../../../lib/firebaseAdmin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
+/* ------- Base URL helper -------- */
+function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL !== 'http://localhost:3000') {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+}
+
 // plan ücretleri (sabit değer, Stripe'taki aylık fiyatlara göre)
 const PRICE_MAP = {
   starter: 4.99,
@@ -77,8 +88,8 @@ export default async function handler(req, res) {
         viewLimit: base.viewLimit,
         messagesLeft: base.messagesLeft,
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      success_url: `${getBaseUrl()}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${getBaseUrl()}/cancel`,
     });
 
     return res.status(200).json({ url: session.url, payable });

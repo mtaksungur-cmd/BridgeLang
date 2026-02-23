@@ -5,6 +5,17 @@ import { DateTime } from 'luxon';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
+/* ------- Base URL helper -------- */
+function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL !== 'http://localhost:3000') {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -250,8 +261,8 @@ export default async function handler(req, res) {
       }],
       payment_intent_data: Object.keys(paymentIntentData).length > 0 ? paymentIntentData : undefined,
       customer_email: studentEmail || undefined,
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      success_url: `${getBaseUrl()}/success`,
+      cancel_url: `${getBaseUrl()}/cancel`,
       metadata: {
         bookingType: 'lesson',
         lessonType: lessonType || 'standard',
