@@ -1,53 +1,60 @@
-// TEMPORARY DEBUG - DELETE AFTER FIXING
-import { cert } from 'firebase-admin/app';
-import { adminDb } from '../../lib/firebaseAdmin';
-
+// TEMPORARY - DELETE AFTER DEBUGGING
 export default async function handler(req, res) {
-  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const result = {
+    hasBase64Key: !!process.env.FIREBASE_PRIVATE_KEY_BASE64,
+    base64KeyLength: process.env.FIREBASE_PRIVATE_KEY_BASE64?.length || 0,
+    hasRegularKey: !!process.env.FIREBASE_PRIVATE_KEY,
+    regularKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
+  };
 
-  // Clean key same way as firebaseAdmin.js
-  if (privateKey) {
-    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-      privateKey = privateKey.slice(1, -1);
-    }
-    privateKey = privateKey.replace(/\\n/g, '\n');
-  }
-
-  // Try cert() directly to see the real error
-  let certError = null;
-  let certSuccess = false;
-  try {
-    const credential = cert({ projectId, clientEmail, privateKey });
-    certSuccess = true;
-  } catch (e) {
-    certError = e.message;
-  }
-
-  // Try a Firestore operation if adminDb exists
-  let firestoreTest = null;
-  if (adminDb) {
+  // Try base64 decode
+  if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
     try {
-      const testDoc = await adminDb.collection('_debug').doc('test').get();
-      firestoreTest = 'OK';
+      const decoded = Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, 'base64').toString('utf-8');
+      result.base64DecodedLength = decoded.length;
+      result.base64DecodedHasBegin = decoded.includes('-----BEGIN PRIVATE KEY-----');
+      result.base64DecodedHasEnd = decoded.includes('-----END PRIVATE KEY-----');
+      result.base64DecodedNewlines = (decoded.match(/\n/g) || []).length;
+
+      // Try cert with decoded key
+      const { cert } = await import('firebase-admin/app');
+      try {
+        cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: decoded,
+        });
+        result.base64CertResult = 'SUCCESS';
+      } catch (e) {
+        result.base64CertResult = 'FAILED: ' + e.message;
+      }
     } catch (e) {
-      firestoreTest = e.message;
+      result.base64DecodeError = e.message;
     }
   }
 
-  res.status(200).json({
-    adminDbExists: !!adminDb,
-    certSuccess,
-    certError,
-    firestoreTest,
-    envCheck: {
-      projectId: projectId || 'MISSING',
-      clientEmail: clientEmail ? clientEmail.substring(0, 20) + '...' : 'MISSING',
-      privateKeyFirst50: privateKey ? privateKey.substring(0, 50) : 'MISSING',
-      privateKeyLast30: privateKey ? privateKey.substring(privateKey.length - 30) : 'MISSING',
-      privateKeyLength: privateKey?.length || 0,
-      newlineCount: (privateKey?.match(/\n/g) || []).length,
-    },
-  });
+  // Try regular key with cleanup
+  if (process.env.FIREBASE_PRIVATE_KEY) {
+    let pk = process.env.FIREBASE_PRIVATE_KEY;
+    if (pk.startsWith('"') && pk.endsWith('"')) pk = pk.slice(1, -1);
+    pk = pk.replace(/\\n/g, '\n');
+    pk = pk.replace(/\n{2,}/g, '\n');
+    pk = pk.trim();
+    result.regularCleanedLength = pk.length;
+    result.regularCleanedNewlines = (pk.match(/\n/g) || []).length;
+
+    const { cert } = await import('firebase-admin/app');
+    try {
+      cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: pk,
+      });
+      result.regularCertResult = 'SUCCESS';
+    } catch (e) {
+      result.regularCertResult = 'FAILED: ' + e.message;
+    }
+  }
+
+  return res.status(200).json(result);
 }
