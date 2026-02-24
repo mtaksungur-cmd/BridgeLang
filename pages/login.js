@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -28,6 +28,9 @@ export default function LoginPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
 
+  // Ref to prevent onAuthStateChanged from redirecting during active login/verify
+  const loginInProgressRef = useRef(false);
+
   useEffect(() => {
     if (!auth) {
       setCheckingAuth(false);
@@ -36,15 +39,20 @@ export default function LoginPage() {
     let cancelled = false;
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (cancelled) return;
-      if (user && stage === 'login') {
+      // Don't redirect if login/verify is actively in progress
+      if (loginInProgressRef.current) {
+        setCheckingAuth(false);
+        return;
+      }
+      if (user) {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (cancelled) return;
+          if (cancelled || loginInProgressRef.current) return;
           const userData = userDoc.data();
 
           if (!userData) {
             const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
-            if (cancelled) return;
+            if (cancelled || loginInProgressRef.current) return;
             if (pendingDoc.exists()) {
               await signOut(auth);
               router.push('/teacher/pending-approval');
@@ -107,6 +115,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    loginInProgressRef.current = true;
 
     try {
       await setPersistence(auth, browserLocalPersistence);
@@ -177,6 +186,7 @@ export default function LoginPage() {
           return;
         }
 
+        loginInProgressRef.current = false;
         if (role === 'teacher') router.push('/teacher/dashboard');
         else if (role === 'student') router.push('/student/dashboard');
         else if (role === 'admin') router.push('/admin/teachers');

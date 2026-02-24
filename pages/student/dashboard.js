@@ -30,22 +30,12 @@ export default function StudentDashboard() {
     }, 10000);
 
     let cancelled = false;
-    let isFirstCall = true;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (cancelled || redirecting) return;
       if (!user) {
-        // First call may be null while auth restores from persistence — wait briefly
-        if (isFirstCall) {
-          isFirstCall = false;
-          await new Promise(r => setTimeout(r, 1500));
-          // After waiting, check if auth restored
-          if (cancelled || redirecting) return;
-          if (auth.currentUser) return; // auth restored, listener will fire again
-        }
         clearTimeout(timeout); setRedirecting(true); router.replace('/login'); return;
       }
-      isFirstCall = false;
 
       try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
