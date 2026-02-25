@@ -277,10 +277,10 @@ export default function TeacherLessons() {
 
               const endMs = getLessonEndMs(booking);
               const showCompleteBtn =
-                ['pending-approval', 'confirmed', 'student_approved', 'teacher_approved'].includes(booking.status) &&
+                ['pending-approval', 'confirmed', 'approved', 'student_approved', 'teacher_approved'].includes(booking.status) &&
                 endMs &&
                 Date.now() > endMs &&
-                !booking.teacherApproved;
+                !booking.lessonCompleted;
 
               // ✅ FIX: Show approve/reject buttons for BOTH pending AND confirmed (paid bookings)
               // Teacher must approve even if student paid
