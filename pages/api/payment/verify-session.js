@@ -78,6 +78,8 @@ export default async function handler(req, res) {
     // Zaten güncellenmiş mi kontrol et (webhook çoktan işlemiş olabilir)
     if (currentData.subscriptionPlan === upgradeTo && currentData.justUpgraded === true) {
       console.log(`✅ verify-session: User ${userId} already on ${upgradeTo} (webhook handled it)`);
+      // Clear justUpgraded flag so it doesn't show on next visit
+      await userRef.update({ justUpgraded: false });
       return res.status(200).json({
         message: 'Already updated',
         plan: upgradeTo,

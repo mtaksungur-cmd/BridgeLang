@@ -9,18 +9,27 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function Success() {
-  const [planReady, setPlanReady] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [bookingType, setBookingType] = useState(null); // 'lesson' | 'plan' | null
   const [updatedPlan, setUpdatedPlan] = useState(null);
   const router = useRouter();
 
-  const [bookingType, setBookingType] = useState(null); // 'lesson' | 'plan' | null
-
   useEffect(() => {
     const sessionId = router.query.session_id;
+    if (!router.isReady) return; // wait for query params
+
     let unsubFirestore = null;
     let fallbackTimer = null;
+    let resolved = false;
 
-    // 1) Stripe session_id varsa → verify-session API ile ödeme tipini belirle
+    const resolve = (type, plan) => {
+      if (resolved) return;
+      resolved = true;
+      setBookingType(type);
+      if (plan) setUpdatedPlan(plan);
+      setReady(true);
+    };
+
     const verifySession = async () => {
       if (!sessionId) return false;
       try {
@@ -32,15 +41,10 @@ export default function Success() {
         const data = await res.json();
         if (res.ok) {
           if (data.bookingType === 'lesson') {
-            // Ders satın alımı — plan mesajı gösterme
-            setBookingType('lesson');
-            setPlanReady(true);
+            resolve('lesson', null);
             return true;
           } else if (data.plan) {
-            // Plan upgrade
-            setBookingType('plan');
-            setUpdatedPlan(data.plan);
-            setPlanReady(true);
+            resolve('plan', data.plan);
             return true;
           }
         }
@@ -50,28 +54,37 @@ export default function Success() {
       return false;
     };
 
-    // 2) Auth hazır olunca verify et, sonra Firestore dinle
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
-      const verified = await verifySession();
-      if (verified) return;
+      // session_id varsa önce verify-session dene
+      if (sessionId) {
+        const verified = await verifySession();
+        if (verified) return;
+      }
 
       if (!user) {
-        fallbackTimer = setTimeout(() => setPlanReady(true), 3000);
+        // session_id yoksa ve login yoksa → ders satın alımı varsay
+        fallbackTimer = setTimeout(() => resolve('lesson', null), 3000);
         return;
       }
 
-      // Firestore'dan real-time dinle (webhook fallback)
-      unsubFirestore = onSnapshot(doc(db, 'users', user.uid), (snap) => {
-        if (!snap.exists()) return;
-        const data = snap.data();
-        if (data.justUpgraded) {
-          setBookingType('plan');
-          setUpdatedPlan(data.subscriptionPlan);
-          setPlanReady(true);
-        }
-      });
+      // session_id yoksa (eski checkout URL) → Firestore'dan kontrol et
+      // Ama sadece plan upgrade için dinle, justUpgraded flag'ini temizle
+      if (!sessionId) {
+        unsubFirestore = onSnapshot(doc(db, 'users', user.uid), async (snap) => {
+          if (!snap.exists() || resolved) return;
+          const data = snap.data();
+          if (data.justUpgraded) {
+            resolve('plan', data.subscriptionPlan);
+            // justUpgraded flag'ini temizle
+            try {
+              const { updateDoc } = await import('firebase/firestore');
+              await updateDoc(doc(db, 'users', user.uid), { justUpgraded: false });
+            } catch (e) { /* ignore */ }
+          }
+        });
+      }
 
-      fallbackTimer = setTimeout(() => setPlanReady(true), 15000);
+      fallbackTimer = setTimeout(() => resolve('lesson', null), 10000);
     });
 
     return () => {
@@ -79,7 +92,7 @@ export default function Success() {
       if (unsubFirestore) unsubFirestore();
       if (fallbackTimer) clearTimeout(fallbackTimer);
     };
-  }, [router.query]);
+  }, [router.isReady, router.query]);
 
   return (
     <>
@@ -157,8 +170,8 @@ export default function Success() {
 
             {/* Content */}
             <div style={{ padding: '2.5rem 2rem' }}>
-              {/* Plan Update Status */}
-              {!planReady && (
+              {/* Loading State */}
+              {!ready && (
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -172,13 +185,14 @@ export default function Success() {
                 }}>
                   <Loader2 style={{ width: '20px', height: '20px', color: '#3b82f6', animation: 'spin 1s linear infinite' }} />
                   <span style={{ fontSize: '0.875rem', color: '#1e40af', fontWeight: '500' }}>
-                    Updating your plan...
+                    Confirming your payment...
                   </span>
                   <style jsx>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                 </div>
               )}
 
-              {planReady && updatedPlan && (
+              {/* Plan upgrade message — only for plan purchases */}
+              {ready && bookingType === 'plan' && updatedPlan && (
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -193,6 +207,26 @@ export default function Success() {
                   <Check style={{ width: '20px', height: '20px', color: '#22c55e' }} />
                   <span style={{ fontSize: '0.875rem', color: '#166534', fontWeight: '500' }}>
                     Your plan has been updated to {updatedPlan.toUpperCase()}
+                  </span>
+                </div>
+              )}
+
+              {/* Lesson booking message — only for lesson purchases */}
+              {ready && bookingType === 'lesson' && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '1rem',
+                  background: '#f0fdf4',
+                  borderRadius: '8px',
+                  border: '1px solid #bbf7d0',
+                  marginBottom: '1.5rem',
+                }}>
+                  <Check style={{ width: '20px', height: '20px', color: '#22c55e' }} />
+                  <span style={{ fontSize: '0.875rem', color: '#166534', fontWeight: '500' }}>
+                    Your lesson has been booked successfully!
                   </span>
                 </div>
               )}

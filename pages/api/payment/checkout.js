@@ -290,7 +290,7 @@ export default async function handler(req, res) {
       }],
       payment_intent_data: Object.keys(paymentIntentData).length > 0 ? paymentIntentData : undefined,
       customer_email: studentEmail || undefined,
-      success_url: `${getBaseUrl()}/success`,
+      success_url: `${getBaseUrl()}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${getBaseUrl()}/cancel`,
       metadata: {
         bookingType: 'lesson',
