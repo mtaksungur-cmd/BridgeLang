@@ -30,7 +30,7 @@ export default function StudentLessons() {
       const q = query(
         collection(db, 'bookings'),
         where('studentId', '==', _uid),
-        where('status', 'in', ['pending-approval', 'confirmed', 'teacher_approved', 'student_approved', 'approved'])
+        where('status', 'in', ['pending', 'pending-approval', 'confirmed', 'teacher_approved', 'student_approved', 'approved', 'completed'])
       );
       const snap = await getDocs(q);
       const lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));

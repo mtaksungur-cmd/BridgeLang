@@ -129,14 +129,14 @@ export default function TeacherLessons() {
       console.log('Daily.co room created:', url);
 
       // Update booking with approval and meeting link
+      // NOTE: teacherApproved is NOT set here — it's only set when teacher confirms lesson completion after the lesson ends
       await updateDoc(doc(db, 'bookings', booking.id), {
         status: 'approved',
-        teacherApproved: true,
         meetingLink: url
       });
 
       setBookings((prev) => prev.map((r) =>
-        r.id === booking.id ? { ...r, status: 'approved', teacherApproved: true, meetingLink: url } : r
+        r.id === booking.id ? { ...r, status: 'approved', meetingLink: url } : r
       ));
 
       notify.success('Booking approved and video room created!');

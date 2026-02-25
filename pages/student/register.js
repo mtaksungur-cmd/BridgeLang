@@ -283,7 +283,10 @@ export default function StudentRegister() {
                 </div>
                 {form.birthday && (() => {
                   const birthDate = new Date(form.birthday);
-                  const age = new Date().getFullYear() - birthDate.getFullYear();
+                  const today = new Date();
+                  let age = today.getFullYear() - birthDate.getFullYear();
+                  const m = today.getMonth() - birthDate.getMonth();
+                  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
                   if (age >= 14 && age < 18) {
                     return (
                       <div className={`${styles.inputGroup} ${styles.fullWidth}`} style={{ marginTop: '1rem', padding: '1rem', background: '#fffbeb', borderRadius: '12px', border: '1px solid #fef3c7' }}>
