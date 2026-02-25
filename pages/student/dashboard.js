@@ -7,7 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
 import { 
   ChevronRight, Clock, MessageSquare, User, BookOpen, 
-  Lightbulb, Settings, LogOut, CheckCircle2, Calendar 
+  Lightbulb, Settings, LogOut, CheckCircle2, Calendar, Gift, Star
 } from 'lucide-react';
 import SeoHead from '../../components/SeoHead';
 import styles from '../../scss/StudentDashboardPremium.module.scss';
@@ -20,6 +20,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const [redirecting, setRedirecting] = useState(false);
+  const [unreviewedLesson, setUnreviewedLesson] = useState(null);
 
   useEffect(() => {
     if (!auth) { setLoading(false); return; }
@@ -98,6 +99,22 @@ export default function StudentDashboard() {
           console.error('Bookings fetch error:', bookingError);
         }
 
+        // Find unreviewed approved/completed lessons for review discount banner
+        const approvedLessons = bookingsData.filter(b => b.status === 'approved');
+        if (approvedLessons.length > 0) {
+          try {
+            for (const lesson of approvedLessons) {
+              const reviewSnap = await getDoc(doc(db, 'reviews', lesson.id));
+              if (!reviewSnap.exists()) {
+                setUnreviewedLesson(lesson);
+                break;
+              }
+            }
+          } catch (e) {
+            console.error('Review check error:', e);
+          }
+        }
+
         setLessons(bookingsData);
         setData(userData);
         clearTimeout(timeout);
@@ -132,6 +149,65 @@ export default function StudentDashboard() {
           {planLabel} Plan — 
           {planKey === 'free' ? ' No membership fees. Only pay for the lessons you take.' : ' Enjoy your premium learning benefits!'}
         </div>
+
+        {/* Review Discount Banner */}
+        {(() => {
+          const lessonCoupons = Array.isArray(data.lessonCoupons) ? data.lessonCoupons : [];
+          const activeReviewCoupon = lessonCoupons.find(
+            c => c.type === 'lesson' && (c.source === 'review-bonus' || c.source === 'first-review') && c.active && !c.used
+          );
+          const discountByPlan = { starter: 5, pro: 10, vip: 15 };
+          const potentialDiscount = discountByPlan[planKey] || 0;
+
+          if (activeReviewCoupon) {
+            const pct = activeReviewCoupon.percent || activeReviewCoupon.discount || 0;
+            return (
+              <div style={{
+                background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', border: '1px solid #86efac',
+                borderRadius: '12px', padding: '1rem 1.5rem', margin: '0 1.5rem 0.5rem',
+                display: 'flex', alignItems: 'center', gap: '0.75rem'
+              }}>
+                <Gift size={22} color="#16a34a" />
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontWeight: '700', color: '#15803d', fontSize: '0.9375rem' }}>
+                    You have a {pct}% review discount ready for your next lesson!
+                  </span>
+                  <span style={{ color: '#166534', fontSize: '0.8125rem', marginLeft: '0.5rem' }}>
+                    It will be applied automatically at checkout. This discount is covered by the platform.
+                  </span>
+                </div>
+              </div>
+            );
+          }
+
+          if (unreviewedLesson && potentialDiscount > 0) {
+            return (
+              <div style={{
+                background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '1px solid #fcd34d',
+                borderRadius: '12px', padding: '1rem 1.5rem', margin: '0 1.5rem 0.5rem',
+                display: 'flex', alignItems: 'center', gap: '0.75rem'
+              }}>
+                <Star size={22} color="#d97706" />
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontWeight: '700', color: '#92400e', fontSize: '0.9375rem' }}>
+                    Leave a review and earn {potentialDiscount}% off your next lesson!
+                  </span>
+                  <span style={{ color: '#78350f', fontSize: '0.8125rem', marginLeft: '0.5rem' }}>
+                    The discount is covered by the platform — your tutor still gets paid in full.
+                  </span>
+                </div>
+                <Link href={`/student/review/${unreviewedLesson.id}`} style={{
+                  padding: '0.5rem 1rem', background: '#f59e0b', color: 'white', borderRadius: '8px',
+                  fontWeight: '600', fontSize: '0.8125rem', textDecoration: 'none', whiteSpace: 'nowrap'
+                }}>
+                  Write Review
+                </Link>
+              </div>
+            );
+          }
+
+          return null;
+        })()}
 
         {/* Welcome Section */}
         <div className={styles.welcomeSection}>

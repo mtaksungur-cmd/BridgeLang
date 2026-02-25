@@ -115,7 +115,9 @@ export default async function handler(req, res) {
     // 🔹 Öğrenci için review bonus (eski mantık olduğu gibi)
     const plan = studentData.subscriptionPlan || 'free';
     const coupons = Array.isArray(studentData.lessonCoupons) ? [...studentData.lessonCoupons] : [];
-    const alreadyHasReviewCoupon = coupons.some(c => c.type === 'lesson' && c.source === 'review-bonus');
+    const alreadyHasReviewCoupon = coupons.some(
+      c => c.type === 'lesson' && (c.source === 'review-bonus' || c.source === 'first-review')
+    );
 
     if (!alreadyHasReviewCoupon && ['starter', 'pro', 'vip'].includes(plan)) {
       const discountPercent = plan === 'starter' ? 5 : plan === 'pro' ? 10 : 15;

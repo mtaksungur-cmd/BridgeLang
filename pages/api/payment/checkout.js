@@ -176,11 +176,34 @@ export default async function handler(req, res) {
       const totalLessons = user?.lessonsTaken || 0;
       const lessonCoupons = Array.isArray(user?.lessonCoupons) ? user.lessonCoupons : [];
 
-      if (totalLessons < 6) {
+      // 2nd lesson (totalLessons === 1): review coupon takes priority, then fall back to first-6 discount
+      if (totalLessons === 1) {
+        const reviewCoupon = lessonCoupons.find(
+          c => c.type === 'lesson' && c.source === 'review-bonus' && c.active === true && !c.used
+        );
+        if (reviewCoupon) {
+          const pct = Number(reviewCoupon.percent ?? reviewCoupon.discount ?? 0);
+          if (pct > 0) {
+            discountedPrice = originalPrice * (1 - pct / 100);
+            discountLabel = `Review Bonus ${pct}% (2nd lesson)`;
+            discountPercent = pct;
+            usedCoupon = reviewCoupon;
+            console.log(`🎁 Review coupon applied on 2nd lesson: ${pct}%`);
+          }
+        }
+        // Fall back to first-6-lessons discount if no review coupon
+        if (!usedCoupon) {
+          if (plan === 'starter') { discountedPrice *= 0.9; discountLabel = 'Starter 10% (first 6 lessons)'; discountPercent = 10; }
+          if (plan === 'pro') { discountedPrice *= 0.85; discountLabel = 'Pro 15% (first 6 lessons)'; discountPercent = 15; }
+          if (plan === 'vip') { discountedPrice *= 0.8; discountLabel = 'VIP 20% (first 6 lessons)'; discountPercent = 20; }
+        }
+      } else if (totalLessons < 6) {
+        // Lessons 3-6: first-6-lessons plan discount
         if (plan === 'starter') { discountedPrice *= 0.9; discountLabel = 'Starter 10% (first 6 lessons)'; discountPercent = 10; }
         if (plan === 'pro') { discountedPrice *= 0.85; discountLabel = 'Pro 15% (first 6 lessons)'; discountPercent = 15; }
         if (plan === 'vip') { discountedPrice *= 0.8; discountLabel = 'VIP 20% (first 6 lessons)'; discountPercent = 20; }
       } else {
+        // Lessons 7+: use any active unused coupon
         const activeCoupon = lessonCoupons.find(c => c.type === 'lesson' && c.active === true && !c.used);
         if (activeCoupon) {
           const pct = Number(activeCoupon.percent ?? activeCoupon.discount ?? 0);
@@ -189,29 +212,6 @@ export default async function handler(req, res) {
             discountLabel = `Auto Lesson Coupon ${pct}%`;
             discountPercent = pct;
             usedCoupon = activeCoupon;
-          }
-        }
-      }
-
-      // ✅ Auto-activate review coupon for 2nd lesson
-      if (totalLessons === 1 && !usedCoupon) {
-        const inactiveCoupon = lessonCoupons.find(c => c.type === 'lesson' && c.active === false && !c.used);
-        if (inactiveCoupon) {
-          const pct = Number(inactiveCoupon.percent ?? inactiveCoupon.discount ?? 0);
-          if (pct > 0) {
-            // Activate and apply the coupon
-            await adminDb.collection('users').doc(studentId).update({
-              lessonCoupons: admin.firestore.FieldValue.arrayRemove(inactiveCoupon),
-            });
-            inactiveCoupon.active = true;
-            await adminDb.collection('users').doc(studentId).update({
-              lessonCoupons: admin.firestore.FieldValue.arrayUnion(inactiveCoupon),
-            });
-            discountedPrice = originalPrice * (1 - pct / 100);
-            discountLabel = `Review Bonus ${pct}% (2nd lesson)`;
-            discountPercent = pct;
-            usedCoupon = inactiveCoupon;
-            console.log(`🎁 Auto-activated review coupon for 2nd lesson: ${pct}%`);
           }
         }
       }

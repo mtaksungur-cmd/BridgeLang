@@ -7,53 +7,14 @@ const db = admin.firestore();
 
 setGlobalOptions({ maxInstances: 10 });
 
+// Review coupon creation is handled solely by the API route /api/review/[lessonId].js
+// This Cloud Function only logs the event for analytics.
 exports.onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (event) => {
     const review = event.data.data();
     if (!review) return;
 
     const { studentId, teacherId } = review;
-    if (!studentId) return;
-
-    try {
-        const userRef = db.collection("users").doc(studentId);
-        const userSnap = await userRef.get();
-        if (!userSnap.exists) return;
-        const user = userSnap.data();
-
-        const coupons = Array.isArray(user.lessonCoupons) ? user.lessonCoupons : [];
-        const hasReviewCoupon = coupons.some(c => c.source === 'first-review');
-
-        if (hasReviewCoupon) {
-            console.log(`User ${studentId} already has a review coupon.`);
-            return;
-        }
-
-        const plan = user.subscriptionPlan || 'free';
-        let percent = 25;
-        if (plan === 'starter') percent = 30;
-        if (plan === 'pro') percent = 35;
-        if (plan === 'vip') percent = 40;
-
-        const newCoupon = {
-            code: `REV-${studentId.substring(0, 5)}-${Date.now().toString().substring(8)}`.toUpperCase(),
-            percent: percent,
-            type: 'lesson',
-            active: true,
-            used: false,
-            source: 'first-review',
-            createdAt: admin.firestore.Timestamp.now(),
-            description: `Thank you for your review! ${percent}% off your next lesson.`
-        };
-
-        await userRef.update({
-            lessonCoupons: admin.firestore.FieldValue.arrayUnion(newCoupon)
-        });
-
-        console.log(`Review Coupon generated for ${studentId}: ${percent}% (Plan: ${plan})`);
-
-    } catch (err) {
-        console.error("Error in onReviewCreated:", err);
-    }
+    console.log(`Review created by student ${studentId} for teacher ${teacherId}`);
 });
 
 exports.onTutorAvailabilityUpdate = onDocumentUpdated("users/{tutorId}", async (event) => {
