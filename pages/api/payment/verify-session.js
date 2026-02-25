@@ -23,6 +23,41 @@ export default async function handler(req, res) {
 
     const metadata = session.metadata || {};
 
+    // Handle lesson bookings — create booking as fallback if webhook hasn't fired yet
+    if (metadata.bookingType === 'lesson') {
+      const { teacherId, studentId, date, startTime, endTime, duration, location, lessonType } = metadata;
+      
+      // Check if booking already exists (webhook may have already created it)
+      const existingBooking = await adminDb.collection('bookings').doc(session.id).get();
+      if (!existingBooking.exists) {
+        console.log('📚 verify-session: Creating booking as webhook fallback');
+        await adminDb.collection('bookings').doc(session.id).set({
+          teacherId,
+          studentId,
+          date,
+          startTime,
+          endTime: endTime || '',
+          duration: Number(duration),
+          location,
+          lessonType: lessonType || 'standard',
+          status: 'confirmed',
+          amountPaid: session.amount_total / 100,
+          stripeSessionId: session.id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        console.log('✅ verify-session: Booking created:', session.id);
+      } else {
+        console.log('✅ verify-session: Booking already exists (webhook handled it)');
+      }
+
+      return res.status(200).json({ 
+        message: 'Lesson booking confirmed', 
+        bookingType: 'lesson',
+        bookingId: session.id 
+      });
+    }
+
     // Sadece subscription_upgrade tipindeki ödemeleri işle
     if (metadata.bookingType !== 'subscription_upgrade' && metadata.bookingType !== 'subscription') {
       return res.status(200).json({ message: 'Not a plan payment', bookingType: metadata.bookingType });

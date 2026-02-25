@@ -13,12 +13,14 @@ export default function Success() {
   const [updatedPlan, setUpdatedPlan] = useState(null);
   const router = useRouter();
 
+  const [bookingType, setBookingType] = useState(null); // 'lesson' | 'plan' | null
+
   useEffect(() => {
     const sessionId = router.query.session_id;
     let unsubFirestore = null;
     let fallbackTimer = null;
 
-    // 1) Stripe session_id varsa → verify-session API ile planı direkt güncelle
+    // 1) Stripe session_id varsa → verify-session API ile ödeme tipini belirle
     const verifySession = async () => {
       if (!sessionId) return false;
       try {
@@ -28,10 +30,19 @@ export default function Success() {
           body: JSON.stringify({ sessionId }),
         });
         const data = await res.json();
-        if (res.ok && data.plan) {
-          setUpdatedPlan(data.plan);
-          setPlanReady(true);
-          return true;
+        if (res.ok) {
+          if (data.bookingType === 'lesson') {
+            // Ders satın alımı — plan mesajı gösterme
+            setBookingType('lesson');
+            setPlanReady(true);
+            return true;
+          } else if (data.plan) {
+            // Plan upgrade
+            setBookingType('plan');
+            setUpdatedPlan(data.plan);
+            setPlanReady(true);
+            return true;
+          }
         }
       } catch (err) {
         console.error('verify-session error:', err);
@@ -41,7 +52,6 @@ export default function Success() {
 
     // 2) Auth hazır olunca verify et, sonra Firestore dinle
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
-      // session_id varsa önce verify-session dene
       const verified = await verifySession();
       if (verified) return;
 
@@ -55,6 +65,7 @@ export default function Success() {
         if (!snap.exists()) return;
         const data = snap.data();
         if (data.justUpgraded) {
+          setBookingType('plan');
           setUpdatedPlan(data.subscriptionPlan);
           setPlanReady(true);
         }
