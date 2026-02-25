@@ -9,7 +9,7 @@ const PLANS = [
     key: "free",
     name: "Free",
     price: "£0",
-    period: "forever",
+    period: "one-time access",
     features: [
       "10 teacher profile views",
       "Up to 5 messages before booking",

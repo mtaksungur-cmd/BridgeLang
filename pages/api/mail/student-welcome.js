@@ -45,22 +45,22 @@ export default async function handler(req, res) {
     <tr>
         <td style="padding: 10px 10px 10px 0;">
           <a href="https://www.instagram.com/bridgelang_uk?igsh=a3U0czIyODJ1cDNy" target="_blank">
-            <img src="https://bridgelang.co.uk/images/email/ig.png" alt="Instagram" width="32" height="32" style="display:block; border:0;" />
+            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" alt="Instagram" width="28" height="28" style="display:block; border:0; background:#E4405F; padding:4px; border-radius:6px;" />
           </a>
         </td>
         <td style="padding: 10px 10px 10px 0;">
           <a href="https://youtube.com/@bridgelang_uk?si=tA-V6RyZftqOvtRc" target="_blank">
-            <img src="https://bridgelang.co.uk/images/email/yt.png" alt="YouTube" width="32" height="32" style="display:block; border:0;" />
+            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg" alt="YouTube" width="28" height="28" style="display:block; border:0; background:#FF0000; padding:4px; border-radius:6px;" />
           </a>
         </td>
         <td style="padding: 10px 10px 10px 0;">
           <a href="https://www.facebook.com/share/17858srkmF/" target="_blank">
-            <img src="https://bridgelang.co.uk/images/email/fb.png" alt="Facebook" width="32" height="32" style="display:block; border:0;" />
+            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg" alt="Facebook" width="28" height="28" style="display:block; border:0; background:#1877F2; padding:4px; border-radius:6px;" />
           </a>
         </td>
         <td style="padding: 10px 10px 10px 0;">
           <a href="https://www.linkedin.com/company/bridgelang-uk/" target="_blank">
-            <img src="https://bridgelang.co.uk/images/email/ln.png" alt="LinkedIn" width="32" height="32" style="display:block; border:0;" />
+            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg" alt="LinkedIn" width="28" height="28" style="display:block; border:0; background:#0A66C2; padding:4px; border-radius:6px;" />
           </a>
         </td>
     </tr>

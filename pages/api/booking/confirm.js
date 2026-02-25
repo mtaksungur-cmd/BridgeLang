@@ -20,6 +20,14 @@ export default async function handler(req, res) {
 
     const data = snap.data();
 
+    // ✅ Parental consent check
+    if (role === 'student') {
+      const studentSnap = await adminDb.collection('users').doc(data.studentId).get();
+      if (studentSnap.exists && studentSnap.data().status === 'pending_consent') {
+        return res.status(403).json({ error: 'Parental consent is required before confirming lessons.' });
+      }
+    }
+
     // Update confirmation status
     if (role === 'student') {
       await ref.update({ studentConfirmed: true });
@@ -63,6 +71,17 @@ export default async function handler(req, res) {
 
       // Mark as completed
       await ref.update({ status: 'completed' });
+
+      // ✅ Enable unlimited messaging between student and this teacher after lesson
+      try {
+        const studentMsgRef = adminDb.collection('users').doc(updatedData.studentId);
+        await studentMsgRef.update({
+          [`messagesAfterLesson.${updatedData.teacherId}`]: true
+        });
+        console.log(`💬 Enabled unlimited messaging for student ${updatedData.studentId} with teacher ${updatedData.teacherId}`);
+      } catch (msgErr) {
+        console.warn('messagesAfterLesson update failed:', msgErr.message);
+      }
 
       // ✅ TRIGGER PAYMENT TRANSFER TO TEACHER (ESCROW RELEASE)
       console.log('💰 Initiating payment transfer to teacher...');

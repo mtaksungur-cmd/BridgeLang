@@ -238,6 +238,27 @@ export default function AdminTeachers() {
                         </video>
                       </div>
                     )}
+
+                    {/* CV & Certifications */}
+                    {(app.cvUrl || (app.certificationUrls && app.certificationUrls.length > 0)) && (
+                      <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9' }}>
+                        <h4 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', margin: '0 0 0.75rem 0' }}>
+                          Documents
+                        </h4>
+                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          {app.cvUrl && (
+                            <a href={app.cvUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '0.5rem 1rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '0.8125rem', color: '#1e40af', textDecoration: 'none', fontWeight: '500' }}>
+                              📄 View CV
+                            </a>
+                          )}
+                          {app.certificationUrls?.map((url, i) => (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" style={{ padding: '0.5rem 1rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '0.8125rem', color: '#166534', textDecoration: 'none', fontWeight: '500' }}>
+                              📜 Certificate {i + 1}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -301,6 +322,27 @@ export default function AdminTeachers() {
                       <InfoRow label="Total Lessons" value={t.totalLessons || 0} />
                       <InfoRow label="Avg Rating" value={t.avgRating ? `${t.avgRating.toFixed(1)} ⭐` : '—'} />
                     </div>
+
+                    {/* Intro Video Consent History */}
+                    {t.intro_video_history && t.intro_video_history.length > 0 && (
+                      <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fefce8', borderRadius: '6px', border: '1px solid #fef08a' }}>
+                        <div style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#854d0e', marginBottom: '0.5rem' }}>
+                          🎥 Video Consent History
+                        </div>
+                        {t.intro_video_history.slice(-5).map((entry, i) => (
+                          <div key={i} style={{ fontSize: '0.75rem', color: '#713f12', padding: '0.25rem 0', borderBottom: i < Math.min(t.intro_video_history.length, 5) - 1 ? '1px solid #fef9c3' : 'none' }}>
+                            <span style={{ fontWeight: '500' }}>{entry.field?.replace('intro_video_consent_', '') || 'unknown'}</span>
+                            {' → '}
+                            <span style={{ color: entry.value ? '#166534' : '#991b1b' }}>{entry.value ? 'Enabled' : 'Disabled'}</span>
+                            {entry.changedAt && (
+                              <span style={{ marginLeft: '0.5rem', color: '#a16207' }}>
+                                ({new Date(entry.changedAt?.toDate ? entry.changedAt.toDate() : entry.changedAt).toLocaleDateString('en-GB')})
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <button
                       onClick={() => deleteTeacher(t)}

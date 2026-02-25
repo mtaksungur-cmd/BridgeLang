@@ -47,6 +47,27 @@ export default async function handler(req, res) {
       return res.json({ ok: true, paused: true });
     }
 
+    // ✅ Admin accounts ALWAYS require email verification
+    if (userData?.role === 'admin') {
+      // Force OTP for admin regardless of global OTP setting
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = Date.now() + 10 * 60 * 1000;
+
+      await adminDb.collection('loginCodes').doc(uid).set({
+        email,
+        code,
+        expiresAt,
+      });
+
+      await sendLoginCode({
+        to: email,
+        userName: userData?.name || '',
+        code,
+      });
+
+      return res.json({ ok: true, paused: false, requiresCode: true });
+    }
+
     // Active account - send 6 digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000;

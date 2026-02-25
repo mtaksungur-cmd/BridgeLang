@@ -5,6 +5,7 @@
  */
 
 import { adminDb, adminAuth } from '../../../lib/firebaseAdmin';
+import crypto from 'crypto';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
@@ -19,6 +20,21 @@ export default async function handler(req, res) {
         }
 
         console.log(`🗑️ Deleting account: ${userId}`);
+
+        // ✅ Save email hash to deletedEmails to prevent re-registration
+        const userDoc = await adminDb.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+            const originalEmail = userDoc.data().email;
+            if (originalEmail && !originalEmail.includes('@bridgelang.deleted')) {
+                const emailHash = crypto.createHash('sha256').update(originalEmail.trim().toLowerCase()).digest('hex');
+                await adminDb.collection('deletedEmails').doc(emailHash).set({
+                    email: originalEmail.trim().toLowerCase(),
+                    deletedAt: Date.now(),
+                    deletedBy: 'self',
+                });
+                console.log('✅ Email added to deletedEmails');
+            }
+        }
 
         // Check for active bookings
         const activeBookings = await adminDb.collection('bookings')

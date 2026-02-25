@@ -22,6 +22,11 @@ export default async function handler(req, res) {
     if (!studentId || !teacherId) return res.status(400).json({ error: 'Missing ids' });
 
     try {
+        // Parental consent check
+        const studentSnap = await adminDb.collection('users').doc(studentId).get();
+        if (studentSnap.exists && studentSnap.data().status === 'pending_consent') {
+            return res.status(403).json({ allowed: false, reason: 'pending_consent', error: 'Parental consent required before messaging.' });
+        }
         const bookingQuery = await adminDb.collection('bookings')
             .where('studentId', '==', studentId)
             .where('teacherId', '==', teacherId)

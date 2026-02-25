@@ -34,7 +34,8 @@ export default async function handler(req, res) {
                 const userDoc = await adminDb.collection('users').doc(userId).get();
                 const userData = userDoc.data();
 
-                if (userData?.email) {
+                // ✅ Check if user has email notifications enabled
+                if (userData?.email && userData?.emailNotifications !== false) {
                     const fullLink = `${process.env.NEXT_PUBLIC_BASE_URL}${link || '/'}`;
                     await sendNotificationEmail({
                         to: userData.email,

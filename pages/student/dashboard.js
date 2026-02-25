@@ -70,7 +70,7 @@ export default function StudentDashboard() {
           const bookingsQuery = query(
             collection(db, 'bookings'),
             where('studentId', '==', user.uid),
-            where('status', 'in', ['confirmed', 'approved', 'pending'])
+            where('status', 'in', ['confirmed', 'approved', 'pending', 'completed'])
           );
           const bookingsSnap = await getDocs(bookingsQuery);
 
@@ -171,19 +171,44 @@ export default function StudentDashboard() {
               </div>
 
               <div className={styles.availabilityReminder}>
-                <div className={styles.header}>
-                   <Calendar size={20} color="#f59e0b" fill="#fef3c7" /> Availability Reminder
-                </div>
-                <div className={styles.proTip}>
-                  <Lightbulb size={18} className={styles.bulb} />
-                  <div>
-                    <strong>Pro tip:</strong> Check tutor availability to book a lesson soon.
+                <div className={styles.header} style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                    <Calendar size={20} color="#f59e0b" fill="#fef3c7" /> Availability Reminder
                   </div>
+                  <button
+                    onClick={async () => {
+                      const user = auth.currentUser;
+                      if (!user) return;
+                      const newVal = !data.disableAvailabilityReminders;
+                      try {
+                        await updateDoc(doc(db, 'users', user.uid), { disableAvailabilityReminders: newVal });
+                        setData(prev => ({ ...prev, disableAvailabilityReminders: newVal }));
+                      } catch (e) { console.error('Toggle reminder error:', e); }
+                    }}
+                    style={{
+                      padding:'0.25rem 0.75rem', borderRadius:'6px', fontSize:'0.75rem', fontWeight:'600',
+                      border:'1px solid #e2e8f0', cursor:'pointer',
+                      background: data.disableAvailabilityReminders ? '#f1f5f9' : '#fef3c7',
+                      color: data.disableAvailabilityReminders ? '#64748b' : '#92400e'
+                    }}
+                  >
+                    {data.disableAvailabilityReminders ? '🔕 Reminders Off' : '🔔 Reminders On'}
+                  </button>
                 </div>
-                <p className={styles.reminderText}>Tutors can fill up fast, so look for tutors with times available in the next few days.</p>
-                <Link href="/student/teachers" className={styles.link}>
-                  Browse available tutors &gt;
-                </Link>
+                {!data.disableAvailabilityReminders && (
+                  <>
+                    <div className={styles.proTip}>
+                      <Lightbulb size={18} className={styles.bulb} />
+                      <div>
+                        <strong>Pro tip:</strong> Check tutor availability to book a lesson soon.
+                      </div>
+                    </div>
+                    <p className={styles.reminderText}>Tutors can fill up fast, so look for tutors with times available in the next few days.</p>
+                    <Link href="/student/teachers" className={styles.link}>
+                      Browse available tutors &gt;
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
 

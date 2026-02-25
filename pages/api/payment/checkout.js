@@ -36,6 +36,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // ✅ Parental consent check - block pending_consent students at API level
+    const studentCheck = await adminDb.collection('users').doc(studentId).get();
+    if (studentCheck.exists && studentCheck.data().status === 'pending_consent') {
+      return res.status(403).json({ error: 'Your account requires parental consent before booking lessons.' });
+    }
+
     let numericPrice = Number(price);
     if (isNaN(numericPrice) || numericPrice <= 0) {
       console.log('❌ Invalid price:', price);
@@ -183,6 +189,29 @@ export default async function handler(req, res) {
             discountLabel = `Auto Lesson Coupon ${pct}%`;
             discountPercent = pct;
             usedCoupon = activeCoupon;
+          }
+        }
+      }
+
+      // ✅ Auto-activate review coupon for 2nd lesson
+      if (totalLessons === 1 && !usedCoupon) {
+        const inactiveCoupon = lessonCoupons.find(c => c.type === 'lesson' && c.active === false && !c.used);
+        if (inactiveCoupon) {
+          const pct = Number(inactiveCoupon.percent ?? inactiveCoupon.discount ?? 0);
+          if (pct > 0) {
+            // Activate and apply the coupon
+            await adminDb.collection('users').doc(studentId).update({
+              lessonCoupons: admin.firestore.FieldValue.arrayRemove(inactiveCoupon),
+            });
+            inactiveCoupon.active = true;
+            await adminDb.collection('users').doc(studentId).update({
+              lessonCoupons: admin.firestore.FieldValue.arrayUnion(inactiveCoupon),
+            });
+            discountedPrice = originalPrice * (1 - pct / 100);
+            discountLabel = `Review Bonus ${pct}% (2nd lesson)`;
+            discountPercent = pct;
+            usedCoupon = inactiveCoupon;
+            console.log(`🎁 Auto-activated review coupon for 2nd lesson: ${pct}%`);
           }
         }
       }

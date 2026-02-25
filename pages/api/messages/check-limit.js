@@ -19,6 +19,15 @@ export default async function handler(req, res) {
         }
 
         const studentData = studentSnap.data();
+
+        // Parental consent check
+        if (studentData.status === 'pending_consent') {
+            return res.status(403).json({
+                canMessage: false,
+                error: 'Your account is pending parental consent. Please wait for your parent/guardian to confirm.'
+            });
+        }
+
         const plan = studentData.subscriptionPlan || 'free';
 
         // Check if student has unlimited messaging with this teacher (after first lesson)
