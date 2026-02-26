@@ -19,6 +19,7 @@ export default async function handler(req, res) {
       ...teacher,
       role: 'teacher',
       status: 'approved',
+      approved: true,
       emailVerified: true,
       createdAt: pending.createdAt || teacher.createdAt || now,
       approvedAt: now,

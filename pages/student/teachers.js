@@ -14,9 +14,16 @@ export default function TeachersPage() {
     useEffect(() => {
         const fetchTeachers = async () => {
             try {
-                const q = query(collection(db, 'users'), where('role', '==', 'teacher'), where('approved', '==', true));
-                const snap = await getDocs(q);
-                setTeachers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                const usersRef = collection(db, 'users');
+                // Onaylı öğretmenler: approved === true veya status === 'approved' (mevcut DB uyumu)
+                const qApproved = query(usersRef, where('role', '==', 'teacher'), where('approved', '==', true));
+                const qStatusApproved = query(usersRef, where('role', '==', 'teacher'), where('status', '==', 'approved'));
+                const [snapApproved, snapStatus] = await Promise.all([getDocs(qApproved), getDocs(qStatusApproved)]);
+                const byId = new Map();
+                [...snapApproved.docs, ...snapStatus.docs].forEach(doc => {
+                    if (!byId.has(doc.id)) byId.set(doc.id, { id: doc.id, ...doc.data() });
+                });
+                setTeachers(Array.from(byId.values()));
             } catch (err) {
                 console.error("Error fetching teachers:", err);
             } finally {
