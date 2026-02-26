@@ -165,18 +165,25 @@ export default function StudentRegister() {
         createdAt: new Date(),
       });
 
-      // Trigger Parent Consent API if minor
+      // Trigger Parent Consent API if minor (14–17) — must succeed before showing success
       if (isMinor) {
-        await fetch('/api/parent-consent', {
+        const parentEmailTrimmed = (form.parentEmail || '').trim().toLowerCase();
+        const consentRes = await fetch('/api/parent-consent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            studentId: user.uid, 
-            studentName: form.name, 
-            parentEmail: form.parentEmail,
-            dob: form.birthday
+          body: JSON.stringify({
+            studentId: user.uid,
+            studentName: form.name.trim(),
+            parentEmail: parentEmailTrimmed,
+            dob: form.birthday,
           }),
-        }).catch(console.error);
+        });
+        if (!consentRes.ok) {
+          const errData = await consentRes.json().catch(() => ({}));
+          setError(errData.error || 'Could not send the parental consent email. Please contact support.');
+          setSubmitting(false);
+          return;
+        }
       }
 
       await signOut(auth);

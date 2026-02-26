@@ -131,15 +131,7 @@ export default async function handler(req, res) {
                 }, { merge: true });
                 console.log('✅ Booking Saved:', session.id);
 
-                // Update student's lessonsTaken count
-                if (studentId) {
-                    const studentRef = adminDb.collection('users').doc(studentId);
-                    const studentSnap = await studentRef.get();
-                    const studentData = studentSnap.exists ? studentSnap.data() : {};
-                    const currentLessons = studentData.lessonsTaken || 0;
-                    await studentRef.update({ lessonsTaken: currentLessons + 1 });
-                    console.log(`✅ Student ${studentId} lessonsTaken updated to ${currentLessons + 1}`);
-                }
+                // lessonsTaken is updated only when lesson is completed (both confirmed) in booking/confirm.js
 
                 // Track intro lesson tutors
                 if (lessonType === 'intro' && studentId && teacherId) {

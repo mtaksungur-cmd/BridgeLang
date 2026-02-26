@@ -5,10 +5,15 @@ import crypto from 'crypto';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
-  const { studentId, studentName, parentName, parentEmail, dob } = req.body;
+  const { studentId, studentName, parentName, parentEmail: rawParentEmail, dob } = req.body;
 
+  const parentEmail = typeof rawParentEmail === 'string' ? rawParentEmail.trim().toLowerCase() : '';
   if (!studentId || !parentEmail) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(400).json({ error: 'Missing required fields (studentId, parentEmail)' });
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(parentEmail)) {
+    return res.status(400).json({ error: 'Invalid parent email address' });
   }
 
   try {

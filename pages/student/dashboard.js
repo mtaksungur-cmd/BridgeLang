@@ -100,7 +100,7 @@ export default function StudentDashboard() {
         }
 
         // Find unreviewed approved/completed lessons for review discount banner
-        const approvedLessons = bookingsData.filter(b => b.status === 'approved');
+        const approvedLessons = bookingsData.filter(b => b.status === 'approved' || b.status === 'completed');
         if (approvedLessons.length > 0) {
           try {
             for (const lesson of approvedLessons) {
