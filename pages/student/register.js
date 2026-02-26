@@ -198,6 +198,21 @@ export default function StudentRegister() {
         }
       }
 
+      // Send welcome email to the new student (before signOut so we can send token for verification)
+      try {
+        const token = await user.getIdToken();
+        await fetch('/api/mail/student-welcome', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email, name: form.name.trim() }),
+        });
+      } catch (welcomeErr) {
+        console.warn('Welcome email request failed (account still created):', welcomeErr);
+      }
+
       await signOut(auth);
       setSuccess(true);
     } catch (err) {
