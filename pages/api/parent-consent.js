@@ -50,6 +50,13 @@ export default async function handler(req, res) {
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ Parent consent error:', err);
-    res.status(500).json({ error: 'Failed to send parental consent email', details: err.message });
+    const isConfig = /SMTP|not configured|ECONNREFUSED|ETIMEDOUT|Invalid login/i.test(err.message || '');
+    const status = isConfig ? 503 : 500;
+    res.status(status).json({
+      error: isConfig
+        ? 'Email service is not configured or unreachable. Please set SMTP_USER and SMTP_PASS in .env.local (see BREVO_SETUP.md).'
+        : 'Failed to send parental consent email.',
+      details: err.message || undefined,
+    });
   }
 }

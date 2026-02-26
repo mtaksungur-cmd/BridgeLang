@@ -180,7 +180,8 @@ export default function StudentRegister() {
         });
         if (!consentRes.ok) {
           const errData = await consentRes.json().catch(() => ({}));
-          setError(errData.error || 'Could not send the parental consent email. Please contact support.');
+          const msg = errData.error || 'Could not send the parental consent email. Please contact support.';
+          setError(errData.details ? `${msg} (${errData.details})` : msg);
           setSubmitting(false);
           return;
         }
