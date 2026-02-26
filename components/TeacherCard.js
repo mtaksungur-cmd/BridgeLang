@@ -22,11 +22,13 @@ export default function TeacherCard({ teacher }) {
             <div className={styles.pricingSection}>
                 <div className={styles.priceRow}>
                     <span className={styles.label}>From</span>
-                    <span className={styles.amount}>£{teacher.pricing30 || 15}</span>
-                    <span className={styles.unit}>· 30 min</span>
+                    <span className={styles.amount}>£4.99</span>
+                    <span className={styles.unit}>· 15 min intro</span>
                 </div>
                 <div className={styles.durations}>
                     <Clock size={14} />
+                    <span>15 min</span>
+                    <span>|</span>
                     <span>30 min</span>
                     <span>|</span>
                     <span>45 min</span>
@@ -57,7 +59,7 @@ export default function TeacherCard({ teacher }) {
 
             <div className={styles.cardFooter}>
                 <Link href={`/student/book/${teacher.id}`} className={styles.btnBook}>
-                    Book a 30-min Lesson
+                    Book intro or lesson
                 </Link>
                 <Link href={`/student/teacher/${teacher.id}`} className={styles.btnProfile}>
                     View profile
