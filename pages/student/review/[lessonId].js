@@ -28,7 +28,7 @@ export default function ReviewLesson() {
       if (!snap.exists()) return router.push('/student/lessons');
 
       const data = snap.data();
-      if (data.studentId !== user.uid || data.status !== 'approved') {
+      if (data.studentId !== user.uid || (data.status !== 'approved' && data.status !== 'completed')) {
         alert('You are not allowed to review this lesson.');
         return router.push('/student/lessons');
       }

@@ -70,8 +70,8 @@ export default async function handler(req, res) {
     const bookingSnap = await adminDb.collection('bookings').doc(lessonId).get();
     if (!bookingSnap.exists) return res.status(404).end();
     const booking = bookingSnap.data();
-    if (booking.status !== 'approved') {
-      return res.status(403).json({ error: 'Lesson not approved yet' });
+    if (booking.status !== 'approved' && booking.status !== 'completed') {
+      return res.status(403).json({ error: 'Lesson not approved or completed yet' });
     }
 
     const teacherId = booking.teacherId;
