@@ -4,6 +4,8 @@
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { PLAN_LIMITS } from '../../../lib/planLimits';
+import { sendMail } from '../../../lib/mailer';
+import { getBookingConfirmationEmail } from '../../../lib/reminderTemplates';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 
@@ -25,8 +27,10 @@ export default async function handler(req, res) {
 
     // Handle lesson bookings — create booking as fallback if webhook hasn't fired yet
     if (metadata.bookingType === 'lesson') {
-      const { teacherId, studentId, date, startTime, endTime, duration, location, lessonType } = metadata;
-      
+      const { teacherId, studentId, date, startTime, endTime, duration, location, lessonType, timezone: metaTimezone } = metadata;
+      const timezone = metaTimezone || 'Europe/London';
+      const amountPaid = session.amount_total / 100;
+
       // Check if booking already exists (webhook may have already created it)
       const existingBooking = await adminDb.collection('bookings').doc(session.id).get();
       if (!existingBooking.exists) {
@@ -41,12 +45,38 @@ export default async function handler(req, res) {
           location,
           lessonType: lessonType || 'standard',
           status: 'confirmed',
-          amountPaid: session.amount_total / 100,
+          amountPaid,
           stripeSessionId: session.id,
+          timezone,
           createdAt: new Date(),
           updatedAt: new Date()
         });
         console.log('✅ verify-session: Booking created:', session.id);
+
+        // Booking confirmation email (when we created the booking; webhook may not have run)
+        try {
+          const [studentSnap, teacherSnap] = await Promise.all([
+            adminDb.collection('users').doc(studentId).get(),
+            adminDb.collection('users').doc(teacherId).get()
+          ]);
+          const studentData = studentSnap.exists ? studentSnap.data() : {};
+          const teacherData = teacherSnap.exists ? teacherSnap.data() : {};
+          if (studentData.email && studentData.emailNotifications !== false) {
+            const { subject, html } = getBookingConfirmationEmail({
+              studentName: studentData.name || 'Student',
+              teacherName: teacherData.name || 'Teacher',
+              date,
+              startTime,
+              timezone,
+              duration: Number(duration) || 60,
+              amountPaid
+            });
+            await sendMail({ to: studentData.email, subject, html });
+            console.log('✅ verify-session: Booking confirmation email sent to', studentData.email);
+          }
+        } catch (mailErr) {
+          console.warn('⚠️ verify-session: Booking confirmation email failed:', mailErr.message);
+        }
       } else {
         console.log('✅ verify-session: Booking already exists (webhook handled it)');
       }

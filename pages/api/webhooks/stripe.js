@@ -2,6 +2,8 @@ import { buffer } from 'micro';
 import Stripe from 'stripe';
 import { adminDb } from '../../../lib/firebaseAdmin';
 import { PLAN_LIMITS } from '../../../lib/planLimits';
+import { sendMail } from '../../../lib/mailer';
+import { getBookingConfirmationEmail } from '../../../lib/reminderTemplates';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -111,7 +113,8 @@ export default async function handler(req, res) {
         // 2. Handle Lesson Bookings
         if (metadata.bookingType === 'lesson') {
             console.log('📚 Processing Lesson Booking...');
-            const { teacherId, studentId, date, startTime, endTime, duration, location, lessonType } = metadata;
+            const { teacherId, studentId, date, startTime, endTime, duration, location, lessonType, timezone: metaTimezone } = metadata;
+            const timezone = metaTimezone || 'Europe/London';
             try {
                 const bookingRef = adminDb.collection('bookings').doc(session.id);
                 await bookingRef.set({
@@ -126,10 +129,36 @@ export default async function handler(req, res) {
                     status: 'confirmed',
                     amountPaid: session.amount_total / 100,
                     stripeSessionId: session.id,
+                    timezone,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 }, { merge: true });
                 console.log('✅ Booking Saved:', session.id);
+
+                // Booking confirmation email to student
+                try {
+                    const [studentSnap, teacherSnap] = await Promise.all([
+                        adminDb.collection('users').doc(studentId).get(),
+                        adminDb.collection('users').doc(teacherId).get()
+                    ]);
+                    const studentData = studentSnap.exists ? studentSnap.data() : {};
+                    const teacherData = teacherSnap.exists ? teacherSnap.data() : {};
+                    if (studentData.email && studentData.emailNotifications !== false) {
+                        const { subject, html } = getBookingConfirmationEmail({
+                            studentName: studentData.name || 'Student',
+                            teacherName: teacherData.name || 'Teacher',
+                            date,
+                            startTime,
+                            timezone,
+                            duration: Number(duration) || 60,
+                            amountPaid: session.amount_total / 100
+                        });
+                        await sendMail({ to: studentData.email, subject, html });
+                        console.log('✅ Booking confirmation email sent to', studentData.email);
+                    }
+                } catch (mailErr) {
+                    console.warn('⚠️ Booking confirmation email failed:', mailErr.message);
+                }
 
                 // lessonsTaken is updated only when lesson is completed (both confirmed) in booking/confirm.js
 

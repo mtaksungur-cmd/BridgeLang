@@ -3,7 +3,7 @@ import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged, updatePassword, updateEmail } from 'firebase/auth';
 import { useRouter } from 'next/router';
-import { User, Lock, Bell, CreditCard, Globe, Shield, Download, Trash2, Save, PauseCircle } from 'lucide-react';
+import { User, Lock, Bell, CreditCard, Globe, Shield, Download, Trash2, Save, PauseCircle, LogOut } from 'lucide-react';
 
 export default function Settings() {
     const [user, setUser] = useState(null);
@@ -740,6 +740,34 @@ export default function Settings() {
                                         >
                                             <PauseCircle style={{ width: '16px', height: '16px' }} />
                                             Pause Account
+                                        </button>
+                                    </div>
+
+                                    <div style={{ paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                                        <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>
+                                            Log Out
+                                        </h3>
+                                        <p style={{ fontSize: '0.8125rem', color: '#64748b', marginBottom: '1rem' }}>
+                                            Sign out of your account on this device.
+                                        </p>
+                                        <button 
+                                            onClick={async () => { await auth.signOut(); router.push('/login'); }}
+                                            style={{
+                                                padding: '0.625rem 1.25rem',
+                                                background: '#f1f5f9',
+                                                border: '1px solid #cbd5e1',
+                                                borderRadius: '6px',
+                                                fontSize: '0.875rem',
+                                                fontWeight: '500',
+                                                color: '#475569',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem'
+                                            }}
+                                        >
+                                            <LogOut style={{ width: '16px', height: '16px' }} />
+                                            Log Out
                                         </button>
                                     </div>
 
