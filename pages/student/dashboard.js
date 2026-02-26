@@ -156,7 +156,7 @@ export default function StudentDashboard() {
           const activeReviewCoupon = lessonCoupons.find(
             c => c.type === 'lesson' && (c.source === 'review-bonus' || c.source === 'first-review') && c.active && !c.used
           );
-          const discountByPlan = { starter: 5, pro: 10, vip: 15 };
+          const discountByPlan = { free: 25, starter: 30, pro: 35, vip: 40 };
           const potentialDiscount = discountByPlan[planKey] || 0;
 
           if (activeReviewCoupon) {
@@ -170,7 +170,7 @@ export default function StudentDashboard() {
                 <Gift size={22} color="#16a34a" />
                 <div style={{ flex: 1 }}>
                   <span style={{ fontWeight: '700', color: '#15803d', fontSize: '0.9375rem' }}>
-                    You have a {pct}% review discount ready for your next lesson!
+                    You have a {pct}% review discount ready for your 2nd lesson!
                   </span>
                   <span style={{ color: '#166534', fontSize: '0.8125rem', marginLeft: '0.5rem' }}>
                     It will be applied automatically at checkout. This discount is covered by the platform.
@@ -190,7 +190,7 @@ export default function StudentDashboard() {
                 <Star size={22} color="#d97706" />
                 <div style={{ flex: 1 }}>
                   <span style={{ fontWeight: '700', color: '#92400e', fontSize: '0.9375rem' }}>
-                    Leave a review and earn {potentialDiscount}% off your next lesson!
+                    Leave a review and earn {potentialDiscount}% off your 2nd lesson!
                   </span>
                   <span style={{ color: '#78350f', fontSize: '0.8125rem', marginLeft: '0.5rem' }}>
                     The discount is covered by the platform — your tutor still gets paid in full.

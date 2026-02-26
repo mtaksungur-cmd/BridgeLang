@@ -119,8 +119,8 @@ export default async function handler(req, res) {
       c => c.type === 'lesson' && (c.source === 'review-bonus' || c.source === 'first-review')
     );
 
-    if (!alreadyHasReviewCoupon && ['starter', 'pro', 'vip'].includes(plan)) {
-      const discountPercent = plan === 'starter' ? 5 : plan === 'pro' ? 10 : 15;
+    if (!alreadyHasReviewCoupon && ['free', 'starter', 'pro', 'vip'].includes(plan)) {
+      const discountPercent = plan === 'free' ? 25 : plan === 'starter' ? 30 : plan === 'pro' ? 35 : 40;
 
       const coupon = await stripe.coupons.create({
         percent_off: discountPercent,

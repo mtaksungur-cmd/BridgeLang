@@ -26,25 +26,32 @@ export default function LoyaltyBadge({ plan, lessonsTaken = 0 }) {
   let loyaltyText = "";
   let infoNote = "";
 
-  if (plan === "starter") {
+  if (plan === "free") {
+    badge = "🎟️";
+    planText = "Free Plan – No membership fees.";
+    lessonDiscount =
+      "25% review discount automatically applied to your 2nd lesson after leaving feedback.";
+  } else if (plan === "starter") {
     badge = "🎟️";
     planText = "Starter Plan – 10% off the first 6 lessons.";
     lessonDiscount =
-      "5% review coupon automatically applied to your next lesson after leaving feedback.";
+      "30% review discount automatically applied to your 2nd lesson after leaving feedback.";
   } else if (plan === "pro") {
     badge = "🥈";
     planText = "Pro Plan – 15% off the first 6 lessons.";
     lessonDiscount =
-      "10% review coupon + 10% loyalty discount every 3rd payment (both applied automatically).";
+      "35% review discount applied to your 2nd lesson + 10% loyalty discount every 3rd payment (both applied automatically).";
   } else if (plan === "vip") {
     badge = "🥇";
     planText = "VIP Plan – 20% off the first 6 lessons.";
     lessonDiscount =
-      "15% review coupon + 20% loyalty discount every 3rd payment (applied automatically).";
+      "40% review discount applied to your 2nd lesson + 20% loyalty discount every 3rd payment (applied automatically).";
     loyaltyText =
       "Every 6th renewal also gives you a 10% discount on your subscription (applied automatically).";
   } else {
-    planText = "Free Plan – No discounts available.";
+    planText = "Free Plan – No membership fees.";
+    lessonDiscount =
+      "25% review discount automatically applied to your 2nd lesson after leaving feedback.";
   }
 
   infoNote = `

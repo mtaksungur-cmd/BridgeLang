@@ -35,7 +35,7 @@ export default function WelcomeBanner({ plan, onDismiss }) {
               `${limits.viewLimit} teacher views`, 
               `${limits.messagesLeft} messages`, 
               '24/7 VIP support', 
-              '35% discount on lessons'
+              '35% review discount on your 2nd lesson'
             ]
         },
         vip: {
@@ -46,7 +46,7 @@ export default function WelcomeBanner({ plan, onDismiss }) {
               'Unlimited teacher views', 
               'Unlimited messages', 
               'Personal learning advisor', 
-              '40% discount on lessons'
+              '40% review discount on your 2nd lesson'
             ]
         }
     };
