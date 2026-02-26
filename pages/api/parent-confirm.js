@@ -28,5 +28,5 @@ export default async function handler(req, res) {
     },
   });
 
-  res.send('<h2>✅ Consent confirmed. Your child can now use BridgeLang.</h2>');
+  res.redirect(302, '/parent-consent-success');
 }
