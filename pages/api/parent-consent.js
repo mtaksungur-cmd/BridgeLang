@@ -5,6 +5,14 @@ import crypto from 'crypto';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+
+  if (!adminDb) {
+    console.error('Parent consent: Firebase Admin (adminDb) is not initialized.');
+    return res.status(503).json({
+      error: 'Server configuration error. Parent consent is temporarily unavailable.',
+    });
+  }
+
   const { studentId, studentName, parentName, parentEmail: rawParentEmail, dob } = req.body;
 
   const parentEmail = typeof rawParentEmail === 'string' ? rawParentEmail.trim().toLowerCase() : '';

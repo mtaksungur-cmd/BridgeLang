@@ -174,6 +174,7 @@ export default function StudentRegister() {
           body: JSON.stringify({
             studentId: user.uid,
             studentName: form.name.trim(),
+            parentName: null,
             parentEmail: parentEmailTrimmed,
             dob: form.birthday,
           }),
@@ -182,6 +183,16 @@ export default function StudentRegister() {
           const errData = await consentRes.json().catch(() => ({}));
           const msg = errData.error || 'Could not send the parental consent email. Please contact support.';
           setError(errData.details ? `${msg} (${errData.details})` : msg);
+          // Rollback: remove the just-created user so they can try again (avoid "email already registered")
+          try {
+            const token = await user.getIdToken();
+            await fetch('/api/auth/rollback-student-registration', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          } catch (rollbackErr) {
+            console.warn('Rollback failed:', rollbackErr);
+          }
           setSubmitting(false);
           return;
         }
