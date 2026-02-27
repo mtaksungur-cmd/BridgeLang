@@ -1,5 +1,6 @@
 // pages/api/mail/student-welcome.js
 import { sendMail } from '../../../lib/mailer';
+import { getEmailSocialIconsHtml } from '../../../lib/emailSocialIcons';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -40,31 +41,7 @@ export default async function handler(req, res) {
     </p>
 
     <h3>Stay Connected!</h3>
-
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top: 10px;">
-    <tr>
-        <td style="padding: 0 8px 0 0;">
-          <a href="https://www.instagram.com/bridgelang_uk?igsh=a3U0czIyODJ1cDNy" target="_blank" style="text-decoration:none;">
-            <img src="https://img.icons8.com/fluency/48/instagram-new.png" alt="Instagram" width="36" height="36" style="display:block; border:0; border-radius:8px;" />
-          </a>
-        </td>
-        <td style="padding: 0 8px 0 0;">
-          <a href="https://youtube.com/@bridgelang_uk?si=tA-V6RyZftqOvtRc" target="_blank" style="text-decoration:none;">
-            <img src="https://img.icons8.com/fluency/48/youtube-play.png" alt="YouTube" width="36" height="36" style="display:block; border:0; border-radius:8px;" />
-          </a>
-        </td>
-        <td style="padding: 0 8px 0 0;">
-          <a href="https://www.facebook.com/share/17858srkmF/" target="_blank" style="text-decoration:none;">
-            <img src="https://img.icons8.com/fluency/48/facebook-new.png" alt="Facebook" width="36" height="36" style="display:block; border:0; border-radius:8px;" />
-          </a>
-        </td>
-        <td style="padding: 0 8px 0 0;">
-          <a href="https://www.linkedin.com/company/bridgelang-uk/" target="_blank" style="text-decoration:none;">
-            <img src="https://img.icons8.com/fluency/48/linkedin.png" alt="LinkedIn" width="36" height="36" style="display:block; border:0; border-radius:8px;" />
-          </a>
-        </td>
-    </tr>
-    </table>
+    ${getEmailSocialIconsHtml('margin-top: 10px;')}
 
     <p>Warm regards,<br/>The BridgeLang Team</p>
   `;
