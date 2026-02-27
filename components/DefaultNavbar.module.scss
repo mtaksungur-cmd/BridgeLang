@@ -236,3 +236,77 @@
 
   }
 }
+
+/* Admin: mobilde her zaman görünür Settings ve Log Out */
+.mobileActions {
+  display: none;
+
+  @media (max-width: 1023px) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.mobileActionBtn {
+  display: none;
+
+  @media (max-width: 1023px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #f8fafc;
+      color: #2563eb;
+    }
+  }
+}
+
+.mobileLogoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
+/* Admin: mobilde logo metni kısa */
+.logoTextDesktop {
+  @media (max-width: 1023px) {
+    display: none !important;
+  }
+}
+
+.logoTextMobile {
+  display: none !important;
+
+  @media (max-width: 1023px) {
+    display: inline !important;
+  }
+}
