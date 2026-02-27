@@ -21,6 +21,7 @@ export default function TeacherApply() {
     specialty: [], experienceYears: '', certifications: [],
     pricing30: '', pricing60: '', deliveryMethod: 'Both', willingToTravel: false,
     bio: '', videoIntroUrl: '',
+    cvUrl: '', certificationUrls: [],
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -100,6 +101,7 @@ export default function TeacherApply() {
         pricing30: Number(form.pricing30), pricing60: Number(form.pricing60),
         deliveryMethod: form.deliveryMethod, willingToTravel: form.willingToTravel,
         bio: form.bio || '', videoIntroUrl: form.videoIntroUrl || '',
+        cvUrl: form.cvUrl || '', certificationUrls: form.certificationUrls || [],
         createdAt: new Date(),
       });
 
@@ -273,6 +275,59 @@ export default function TeacherApply() {
                 <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                   <label>Professional Bio *</label>
                   <textarea name="bio" value={form.bio} onChange={handleChange} rows="6" placeholder="Share your experience, teaching style and how you help students..." required />
+                </div>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Upload CV (Optional)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) { setError('CV file must be under 5MB'); return; }
+                      try {
+                        const fd = new FormData();
+                        fd.append('file', file);
+                        const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                        const data = await res.json();
+                        if (data.url) setForm(prev => ({ ...prev, cvUrl: data.url }));
+                        else setError('CV upload failed');
+                      } catch { setError('CV upload failed'); }
+                    }}
+                    style={{ width: '100%', padding: '0.75rem 0.875rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.9375rem' }}
+                  />
+                  {form.cvUrl && <p style={{ fontSize: '0.75rem', color: '#22c55e', marginTop: '0.375rem' }}>✅ CV uploaded</p>}
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.375rem' }}>PDF, DOC or DOCX (max 5MB)</p>
+                </div>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Upload Certifications (Optional)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    multiple
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files);
+                      if (files.length === 0) return;
+                      const oversized = files.find(f => f.size > 5 * 1024 * 1024);
+                      if (oversized) { setError('Each file must be under 5MB'); return; }
+                      try {
+                        const urls = [];
+                        for (const file of files) {
+                          const fd = new FormData();
+                          fd.append('file', file);
+                          const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                          const data = await res.json();
+                          if (data.url) urls.push(data.url);
+                        }
+                        setForm(prev => ({ ...prev, certificationUrls: [...(prev.certificationUrls || []), ...urls] }));
+                      } catch { setError('Certification upload failed'); }
+                    }}
+                    style={{ width: '100%', padding: '0.75rem 0.875rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.9375rem' }}
+                  />
+                  {form.certificationUrls?.length > 0 && (
+                    <p style={{ fontSize: '0.75rem', color: '#22c55e', marginTop: '0.375rem' }}>✅ {form.certificationUrls.length} certification(s) uploaded</p>
+                  )}
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.375rem' }}>PDF, JPG or PNG (max 5MB each)</p>
                 </div>
                 <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                   <label>Video Intro URL (YouTube/Vimeo)</label>
