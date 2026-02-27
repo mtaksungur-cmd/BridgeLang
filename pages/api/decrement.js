@@ -9,9 +9,12 @@ export default async function handler(req, res) {
 
   if (!userId || !type) return res.status(400).json({ error: "Missing userId or type" });
 
-  // Hangi alanı düşüreceğiz?
+  // Profile views are unlimited for all plans — skip decrement
+  if (type === "view") {
+    return res.status(200).json({ viewLimit: 9999 });
+  }
+
   const fieldMap = {
-    view: "viewLimit",
     message: "messagesLeft",
     credit: "credits"
   };
@@ -30,12 +33,10 @@ export default async function handler(req, res) {
 
     const planKey = (udata.subscriptionPlan || "free").toLowerCase();
 
-    // Field eksikse planın varsayılanını alalım
     if (current === undefined || current === null) {
       current = PLAN_LIMITS[planKey]?.[field] ?? 0;
     }
 
-    // Zaten 0 ise veya VIP/Sınırsız (9999) ise azaltma
     if (current <= 0 || current >= 9999 || planKey === "vip") {
       return res.status(200).json({ [field]: current });
     }

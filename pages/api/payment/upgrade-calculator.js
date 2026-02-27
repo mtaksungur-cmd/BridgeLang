@@ -55,9 +55,9 @@ export default async function handler(req, res) {
     const payable = Number((diff * remainingRatio).toFixed(2));
 
     const PLAN_LIMITS = {
-      free: { viewLimit: 10, messagesLeft: 5 },
-      starter: { viewLimit: 30, messagesLeft: 10 },
-      pro: { viewLimit: 100, messagesLeft: 20 },
+      free: { viewLimit: 9999, messagesLeft: 5 },
+      starter: { viewLimit: 9999, messagesLeft: 10 },
+      pro: { viewLimit: 9999, messagesLeft: 20 },
       vip: { viewLimit: 9999, messagesLeft: 9999 },
     };
     const base = PLAN_LIMITS[newPlan] || PLAN_LIMITS.free;

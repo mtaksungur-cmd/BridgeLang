@@ -20,7 +20,6 @@ export default async function handler(req, res) {
 
         const studentData = studentSnap.data();
 
-        // Parental consent check
         if (studentData.status === 'pending_consent') {
             return res.status(403).json({
                 canMessage: false,
@@ -30,33 +29,65 @@ export default async function handler(req, res) {
 
         const plan = studentData.subscriptionPlan || 'free';
 
-        // Check if student has unlimited messaging with this teacher (after first lesson)
+        // Post-lesson: unlimited messaging with tutors you've had a lesson with
         const messagesAfterLesson = studentData.messagesAfterLesson || {};
         if (messagesAfterLesson[teacherId] === true) {
             return res.status(200).json({
                 canMessage: true,
                 unlimited: true,
-                reason: 'Unlimited messaging after first lesson'
+                postLesson: true,
+                reason: 'Unlimited messaging after your lesson with this tutor'
             });
         }
 
-        const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
-        const messagesLeft = studentData.messagesLeft ?? limits.messagesLeft;
+        // Also check bookings directly as a fallback
+        const bookingQuery = await adminDb.collection('bookings')
+            .where('studentId', '==', studentId)
+            .where('teacherId', '==', teacherId)
+            .where('status', 'in', ['confirmed', 'completed', 'approved'])
+            .limit(1)
+            .get();
 
-        if (messagesLeft > 0 || plan === 'vip') {
+        if (!bookingQuery.empty) {
             return res.status(200).json({
                 canMessage: true,
-                unlimited: plan === 'vip',
-                messagesLeft: plan === 'vip' ? 'unlimited' : messagesLeft,
-                limit: plan === 'vip' ? 'unlimited' : limits.messagesLeft
+                unlimited: true,
+                postLesson: true,
+                reason: 'Unlimited messaging after booking with this tutor'
+            });
+        }
+
+        // Pre-lesson: plan-based limits for new tutors
+        const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+        const preLesson = limits.preLesson ?? limits.messagesLeft;
+
+        if (plan === 'vip') {
+            return res.status(200).json({
+                canMessage: true,
+                unlimited: true,
+                postLesson: false,
+                messagesLeft: 'unlimited',
+                limit: 'unlimited'
+            });
+        }
+
+        const messagesLeft = studentData.messagesLeft ?? preLesson;
+
+        if (messagesLeft > 0) {
+            return res.status(200).json({
+                canMessage: true,
+                unlimited: false,
+                postLesson: false,
+                messagesLeft,
+                limit: preLesson
             });
         }
 
         return res.status(403).json({
             canMessage: false,
             messagesLeft: 0,
-            limit: limits.messagesLeft,
-            error: 'Message limit reached. Complete a lesson or upgrade your plan.'
+            limit: preLesson,
+            error: 'Pre-lesson message limit reached. Book a lesson to unlock unlimited messaging with this tutor, or upgrade your plan.'
         });
 
     } catch (err) {

@@ -8,9 +8,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-
 const PLAN_PRICES = { starter: 4.99, pro: 9.99, vip: 14.99 };
 const PLAN_ORDER = ['free', 'starter', 'pro', 'vip'];
 const PLAN_LIMITS = {
-  free: { viewLimit: 10, messagesLeft: 5 },
-  starter: { viewLimit: 30, messagesLeft: 10 },
-  pro: { viewLimit: 100, messagesLeft: 20 },
+  free: { viewLimit: 9999, messagesLeft: 5 },
+  starter: { viewLimit: 9999, messagesLeft: 10 },
+  pro: { viewLimit: 9999, messagesLeft: 20 },
   vip: { viewLimit: 9999, messagesLeft: 9999 },
 };
 

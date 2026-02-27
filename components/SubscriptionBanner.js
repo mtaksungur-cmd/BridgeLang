@@ -103,7 +103,7 @@ export default function SubscriptionBanner({ hideIfNoPlan = false }) {
               marginRight: 12,
             }}
           >
-            Unlimited profile views / 5 messages
+            Unlimited views · 5 pre-lesson messages
           </span>
           <Link href="/student/subscription">
             <button

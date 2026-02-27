@@ -198,20 +198,8 @@ export default function TeacherProfilePage() {
   if (loading) return <p>Loading...</p>;
   if (!teacher) return <p>Teacher not found.</p>;
 
-  // 🔹 Limit dolmuşsa ve bu öğretmene daha önce bakılmamışsa içeriği gizle
+  // Profile views are unlimited for all plans
   const hasViewedBefore = typeof window !== 'undefined' && localStorage.getItem(`viewed_${auth?.currentUser?.uid}_${id}`);
-  if (viewLimit !== null && viewLimit <= 0 && !hasViewedBefore) {
-    return (
-      <div className={styles.container} style={{ textAlign: 'center', padding: '100px 20px' }}>
-        <h2>👀 Profile View Limit Reached</h2>
-        <p>You have used all your profile views for this period.</p>
-        <p>Please upgrade your plan to continue exploring teachers.</p>
-        <button onClick={() => router.push('/pricing')} className={styles.btnSecondary}>
-          Upgrade Plan
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className={styles.container}>
@@ -332,11 +320,9 @@ export default function TeacherProfilePage() {
         >
           💬 Send Message ({chatsLeft ?? 0} left)
         </button>
-        {viewLimit !== null && (
-          <span className={styles.viewInfo}>
-            Profile views left in your current plan: <b>{viewLimit}</b>
-          </span>
-        )}
+        <span className={styles.viewInfo}>
+          Unlimited profile views on all plans
+        </span>
       </div>
 
       <div className={styles.reviews}>

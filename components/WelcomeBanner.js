@@ -22,9 +22,10 @@ export default function WelcomeBanner({ plan, onDismiss }) {
             emoji: '🎉',
             color: '#10b981',
             benefits: [
-              `${limits.viewLimit} teacher views`, 
-              `${limits.messagesLeft} messages`, 
-              'Priority support'
+              'Unlimited tutor profile views',
+              `${limits.preLesson ?? limits.messagesLeft} pre-lesson messages per tutor`,
+              'Unlimited messages after your first lesson',
+              `${limits.reviewDiscount ?? 30}% review discount on your 2nd lesson`
             ]
         },
         pro: {
@@ -32,10 +33,10 @@ export default function WelcomeBanner({ plan, onDismiss }) {
             emoji: '⚡',
             color: '#2563eb',
             benefits: [
-              `${limits.viewLimit} teacher views`, 
-              `${limits.messagesLeft} messages`, 
-              '24/7 VIP support', 
-              '35% review discount on your 2nd lesson'
+              'Unlimited tutor profile views',
+              `${limits.preLesson ?? limits.messagesLeft} pre-lesson messages per tutor`,
+              'Unlimited messages after your first lesson',
+              `${limits.reviewDiscount ?? 35}% review discount on your 2nd lesson`
             ]
         },
         vip: {
@@ -43,10 +44,10 @@ export default function WelcomeBanner({ plan, onDismiss }) {
             emoji: '👑',
             color: '#8b5cf6',
             benefits: [
-              'Unlimited teacher views', 
-              'Unlimited messages', 
-              'Personal learning advisor', 
-              '40% review discount on your 2nd lesson'
+              'Unlimited tutor profile views',
+              'Unlimited pre-lesson messages',
+              'Unlimited messages after your first lesson',
+              `${limits.reviewDiscount ?? 40}% review discount on your 2nd lesson`
             ]
         }
     };

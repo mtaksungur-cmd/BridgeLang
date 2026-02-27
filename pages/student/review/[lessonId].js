@@ -41,6 +41,10 @@ export default function ReviewLesson() {
   }, [lessonId, router]);
 
   const handleSubmit = async () => {
+    if (!comment || comment.trim().length === 0) {
+      alert('Please write a comment to submit your review and earn your discount.');
+      return;
+    }
     if (isInappropriate(comment)) {
       alert('Your comment contains inappropriate or forbidden content.');
       return;
@@ -104,13 +108,18 @@ export default function ReviewLesson() {
           ))}
         </div>
 
-        <label className={styles.label}>Comment:</label>
+        <label className={styles.label}>Comment (required):</label>
         <textarea
           rows="4"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           className={styles.textarea}
+          placeholder="Share your experience with this lesson..."
+          required
         />
+        <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: '0.25rem 0 0.75rem' }}>
+          Leave a comment to earn a discount on your 2nd lesson. The discount is covered by the platform.
+        </p>
 
         {/* 🔹 GDPR – Açık Rıza */}
         <label className={styles.consentRow}>

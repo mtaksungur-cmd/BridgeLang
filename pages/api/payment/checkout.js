@@ -185,13 +185,12 @@ export default async function handler(req, res) {
           const pct = Number(reviewCoupon.percent ?? reviewCoupon.discount ?? 0);
           if (pct > 0) {
             discountedPrice = originalPrice * (1 - pct / 100);
-            discountLabel = `Review Bonus ${pct}% (2nd lesson)`;
+            discountLabel = `Review coupon applied — ${pct}% off your 2nd lesson (covered by BridgeLang)`;
             discountPercent = pct;
             usedCoupon = reviewCoupon;
             console.log(`🎁 Review coupon applied on 2nd lesson: ${pct}%`);
           }
         }
-        // Fall back to first-6-lessons discount if no review coupon
         if (!usedCoupon) {
           if (plan === 'starter') { discountedPrice *= 0.9; discountLabel = 'Starter 10% (first 6 lessons)'; discountPercent = 10; }
           if (plan === 'pro') { discountedPrice *= 0.85; discountLabel = 'Pro 15% (first 6 lessons)'; discountPercent = 15; }

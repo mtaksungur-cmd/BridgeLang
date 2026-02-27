@@ -190,7 +190,7 @@ export default function StudentDashboard() {
                 <Star size={22} color="#d97706" />
                 <div style={{ flex: 1 }}>
                   <span style={{ fontWeight: '700', color: '#92400e', fontSize: '0.9375rem' }}>
-                    Leave a review and earn {potentialDiscount}% off your 2nd lesson!
+                    Review &amp; get {potentialDiscount}% off your 2nd lesson!
                   </span>
                   <span style={{ color: '#78350f', fontSize: '0.8125rem', marginLeft: '0.5rem' }}>
                     The discount is covered by the platform — your tutor still gets paid in full.
@@ -295,20 +295,38 @@ export default function StudentDashboard() {
                   <h4>{planLabel} Plan Details</h4>
                   
                   <div className={styles.usageItem}>
-                    <span className={styles.label}>Profile Views Left</span>
-                    <span className={styles.value}>{profileViewsLeft >= 9999 ? 'Unlimited' : profileViewsLeft} &gt;</span>
+                    <span className={styles.label}>Profile Views</span>
+                    <span className={styles.value} style={{color:'#16a34a', fontWeight:'700'}}>Unlimited</span>
                   </div>
                   <div className={styles.infoAlert}>
-                    {planKey === 'vip' ? 'You have unlimited profile views.' : `You can view up to ${limits.viewLimit} tutor profiles on the ${planLabel} Plan.`}
+                    All plans include unlimited tutor profile views.
                   </div>
 
                   <div className={styles.usageItem} style={{marginTop:'1.5rem'}}>
-                    <span className={styles.label}>Messages Left</span>
-                    <span className={styles.value}>{messagesLeft >= 9999 ? 'Unlimited' : messagesLeft} &gt;</span>
+                    <span className={styles.label}>Pre-Lesson Messages</span>
+                    <span className={styles.value}>
+                      {planKey === 'vip' ? (
+                        <span style={{color:'#16a34a', fontWeight:'700'}}>Unlimited</span>
+                      ) : (
+                        <>{messagesLeft} / {limits.messagesLeft}</>
+                      )}
+                    </span>
                   </div>
                   <div className={styles.infoAlert}>
-                    {planKey === 'vip' ? 'You have unlimited messages.' : `You can message up to ${limits.messagesLeft} tutors on the ${planLabel} Plan.`}
+                    {planKey === 'vip'
+                      ? 'You have unlimited messages with all tutors.'
+                      : `${limits.messagesLeft} messages before booking on the ${planLabel} Plan. Unlimited after your first lesson with each tutor.`
+                    }
                   </div>
+
+                  {planKey !== 'vip' && (
+                    <div style={{
+                      background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px',
+                      padding: '0.625rem 0.875rem', marginTop: '0.75rem', fontSize: '0.8125rem', color: '#166534'
+                    }}>
+                      Unlimited messaging after your first lesson with each tutor.
+                    </div>
+                  )}
 
                   <Link href="/student/subscription" className={styles.showDetails}>Show usage details &gt;</Link>
                 </div>

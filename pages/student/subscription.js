@@ -9,23 +9,25 @@ const PLANS = [
     key: "free",
     name: "Free",
     price: "£0",
-    period: "one-time access",
+    period: "no expiry",
     features: [
-      "10 teacher profile views",
-      "Up to 5 messages before booking",
-      "25% Review Discount"
+      "Unlimited tutor profile views",
+      "5 pre-lesson messages per tutor",
+      "Unlimited messages after your first lesson",
+      "25% review discount on your 2nd lesson"
     ],
-    description: "Perfect for trying BridgeLang risk-free.",
+    description: "Perfect for trying BridgeLang risk-free. No auto-renewal.",
   },
   {
     key: "starter",
     name: "Starter",
     price: "£4.99",
-    period: "1-month access",
+    period: "1-month access · no auto-renewal",
     features: [
-      "30 teacher profile views",
-      "Up to 10 messages before booking",
-      "30% Review Discount"
+      "Unlimited tutor profile views",
+      "10 pre-lesson messages per tutor",
+      "Unlimited messages after your first lesson",
+      "30% review discount on your 2nd lesson"
     ],
     description: "Ideal for starting your journey with more flexibility.",
     popular: false,
@@ -34,11 +36,12 @@ const PLANS = [
     key: "pro",
     name: "Pro",
     price: "£9.99",
-    period: "1-month access",
+    period: "1-month access · no auto-renewal",
     features: [
-      "100 teacher profile views",
-      "Up to 20 messages before booking",
-      "35% Review Discount"
+      "Unlimited tutor profile views",
+      "20 pre-lesson messages per tutor",
+      "Unlimited messages after your first lesson",
+      "35% review discount on your 2nd lesson"
     ],
     description: "Great for serious learners making steady progress.",
     popular: true,
@@ -47,11 +50,12 @@ const PLANS = [
     key: "vip",
     name: "VIP",
     price: "£14.99",
-    period: "1-month access",
+    period: "1-month access · no auto-renewal",
     features: [
-      "Unlimited teacher views",
-      "Unlimited messages before booking",
-      "40% Review Discount",
+      "Unlimited tutor profile views",
+      "Unlimited pre-lesson messages",
+      "Unlimited messages after your first lesson",
+      "40% review discount on your 2nd lesson",
       "Priority Support"
     ],
     description: "Maximum freedom and highest rewards for committed learners.",
@@ -183,7 +187,7 @@ export default function SubscriptionPage() {
             </div>
             <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '6px', borderLeft: '3px solid #3b82f6' }}>
               <p style={{ fontSize: '0.875rem', color: '#475569', margin: '0', lineHeight: '1.6' }}>
-                <strong>All plans are one-time purchases and valid for 1 month.</strong> They do not auto-renew. You stay in control. <strong>You can switch plans anytime — the new plan starts immediately.</strong>
+                <strong>No auto-renewal.</strong> The Free plan is permanent with no expiry. Paid plans are one-time purchases valid for 1 month. You stay in control — <strong>you can switch plans anytime.</strong>
               </p>
             </div>
           </div>

@@ -112,14 +112,16 @@ export default async function handler(req, res) {
 
     await updateBadgesForTeacher(teacherId);
 
-    // 🔹 Öğrenci için review bonus (eski mantık olduğu gibi)
     const plan = studentData.subscriptionPlan || 'free';
     const coupons = Array.isArray(studentData.lessonCoupons) ? [...studentData.lessonCoupons] : [];
     const alreadyHasReviewCoupon = coupons.some(
       c => c.type === 'lesson' && (c.source === 'review-bonus' || c.source === 'first-review')
     );
 
-    if (!alreadyHasReviewCoupon && ['free', 'starter', 'pro', 'vip'].includes(plan)) {
+    const lessonsTaken = studentData.lessonsTaken || 0;
+    const hasComment = comment && comment.trim().length > 0;
+
+    if (!alreadyHasReviewCoupon && hasComment && lessonsTaken <= 1 && ['free', 'starter', 'pro', 'vip'].includes(plan)) {
       const discountPercent = plan === 'free' ? 25 : plan === 'starter' ? 30 : plan === 'pro' ? 35 : 40;
 
       const coupon = await stripe.coupons.create({

@@ -157,7 +157,7 @@ export default function StudentRegister() {
         nativeLanguage: form.nativeLanguage || null,
         learningGoals: form.learningGoals.length > 0 ? form.learningGoals : null,
         subscriptionPlan: 'free',
-        viewLimit: 10,
+        viewLimit: 9999,
         messagesLeft: 5,
         credits: 0,
         emailVerified: false,

@@ -47,25 +47,25 @@ export default function PricingTable() {
                                     <td className="fw-bold">Price</td>
                                     <td>
                                         <span className={styles.price}>
-                                            £0 <small>(one-time access)</small>
+                                            £0 <small>(no expiry)</small>
                                         </span>
                                         <div className={styles.planDesc}>Explore tutors and start at your own pace.</div>
                                     </td>
                                     <td>
                                         <span className={styles.price}>
-                                            £4.99 <small>(1-month access)</small>
+                                            £4.99 <small>(1 month · no auto-renewal)</small>
                                         </span>
                                         <div className={styles.planDesc}>A simple step into regular learning.</div>
                                     </td>
                                     <td>
                                         <span className={styles.price}>
-                                            £9.99 <small>(1-month access)</small>
+                                            £9.99 <small>(1 month · no auto-renewal)</small>
                                         </span>
                                         <div className={styles.planDesc}>Designed for consistent progress.</div>
                                     </td>
                                     <td className={`${styles.vipCol} ${styles.vipCell}`}>
                                         <span className={styles.price}>
-                                            £14.99 <small>(1-month access)</small>
+                                            £14.99 <small>(1 month · no auto-renewal)</small>
                                         </span>
                                         <div className={styles.planDesc}>Maximum flexibility for committed learners.</div>
                                     </td>
@@ -73,16 +73,16 @@ export default function PricingTable() {
 
                                 <tr>
                                     <td className="fw-bold">Profile views</td>
-                                    <td>Up to 10</td>
-                                    <td>Up to 30</td>
-                                    <td>Up to 100</td>
+                                    <td>Unlimited</td>
+                                    <td>Unlimited</td>
+                                    <td>Unlimited</td>
                                     <td className={`${styles.vipCol} ${styles.vipCell}`}>Unlimited</td>
                                 </tr>
 
                                 <tr>
                                     <td className="fw-bold">
                                         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                                            Messages before booking
+                                            Pre-lesson messages
                                             <button
                                                 type="button"
                                                 onClick={showInfo}
@@ -97,6 +97,14 @@ export default function PricingTable() {
                                     <td>Up to 5</td>
                                     <td>Up to 10</td>
                                     <td>Up to 20</td>
+                                    <td className={`${styles.vipCol} ${styles.vipCell}`}>Unlimited</td>
+                                </tr>
+
+                                <tr>
+                                    <td className="fw-bold">Messages after lesson</td>
+                                    <td>Unlimited</td>
+                                    <td>Unlimited</td>
+                                    <td>Unlimited</td>
                                     <td className={`${styles.vipCol} ${styles.vipCell}`}>Unlimited</td>
                                 </tr>
 
@@ -121,7 +129,10 @@ export default function PricingTable() {
                         <h4>All plans include</h4>
                         <div className={styles.featuresGrid}>
                             <div className={styles.featureItem}>
-                                <CheckCircleIcon /> Unlimited messages after a lesson
+                                <CheckCircleIcon /> Unlimited tutor profile views
+                            </div>
+                            <div className={styles.featureItem}>
+                                <CheckCircleIcon /> Unlimited messages after your first lesson with each tutor
                             </div>
                             <div className={styles.featureItem}>
                                 <CheckCircleIcon /> One 15-minute intro lesson per tutor (£4.99)
@@ -132,7 +143,7 @@ export default function PricingTable() {
                 </div>
 
                 <p className={styles.footerNote}>
-                    No long-term commitment. Choose a tutor and continue only if it&apos;s the right match.
+                    No auto-renewal. Free plan has no expiry. Paid plans are one-time purchases valid for 1 month.
                 </p>
 
             </div>

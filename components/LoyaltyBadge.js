@@ -82,15 +82,14 @@ export default function LoyaltyBadge({ plan, lessonsTaken = 0 }) {
 
       {messagesLeft !== null && (
         <div style={{ fontSize: 14, color: "#333", marginTop: 6 }}>
-          💬 Messages Left: <strong>{messagesLeft}</strong>
+          💬 Pre-Lesson Messages: <strong>{messagesLeft >= 9999 ? 'Unlimited' : messagesLeft}</strong>
+          <div style={{ fontSize: 12, color: '#64748b' }}>Unlimited after your first lesson with each tutor</div>
         </div>
       )}
 
-      {viewLimit !== null && (
-        <div style={{ fontSize: 14, color: "#333", marginTop: 6 }}>
-          👀 Profile Views Left: <strong>{viewLimit}</strong>
-        </div>
-      )}
+      <div style={{ fontSize: 14, color: "#333", marginTop: 6 }}>
+        👀 Profile Views: <strong>Unlimited</strong>
+      </div>
 
       <div
         style={{

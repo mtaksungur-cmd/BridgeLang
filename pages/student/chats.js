@@ -95,8 +95,8 @@ export default function StudentChats() {
     if (!newMessage.trim() || !selectedConv) return;
 
     try {
-      // 🔹 Check Message Limit before sending
       const otherUserId = selectedConv.otherUser?.id;
+      let isUnlimited = false;
       if (otherUserId) {
         const checkRes = await fetch('/api/messages/check-limit', {
           method: 'POST',
@@ -109,6 +109,11 @@ export default function StudentChats() {
           alert(checkData.error || 'Message limit reached.');
           return;
         }
+
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          isUnlimited = checkData.unlimited || checkData.postLesson;
+        }
       }
 
       await addDoc(collection(db, 'conversations', selectedConv.id, 'messages'), {
@@ -117,17 +122,17 @@ export default function StudentChats() {
         createdAt: new Date()
       });
 
-      // Update conversation's lastMessageAt
       await updateDoc(doc(db, 'conversations', selectedConv.id), {
         lastMessageAt: new Date()
       });
 
-      // Decrement messagesLeft if not unlimited
-      await fetch('/api/decrement', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, type: 'message' })
-      }).catch(err => console.error('Decrement failed:', err));
+      if (!isUnlimited) {
+        await fetch('/api/decrement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, type: 'message' })
+        }).catch(err => console.error('Decrement failed:', err));
+      }
 
       // Send notification to the other user
       const recipientId = selectedConv.otherUser?.id;
