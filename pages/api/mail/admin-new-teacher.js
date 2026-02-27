@@ -21,12 +21,15 @@ export default async function handler(req, res) {
     <p>Please review the application in the <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://bridgelang.co.uk'}/admin/teachers">Admin Panel</a>.</p>
   `;
 
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || 'contact@bridgelang.co.uk';
+
   try {
     await sendMail({
-      to: 'contact@bridgelang.co.uk',
+      to: adminEmail,
       subject,
       html
     });
+    console.log('[admin-new-teacher] Mail sent to', adminEmail);
     res.json({ ok: true });
   } catch (err) {
     console.error('admin-new-teacher notify error:', err);

@@ -33,4 +33,9 @@ You can check out the Next.js repository for feedback and contributions.
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
+**E-posta bildirimleri (öğretmen başvurusu vb.) için Vercel’de şu env değişkenlerini tanımlayın:**
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` — Brevo veya kullandığınız SMTP
+- `ADMIN_NOTIFY_EMAIL` (opsiyonel) — Yeni öğretmen bildiriminin gideceği adres; yoksa `contact@bridgelang.co.uk` kullanılır
+- `MAIL_FROM` (opsiyonel) — Gönderen adı, örn. `BridgeLang <contact@bridgelang.co.uk>`
+
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

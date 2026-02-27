@@ -220,18 +220,20 @@ export default function TeacherRegister() {
                 createdAt: new Date(),
             });
 
-            await fetch('/api/mail/admin-new-teacher', {
+            const adminRes = await fetch('/api/mail/admin-new-teacher', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: form.name, email, specialty: form.specialty.join(', ') }),
-            }).catch(() => { });
+            }).catch(() => ({ ok: false }));
+            if (!adminRes?.ok) console.error('[register] Admin notify failed', adminRes?.status);
 
             // Öğretmene "başvurunuz alındı" onay maili
-            await fetch('/api/mail/teacher-application', {
+            const teacherMailRes = await fetch('/api/mail/teacher-application', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: form.name.trim(), email }),
-            }).catch(() => { });
+            }).catch(() => ({ ok: false }));
+            if (!teacherMailRes?.ok) console.error('[register] Teacher application mail failed');
 
             await signOut(auth);
             setSuccess(true);

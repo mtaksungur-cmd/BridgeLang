@@ -103,12 +103,25 @@ export default function TeacherApply() {
         createdAt: new Date(),
       });
 
+      // Admin'e yeni öğretmen bildirimi (contact@bridgelang.co.uk veya ADMIN_NOTIFY_EMAIL)
+      const adminRes = await fetch('/api/mail/admin-new-teacher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email,
+          specialty: (form.specialty || []).join(', '),
+        }),
+      }).catch((e) => ({ ok: false, status: 0 }));
+      if (!adminRes?.ok) console.error('[apply] Admin notify failed', adminRes?.status);
+
       // Öğretmene "başvurunuz alındı" onay maili
-      await fetch('/api/mail/teacher-application', {
+      const teacherMailRes = await fetch('/api/mail/teacher-application', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name.trim(), email }),
-      }).catch(() => { });
+      }).catch((e) => ({ ok: false }));
+      if (!teacherMailRes?.ok) console.error('[apply] Teacher application mail failed');
 
       await signOut(auth);
       setSuccess(true);
