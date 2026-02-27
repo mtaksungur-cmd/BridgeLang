@@ -1,25 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { signOut } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';
+import UserDropdown from './UserDropdown';
 import styles from './DefaultNavbar.module.scss';
 
 export default function AdminNavbar() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState(null);
 
-  const logout = async () => {
-    try {
-      await signOut(auth);
-      router.replace('/login');
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+      if (authUser) {
+        const userDoc = await getDoc(doc(db, 'users', authUser.uid));
+        if (userDoc.exists()) {
+          setUser({ uid: authUser.uid, ...userDoc.data() });
+        }
+      } else {
+        setUser(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <nav className={styles.navbar}>
@@ -57,13 +64,11 @@ export default function AdminNavbar() {
           <li>
             <Link href="/admin/reports" className={styles.link}>Reports</Link>
           </li>
-          <li style={{ marginLeft: 'auto' }}>
-            <button
-              onClick={logout}
-              className={styles.logoutBtn}
-            >
-              Logout
-            </button>
+          <li>
+            <Link href="/account/settings" className={styles.link}>Settings</Link>
+          </li>
+          <li style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+            {user && <UserDropdown user={user} />}
           </li>
         </ul>
       </div>
