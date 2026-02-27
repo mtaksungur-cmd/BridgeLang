@@ -226,6 +226,13 @@ export default function TeacherRegister() {
                 body: JSON.stringify({ name: form.name, email, specialty: form.specialty.join(', ') }),
             }).catch(() => { });
 
+            // Öğretmene "başvurunuz alındı" onay maili
+            await fetch('/api/mail/teacher-application', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: form.name.trim(), email }),
+            }).catch(() => { });
+
             await signOut(auth);
             setSuccess(true);
         } catch (err) {
