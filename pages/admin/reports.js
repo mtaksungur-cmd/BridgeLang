@@ -5,6 +5,7 @@ import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import SeoHead from '../../components/SeoHead';
+import AdminBar from '../../components/AdminBar';
 
 export default function AdminReportsPage() {
   const [reports, setReports] = useState([]);
@@ -80,6 +81,7 @@ export default function AdminReportsPage() {
       <SeoHead title="Reports Administration" description="View all complaints" />
       <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <AdminBar />
           <header style={{ marginBottom: '2rem' }}>
             <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
               🚨 Complaints

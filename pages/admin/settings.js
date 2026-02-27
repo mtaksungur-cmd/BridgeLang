@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import toast, { Toaster } from 'react-hot-toast';
+import AdminBar from '../../components/AdminBar';
 
 export default function AuthSettings() {
     const [otpEnabled, setOtpEnabled] = useState(false);
@@ -57,6 +58,7 @@ export default function AuthSettings() {
         <>
             <Toaster position="top-center" />
             <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
+                <AdminBar />
                 <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px', color: '#111827' }}>
                     Authentication Settings
                 </h1>

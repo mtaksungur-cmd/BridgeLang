@@ -5,6 +5,7 @@ import { db } from '../../lib/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
 import SeoHead from '../../components/SeoHead';
+import AdminBar from '../../components/AdminBar';
 
 export default function AdminTeachers() {
   const [pending, setPending] = useState([]);
@@ -123,6 +124,7 @@ export default function AdminTeachers() {
       <SeoHead title="Teachers Administration" description="Manage teacher applications and approved tutors" />
       <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <AdminBar />
           <header style={{ marginBottom: '2rem' }}>
             <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
               Teachers Administration

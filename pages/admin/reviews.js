@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, updateDoc, deleteDoc, doc, orderBy, query } from 'firebase/firestore';
 import SeoHead from '../../components/SeoHead';
+import AdminBar from '../../components/AdminBar';
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState([]);
@@ -76,6 +77,7 @@ export default function AdminReviews() {
       <SeoHead title="Reviews Administration" description="Manage all reviews" />
       <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <AdminBar />
           <header style={{ marginBottom: '2rem' }}>
             <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
               Reviews Administration

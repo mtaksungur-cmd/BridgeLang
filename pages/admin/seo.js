@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import SeoHead from '../../components/SeoHead';
+import AdminBar from '../../components/AdminBar';
 
 const DEFAULT_PAGES = [
   { path: '/', label: 'Homepage' },
@@ -89,6 +90,7 @@ export default function AdminSeo() {
       <SeoHead title="SEO Management" description="Manage SEO settings for all pages" />
       <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <AdminBar />
           <header style={{ marginBottom: '2rem' }}>
             <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
               SEO Management
