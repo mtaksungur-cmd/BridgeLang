@@ -9,7 +9,7 @@ import { useRouter } from 'next/router';
 import DefaultNavbar from './DefaultNavbar';
 import StudentNavbar from './StudentNavbar';
 import TeacherNavbar from './TeacherNavbar';
-import AdminNavbar from './AdminNavbar';
+import AdminPageHeader from './AdminPageHeader';
 
 export default function NavbarSwitcher() {
   const [role, setRole] = useState(null);
@@ -67,13 +67,13 @@ export default function NavbarSwitcher() {
 
   if (isAdminRoute) {
     if (loading) return <div style={{ height: 48 }} />;
-    return role === 'admin' ? <AdminNavbar /> : null;
+    return role === 'admin' ? <AdminPageHeader /> : null;
   }
 
   if (loading) return <DefaultNavbar />;
   if (!role) return <DefaultNavbar />;
   if (role === 'student') return <StudentNavbar />;
   if (role === 'teacher') return <TeacherNavbar />;
-  if (role === 'admin') return <AdminNavbar />;
+  if (role === 'admin') return <AdminPageHeader />;
   return <DefaultNavbar />;
 }
