@@ -272,12 +272,9 @@ export default function TeacherApply() {
 
             {step === 4 && (
               <div className={styles.formGrid}>
-                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-                  <label>Professional Bio *</label>
-                  <textarea name="bio" value={form.bio} onChange={handleChange} rows="6" placeholder="Share your experience, teaching style and how you help students..." required />
-                </div>
-                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-                  <label>Upload CV (Optional)</label>
+                {/* CV & Certifications - shown first in Uploads step */}
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`} style={{ padding: '1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', marginBottom: '0.5rem' }}>
+                  <label style={{ color: '#166534', fontWeight: '700' }}>📄 Upload CV (Optional)</label>
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx"
@@ -299,8 +296,8 @@ export default function TeacherApply() {
                   {form.cvUrl && <p style={{ fontSize: '0.75rem', color: '#22c55e', marginTop: '0.375rem' }}>✅ CV uploaded</p>}
                   <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.375rem' }}>PDF, DOC or DOCX (max 5MB)</p>
                 </div>
-                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-                  <label>Upload Certifications (Optional)</label>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`} style={{ padding: '1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', marginBottom: '0.5rem' }}>
+                  <label style={{ color: '#166534', fontWeight: '700' }}>📜 Upload Certifications (Optional)</label>
                   <input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
@@ -328,6 +325,10 @@ export default function TeacherApply() {
                     <p style={{ fontSize: '0.75rem', color: '#22c55e', marginTop: '0.375rem' }}>✅ {form.certificationUrls.length} certification(s) uploaded</p>
                   )}
                   <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.375rem' }}>PDF, JPG or PNG (max 5MB each)</p>
+                </div>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                  <label>Professional Bio *</label>
+                  <textarea name="bio" value={form.bio} onChange={handleChange} rows="6" placeholder="Share your experience, teaching style and how you help students..." required />
                 </div>
                 <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                   <label>Video Intro URL (YouTube/Vimeo)</label>
