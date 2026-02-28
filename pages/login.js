@@ -62,9 +62,16 @@ export default function LoginPage() {
             return;
           }
 
-          let role = userData?.role;
+          // Detect teacher by role OR teacher-specific fields (handles role overwritten by old bug)
+          const isTeacher = userData?.role === 'teacher' ||
+            userData?.approved !== undefined ||
+            userData?.pricing30 !== undefined ||
+            userData?.stripeOnboarded !== undefined ||
+            userData?.specialties !== undefined;
 
-          // If role is missing, check pendingTeachers before defaulting
+          let role = isTeacher ? 'teacher' : (userData?.role || null);
+
+          // If still no role, check pendingTeachers
           if (!role) {
             try {
               const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
@@ -72,9 +79,6 @@ export default function LoginPage() {
               if (pendingDoc.exists()) role = 'teacher';
             } catch (e) { /* ignore */ }
           }
-
-          // Also detect teacher by approved field presence
-          if (!role && userData?.approved !== undefined) role = 'teacher';
 
           if (role === 'teacher') router.push('/teacher/dashboard');
           else if (role === 'student') router.push('/student/dashboard');
@@ -154,14 +158,29 @@ export default function LoginPage() {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           userData = userDoc.data();
-          // Detect teacher by approved field if role is missing
-          role = userData?.role || (userData?.approved !== undefined ? 'teacher' : 'student');
           status = userData?.status || 'active';
 
-          // Fix missing role field for existing users (only if not a teacher/admin)
-          if (userData && !userData.role) {
+          // Detect teacher by role OR teacher-specific fields (handles role overwritten by old bug)
+          const isTeacherAccount = userData?.role === 'teacher' ||
+            userData?.approved !== undefined ||
+            userData?.pricing30 !== undefined ||
+            userData?.stripeOnboarded !== undefined ||
+            userData?.specialties !== undefined;
+
+          role = isTeacherAccount ? 'teacher' : (userData?.role || 'student');
+
+          // Auto-fix wrong role in Firestore
+          if (userData && isTeacherAccount && userData.role !== 'teacher') {
             try {
-              // Check pendingTeachers before defaulting to student
+              await updateDoc(doc(db, 'users', user.uid), { role: 'teacher' });
+            } catch (e) {
+              console.warn('Could not fix teacher role:', e);
+            }
+          }
+
+          // Fix missing role field for non-teacher users
+          if (userData && !userData.role && !isTeacherAccount) {
+            try {
               const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
               const safeRole = pendingSnap.exists() ? 'teacher' : 'student';
               await updateDoc(doc(db, 'users', user.uid), { role: safeRole });

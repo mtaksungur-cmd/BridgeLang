@@ -45,8 +45,20 @@ export default function StudentDashboard() {
 
         const userData = userSnap.data();
 
-        // Also check pendingTeachers for users with missing/wrong role
-        if (userData.role === 'teacher' || (!userData.role && userData.approved !== undefined)) {
+        // Detect teacher by role OR teacher-specific fields (handles role overwritten to 'student' by old bug)
+        const isTeacher = userData.role === 'teacher' ||
+          userData.approved !== undefined ||
+          userData.pricing30 !== undefined ||
+          userData.stripeOnboarded !== undefined ||
+          userData.specialties !== undefined;
+
+        if (isTeacher) {
+          // Fix the role in Firestore if it was wrongly set
+          if (userData.role !== 'teacher') {
+            try {
+              await updateDoc(doc(db, 'users', user.uid), { role: 'teacher' });
+            } catch (e) { /* ignore */ }
+          }
           clearTimeout(timeout);
           setRedirecting(true);
           router.replace('/teacher/dashboard');
@@ -59,19 +71,17 @@ export default function StudentDashboard() {
           return;
         }
 
-        // Extra safety: check pendingTeachers if role is missing
-        if (!userData.role) {
-          try {
-            const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
-            if (pendingSnap.exists()) {
-              clearTimeout(timeout);
-              setRedirecting(true);
-              router.replace('/teacher/dashboard');
-              return;
-            }
-          } catch (e) { /* ignore */ }
-        }
-        // If role is 'student' or missing/undefined (and not a pending teacher), stay on student dashboard
+        // Extra safety: check pendingTeachers collection
+        try {
+          const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
+          if (pendingSnap.exists()) {
+            clearTimeout(timeout);
+            setRedirecting(true);
+            router.replace('/teacher/dashboard');
+            return;
+          }
+        } catch (e) { /* ignore */ }
+        // If none of the above matched, stay on student dashboard
 
         if (userData.status === 'pending_consent') {
           clearTimeout(timeout);
