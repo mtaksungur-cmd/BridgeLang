@@ -44,7 +44,9 @@ export default function StudentDashboard() {
         if (!userSnap.exists()) { clearTimeout(timeout); setRedirecting(true); router.replace('/login'); return; }
 
         const userData = userSnap.data();
-        if (userData.role === 'teacher') {
+
+        // Also check pendingTeachers for users with missing/wrong role
+        if (userData.role === 'teacher' || (!userData.role && userData.approved !== undefined)) {
           clearTimeout(timeout);
           setRedirecting(true);
           router.replace('/teacher/dashboard');
@@ -56,7 +58,20 @@ export default function StudentDashboard() {
           router.replace('/admin/teachers');
           return;
         }
-        // If role is 'student' or missing/undefined, stay on student dashboard
+
+        // Extra safety: check pendingTeachers if role is missing
+        if (!userData.role) {
+          try {
+            const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
+            if (pendingSnap.exists()) {
+              clearTimeout(timeout);
+              setRedirecting(true);
+              router.replace('/teacher/dashboard');
+              return;
+            }
+          } catch (e) { /* ignore */ }
+        }
+        // If role is 'student' or missing/undefined (and not a pending teacher), stay on student dashboard
 
         if (userData.status === 'pending_consent') {
           clearTimeout(timeout);

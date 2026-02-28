@@ -62,7 +62,19 @@ export default function LoginPage() {
             return;
           }
 
-          const role = userData?.role;
+          let role = userData?.role;
+
+          // If role is missing, check pendingTeachers before defaulting
+          if (!role) {
+            try {
+              const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
+              if (cancelled || loginInProgressRef.current) return;
+              if (pendingDoc.exists()) role = 'teacher';
+            } catch (e) { /* ignore */ }
+          }
+
+          // Also detect teacher by approved field presence
+          if (!role && userData?.approved !== undefined) role = 'teacher';
 
           if (role === 'teacher') router.push('/teacher/dashboard');
           else if (role === 'student') router.push('/student/dashboard');
@@ -142,13 +154,18 @@ export default function LoginPage() {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           userData = userDoc.data();
-          role = userData?.role || 'student';
+          // Detect teacher by approved field if role is missing
+          role = userData?.role || (userData?.approved !== undefined ? 'teacher' : 'student');
           status = userData?.status || 'active';
 
-          // Fix missing role field for existing users
+          // Fix missing role field for existing users (only if not a teacher/admin)
           if (userData && !userData.role) {
             try {
-              await updateDoc(doc(db, 'users', user.uid), { role: 'student' });
+              // Check pendingTeachers before defaulting to student
+              const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
+              const safeRole = pendingSnap.exists() ? 'teacher' : 'student';
+              await updateDoc(doc(db, 'users', user.uid), { role: safeRole });
+              role = safeRole;
             } catch (e) {
               console.warn('Could not update missing role:', e);
             }

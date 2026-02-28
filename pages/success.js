@@ -6,12 +6,13 @@ import { useRouter } from 'next/router';
 import { Check, Calendar, MessageCircle, Star, Loader2 } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 
 export default function Success() {
   const [ready, setReady] = useState(false);
   const [bookingType, setBookingType] = useState(null); // 'lesson' | 'plan' | null
   const [updatedPlan, setUpdatedPlan] = useState(null);
+  const [userRole, setUserRole] = useState('student');
   const router = useRouter();
 
   useEffect(() => {
@@ -58,7 +59,16 @@ export default function Success() {
       // session_id varsa önce verify-session dene
       if (sessionId) {
         const verified = await verifySession();
-        if (verified) return;
+        if (verified) {
+          // Still detect user role for dashboard links
+          if (user) {
+            try {
+              const uSnap = await getDoc(doc(db, 'users', user.uid));
+              if (uSnap.exists()) setUserRole(uSnap.data().role || 'student');
+            } catch (e) { /* ignore */ }
+          }
+          return;
+        }
       }
 
       if (!user) {
@@ -66,6 +76,12 @@ export default function Success() {
         fallbackTimer = setTimeout(() => resolve('lesson', null), 3000);
         return;
       }
+
+      // Detect user role for dashboard links
+      try {
+        const uSnap = await getDoc(doc(db, 'users', user.uid));
+        if (uSnap.exists()) setUserRole(uSnap.data().role || 'student');
+      } catch (e) { /* ignore */ }
 
       // session_id yoksa (eski checkout URL) → Firestore'dan kontrol et
       // Ama sadece plan upgrade için dinle, justUpgraded flag'ini temizle
@@ -379,7 +395,7 @@ export default function Success() {
                 marginTop: '2rem',
               }}>
                 <Link
-                  href="/student/dashboard"
+                  href={userRole === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'}
                   style={{
                     display: 'block',
                     padding: '0.875rem 1.5rem',
@@ -408,7 +424,7 @@ export default function Success() {
                 </Link>
 
                 <Link
-                  href="/student/lessons"
+                  href={userRole === 'teacher' ? '/teacher/lessons' : '/student/lessons'}
                   style={{
                     display: 'block',
                     padding: '0.875rem 1.5rem',
