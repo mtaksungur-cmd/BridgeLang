@@ -17,21 +17,48 @@ export default function CalendarPage() {
   const [msg, setMsg] = useState('');
   const [userId, setUserId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    if (!auth) { setLoading(false); return; }
+    let cancelled = false;
+
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) return router.push('/login');
-      setUserId(user.uid);
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) {
-        const data = snap.data();
-        setAvailability(data.availability || {});
-        if (!data?.stripeOnboarded) return router.push('/teacher/stripe-connect');
+      if (cancelled || redirecting) return;
+      if (!user) {
+        setRedirecting(true);
+        router.replace('/login');
+        return;
+      }
+
+      try {
+        setUserId(user.uid);
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (cancelled || redirecting) return;
+
+        if (snap.exists()) {
+          const data = snap.data();
+          setAvailability(data.availability || {});
+
+          // Only redirect to stripe-connect if truly not onboarded
+          // Don't redirect if stripeOnboarded is explicitly true
+          if (data.stripeOnboarded === false || (!data.stripeOnboarded && data.stripeOnboarded !== true)) {
+            // Skip stripe redirect for now - let teacher use calendar
+            // They can onboard later
+          }
+        }
+      } catch (error) {
+        console.error('Calendar auth error:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     });
-    return () => unsub();
-  }, [router]);
+
+    return () => { cancelled = true; unsub(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const formatTime = (h, m) => `${h.padStart(2, '0')}:${m}`;
 
@@ -82,6 +109,15 @@ export default function CalendarPage() {
   const getTotalSlots = () => {
     return Object.values(availability).reduce((sum, slots) => sum + (slots?.length || 0), 0);
   };
+
+  if (loading || redirecting) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '2rem' }}>
