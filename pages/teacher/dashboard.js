@@ -244,36 +244,6 @@ export default function TeacherDashboard() {
                   Here's what's happening with your teaching
                 </p>
               </div>
-              <Link href="/account/profile">
-                <button style={{
-                  padding: '0.625rem 1.25rem',
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#475569',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#eff6ff';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                    e.currentTarget.style.color = '#3b82f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#cbd5e1';
-                    e.currentTarget.style.color = '#475569';
-                  }}
-                >
-                  <Settings style={{ width: '16px', height: '16px' }} />
-                  Edit Profile
-                </button>
-              </Link>
             </div>
           </div>
         </div>
@@ -578,37 +548,7 @@ export default function TeacherDashboard() {
           <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', marginBottom: '1.25rem' }}>Quick Actions</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <Link href="/account/profile">
-                <button style={{
-                  width: '100%',
-                  padding: '1rem',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
-                }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#eff6ff';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                  }}
-                >
-                  <Settings style={{ width: '20px', height: '20px', color: '#3b82f6', marginBottom: '0.5rem' }} />
-                  <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
-                    Edit Profile
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                    Update your info
-                  </div>
-                </button>
-              </Link>
-
-              <Link href="/teacher/bookings">
+              <Link href="/teacher/lessons">
                 <button style={{
                   width: '100%',
                   padding: '1rem',
