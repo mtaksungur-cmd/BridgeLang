@@ -5,6 +5,7 @@ import styles from "../scss/Home.module.scss";
 import GeneralIntroVideo from "../components/videos/GeneralIntroVideo";
 import PricingTable from "../components/PricingTable";
 import SeoHead from "../components/SeoHead";
+import useSeoData from "../lib/useSeoData";
 
 const trustPoints = [
   {
@@ -107,6 +108,7 @@ const steps = [
 export default function Home() {
   const [learnerCount, setLearnerCount] = useState(142);
   const [activeStep, setActiveStep] = useState(null);
+  const { h1: seoH1 } = useSeoData();
 
   useEffect(() => {
     // Social Proof - randomized count for the session
@@ -126,7 +128,7 @@ export default function Home() {
               <div className={styles.heroGrid}>
                 <div className={styles.heroContent}>
                   <h1 className={styles.heroTitle}>
-                    Real UK English for Real Life in the UK
+                    {seoH1 || 'Real UK English for Real Life in the UK'}
                   </h1>
                   <p className={styles.heroLead}>
                     Learn practical English for everyday life in the UK with trusted, UK-based tutors.
@@ -161,7 +163,7 @@ export default function Home() {
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#28c76f]"></span>
                       </span>
                       <p className="text-sm font-medium text-[#4a5568] m-0">
-                        <span className="font-bold text-[#4a6fbd]">{learnerCount} learners</span> started their journey today.
+                        <span className="font-bold text-[#4a6fbd]">{learnerCount} people</span> are browsing the site right now.
                       </p>
                     </div>
                   </div>
