@@ -355,7 +355,6 @@ export default function StudentDashboard() {
                     </div>
                   )}
 
-                  <Link href="/student/subscription" className={styles.showDetails}>Show usage details &gt;</Link>
                 </div>
               </div>
             </div>
