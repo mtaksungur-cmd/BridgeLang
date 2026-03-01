@@ -107,6 +107,7 @@
   text-align: center;
   background: #fff;
   border-top: 1px solid #e2e8f0;
+  z-index: 10;
 }
 
 .captionHeader {
@@ -179,4 +180,6 @@
   margin: 0.5rem 0 0 0;
   padding: 0 1rem 0.5rem;
   line-height: 1.4;
+  position: relative;
+  z-index: 10;
 }
