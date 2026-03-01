@@ -30,6 +30,11 @@ const SHOTS_STUDENT = [
     src: "/screenshots/student/step-4.png?v=4",
     caption: "Step 4 – Join Your Live Lesson",
     description: "Check your camera and microphone before joining. No downloads needed. Runs directly in your browser."
+  },
+  {
+    src: "/screenshots/student/step-5.png?v=4",
+    caption: "Step 5 – Chat with Your Teacher",
+    description: "Introduce yourself or ask about lesson availability. Most tutors reply within 24 hours. All messages stay within the platform."
   }
 ];
 
