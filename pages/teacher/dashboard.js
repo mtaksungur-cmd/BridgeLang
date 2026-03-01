@@ -38,9 +38,28 @@ export default function TeacherDashboard() {
         if (!userSnap.exists()) { setRedirecting(true); router.push('/login'); return; }
 
         const userData = userSnap.data();
-        if (userData.role === 'student' || (!userData.role && userData.role !== 'teacher')) { setRedirecting(true); router.push('/student/dashboard'); return; }
+
+        // Admin check first
         if (userData.role === 'admin') { setRedirecting(true); router.push('/admin/teachers'); return; }
-        if (userData.role !== 'teacher') { setRedirecting(true); router.push('/login'); return; }
+
+        // Detect teacher by role OR teacher-specific fields (handles corrupted role)
+        const isTeacher = userData.role === 'teacher' ||
+          userData.approved !== undefined ||
+          userData.pricing30 !== undefined ||
+          userData.stripeOnboarded !== undefined ||
+          userData.specialties !== undefined;
+
+        if (!isTeacher) {
+          // Not a teacher at all — send to student dashboard
+          setRedirecting(true); router.push('/student/dashboard'); return;
+        }
+
+        // Auto-fix corrupted role in Firestore
+        if (userData.role !== 'teacher') {
+          try {
+            await updateDoc(userRef, { role: 'teacher' });
+          } catch (e) { console.warn('Could not fix teacher role:', e); }
+        }
 
         // Check for teacher approval
         if (userData.approved === false) {
