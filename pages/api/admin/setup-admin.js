@@ -9,21 +9,23 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { email } = req.body;
+    const { email, force } = req.body;
 
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    // Safety check: only allow if no admin exists yet
-    const existingAdmins = await adminDb
-      .collection('users')
-      .where('role', '==', 'admin')
-      .limit(1)
-      .get();
+    if (!force) {
+      // Safety check: only allow if no admin exists yet (bootstrap mode)
+      const existingAdmins = await adminDb
+        .collection('users')
+        .where('role', '==', 'admin')
+        .limit(1)
+        .get();
 
-    if (!existingAdmins.empty) {
-      return res.status(403).json({ error: 'An admin already exists. This bootstrap endpoint is disabled.' });
+      if (!existingAdmins.empty) {
+        return res.status(403).json({ error: 'An admin already exists. Use force:true to override.' });
+      }
     }
 
     // Find user by email in Firebase Auth
