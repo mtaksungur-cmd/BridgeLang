@@ -216,14 +216,16 @@ export default function TeacherProfile() {
 
                                         {/* Stats */}
                                         <div style={{ display: 'flex', gap: '2rem', marginTop: '1.5rem' }}>
-                                            <div>
-                                                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#0f172a' }}>
-                                                    {teacher.totalLessons || 0}
+                                            {(teacher.totalLessons || 0) > 0 && (
+                                                <div>
+                                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#0f172a' }}>
+                                                        {teacher.totalLessons}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                                                        Lessons
+                                                    </div>
                                                 </div>
-                                                <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                                                    Lessons
-                                                </div>
-                                            </div>
+                                            )}
                                             <div>
                                                 <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#0f172a' }}>
                                                     {teacher.experienceYears || 0}
@@ -232,14 +234,16 @@ export default function TeacherProfile() {
                                                     Years Exp.
                                                 </div>
                                             </div>
-                                            <div>
-                                                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#0f172a' }}>
-                                                    {teacher.totalReviews || 0}
+                                            {(teacher.totalReviews || 0) > 0 && (
+                                                <div>
+                                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#0f172a' }}>
+                                                        {teacher.totalReviews}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                                                        Reviews
+                                                    </div>
                                                 </div>
-                                                <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                                                    Reviews
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
