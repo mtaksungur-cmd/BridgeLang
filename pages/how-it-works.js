@@ -1,9 +1,10 @@
 // pages/how-it-works.js
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import Head from "next/head";
 import Link from "next/link";
 import styles from "../scss/HowItWorks.module.scss";
+import SeoHead from "../components/SeoHead";
+import useSeoData from "../lib/useSeoData";
 
 import StudentOnboardingVideo from "../components/videos/StudentOnboardingVideo";
 import TeacherOnboardingVideo from "../components/videos/TeacherOnboardingVideo";
@@ -11,52 +12,42 @@ import TeacherOnboardingVideo from "../components/videos/TeacherOnboardingVideo"
 /* ————— SCREENSHOTS ————— */
 const SHOTS_STUDENT = [
   {
-    src: "/screenshots/student/step-1.png?v=3",
+    src: "/screenshots/student/step-1.png?v=4",
     caption: "Step 1 – Start with Free Access",
-    description: "No subscription. No upfront cost. Browse verified tutor profiles and message them before booking. Start for free or try a 15-min intro lesson for £4.99."
+    description: "No subscription. No upfront cost. Browse tutors, view profiles, and message tutors before booking. Start for free or try a 15-min intro lesson for £4.99."
   },
   {
-    src: "/screenshots/student/step-2.png?v=3",
+    src: "/screenshots/student/step-2.png?v=4",
     caption: "Step 2 – Find the Tutor That Fits You",
-    description: "Browse verified UK-based tutors. From £15/30min. You can switch tutors anytime — even on the Free Plan."
+    description: "Browse verified UK-based tutors. No commitment. You can switch tutors anytime — even on the Free Plan."
   },
   {
-    src: "/screenshots/student/step-3.png?v=3",
+    src: "/screenshots/student/step-3.png?v=4",
     caption: "Step 3 – Book your first lesson in minutes",
     description: "Choose 15/30/45/60-minute lessons. Pay only for the lesson you book — no membership fees. Intro lesson credit applies to your next booking."
   },
   {
-    src: "/screenshots/student/step-4.png?v=3",
+    src: "/screenshots/student/step-4.png?v=4",
     caption: "Step 4 – Join Your Live Lesson",
-    description: "Join directly in your browser. Check your camera and microphone before the lesson starts. No downloads needed."
-  },
-  {
-    src: "/screenshots/student/step-5.png?v=3",
-    caption: "Step 5 – Progress and Get Rewarded",
-    description: "Earn loyalty rewards as you learn. Your consistency is valued and rewarded with discounts on future lessons."
+    description: "Check your camera and microphone before joining. No downloads needed. Runs directly in your browser."
   }
 ];
 
 const SHOTS_TEACHER = [
   {
-    src: "/screenshots/teacher/step-1.png?v=3",
+    src: "/screenshots/teacher/step-1.png?v=4",
     caption: "Step 1 – Create Your Teaching Profile",
-    description: "Connect with UK-based learners. Set your own rates and availability. Secure payments via Stripe Connect."
+    description: "Start by creating your profile. Our team reviews applications within 1 business day. UK-focused learners, fair pricing, Stripe Connect secure payments."
   },
   {
-    src: "/screenshots/teacher/step-2.png?v=3",
-    caption: "Step 2 – Complete Your Profile Details",
-    description: "Choose lesson durations (30/45/60 min), set your prices, and manage your weekly schedule with ease."
+    src: "/screenshots/teacher/step-2.png?v=4",
+    caption: "Step 2 – Complete Your Profile & Set Your Lesson Details",
+    description: "Set your availability, lesson durations, and prices to start teaching. Actual dashboards may vary based on user role and settings."
   },
   {
-    src: "/screenshots/teacher/step-3.png?v=3",
+    src: "/screenshots/teacher/step-3.png?v=4",
     caption: "Step 3 – Connect Your Payments Securely",
-    description: "Receive your earnings directly to your bank account. Stripe handles all security and tax documentation."
-  },
-  {
-    src: "/screenshots/teacher/step-4.png?v=3",
-    caption: "Step 4 – Start Teaching & Growing",
-    description: "Accept lesson requests, teach learners across the UK, and build your reputation with student reviews."
+    description: "Payments are handled securely via Stripe Connect. Your earnings are paid directly to your bank account. BridgeLang never holds your money."
   }
 ];
 
@@ -65,6 +56,7 @@ export default function HowItWorks() {
   const [activeInfo, setActiveInfo] = useState({});
   const [role, setRole] = useState("student");
   const [mounted, setMounted] = useState(false);
+  const { h1: seoH1 } = useSeoData();
 
   useEffect(() => {
     setMounted(true);
@@ -94,9 +86,10 @@ export default function HowItWorks() {
 
   return (
     <>
-      <Head>
-        <title>How It Works — {role === "teacher" ? "For Teachers" : "For Students"} | BridgeLang</title>
-      </Head>
+      <SeoHead
+        title={`How It Works — ${role === "teacher" ? "For Teachers" : "For Students"} | BridgeLang`}
+        description="Discover how easy it is to start learning English on BridgeLang. Browse verified UK tutors, book a 15-minute intro lesson, join live sessions, and track your progress."
+      />
 
       <div className={`container py-5 ${styles.page}`}>
         {/* ROLE SWITCH - REVERTED TO SIMPLE VERSION AS REQUESTED */}
@@ -124,7 +117,7 @@ export default function HowItWorks() {
         </div>
 
         <header className="text-center mb-4">
-          <h1 className="h3 fw-bold mb-2">How It Works – BridgeLang</h1>
+          <h1 className="h3 fw-bold mb-2">{seoH1 || 'How It Works – BridgeLang'}</h1>
           <p className="text-muted mb-0">
             {role === "teacher"
               ? "Teach real-life English to learners in the UK — online or in person."
@@ -178,6 +171,7 @@ export default function HowItWorks() {
                              <p className={styles.captionDescription}>{s.description}</p>
                         </div>
                       </div>
+                      <p className={styles.slideDisclaimer}>Images shown are illustrative and may not represent a real account. Actual dashboards may vary based on user role and settings.</p>
                     </div>
                   ))}
                 </div>
