@@ -6,6 +6,9 @@ import GeneralIntroVideo from "../components/videos/GeneralIntroVideo";
 import PricingTable from "../components/PricingTable";
 import SeoHead from "../components/SeoHead";
 import useSeoData from "../lib/useSeoData";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../lib/firebase";
 
 const trustPoints = [
   {
@@ -109,11 +112,34 @@ export default function Home() {
   const [learnerCount, setLearnerCount] = useState(142);
   const [activeStep, setActiveStep] = useState(null);
   const { h1: seoH1 } = useSeoData();
+  const [userRole, setUserRole] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     // Social Proof - randomized count for the session
     const randomBoost = Math.floor(Math.random() * 21); // 0 to 20
     setLearnerCount(140 + randomBoost);
+  }, []);
+
+  useEffect(() => {
+    if (!auth) return;
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsLoggedIn(true);
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) {
+            setUserRole(snap.data().role || 'student');
+          }
+        } catch (e) {
+          console.error('Home auth check error:', e);
+        }
+      } else {
+        setIsLoggedIn(false);
+        setUserRole(null);
+      }
+    });
+    return () => unsub();
   }, []);
 
   return (
@@ -135,9 +161,15 @@ export default function Home() {
                   </p>
                   <div className="flex flex-col items-center lg:items-start">
                     <div className={styles.heroBtns}>
-                      <Link href="/student/register" className={styles.btnPrimary}>
-                        Start Learning Today
-                      </Link>
+                      {isLoggedIn ? (
+                        <Link href={userRole === 'teacher' ? '/teacher/dashboard' : userRole === 'admin' ? '/admin/teachers' : '/student/dashboard'} className={styles.btnPrimary}>
+                          Go to Dashboard
+                        </Link>
+                      ) : (
+                        <Link href="/student/register" className={styles.btnPrimary}>
+                          Start Learning Today
+                        </Link>
+                      )}
                       <Link 
                         href="#how-it-works" 
                         className={styles.btnPrimary} 

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react';
 
 export default function UserDropdown({ user }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -164,6 +164,28 @@ export default function UserDropdown({ user }) {
 
                     {/* Menu Items */}
                     <div style={{ padding: '0.5rem' }}>
+                        {/* Dashboard */}
+                        <Link href={userRole === 'teacher' ? '/teacher/dashboard' : userRole === 'admin' ? '/admin/teachers' : '/student/dashboard'}>
+                            <div
+                                onClick={() => setIsOpen(false)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    padding: '0.625rem 0.75rem',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    transition: 'background 0.15s',
+                                    textDecoration: 'none'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                                <LayoutDashboard style={{ width: '16px', height: '16px', color: '#64748b' }} />
+                                <span style={{ fontSize: '0.875rem', color: '#0f172a', fontWeight: '500' }}>Dashboard</span>
+                            </div>
+                        </Link>
+
                         {/* Profile - Teachers only */}
                         {userRole === 'teacher' && (
                             <Link href="/account/profile">

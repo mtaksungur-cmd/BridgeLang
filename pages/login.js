@@ -62,14 +62,18 @@ export default function LoginPage() {
             return;
           }
 
-          // Detect teacher by role OR teacher-specific fields (handles role overwritten by old bug)
-          const isTeacher = userData?.role === 'teacher' ||
-            userData?.approved !== undefined ||
-            userData?.pricing30 !== undefined ||
-            userData?.stripeOnboarded !== undefined ||
-            userData?.specialties !== undefined;
+          // Admin check first — never override admin role
+          let role = userData?.role || null;
+          if (role !== 'admin') {
+            // Detect teacher by role OR teacher-specific fields (handles role overwritten by old bug)
+            const isTeacher = userData?.role === 'teacher' ||
+              userData?.approved !== undefined ||
+              userData?.pricing30 !== undefined ||
+              userData?.stripeOnboarded !== undefined ||
+              userData?.specialties !== undefined;
 
-          let role = isTeacher ? 'teacher' : (userData?.role || null);
+            role = isTeacher ? 'teacher' : (userData?.role || null);
+          }
 
           // If still no role, check pendingTeachers
           if (!role) {
@@ -160,33 +164,38 @@ export default function LoginPage() {
           userData = userDoc.data();
           status = userData?.status || 'active';
 
-          // Detect teacher by role OR teacher-specific fields (handles role overwritten by old bug)
-          const isTeacherAccount = userData?.role === 'teacher' ||
-            userData?.approved !== undefined ||
-            userData?.pricing30 !== undefined ||
-            userData?.stripeOnboarded !== undefined ||
-            userData?.specialties !== undefined;
+          // Admin check first — never override admin role
+          if (userData?.role === 'admin') {
+            role = 'admin';
+          } else {
+            // Detect teacher by role OR teacher-specific fields (handles role overwritten by old bug)
+            const isTeacherAccount = userData?.role === 'teacher' ||
+              userData?.approved !== undefined ||
+              userData?.pricing30 !== undefined ||
+              userData?.stripeOnboarded !== undefined ||
+              userData?.specialties !== undefined;
 
-          role = isTeacherAccount ? 'teacher' : (userData?.role || 'student');
+            role = isTeacherAccount ? 'teacher' : (userData?.role || 'student');
 
-          // Auto-fix wrong role in Firestore
-          if (userData && isTeacherAccount && userData.role !== 'teacher') {
-            try {
-              await updateDoc(doc(db, 'users', user.uid), { role: 'teacher' });
-            } catch (e) {
-              console.warn('Could not fix teacher role:', e);
+            // Auto-fix wrong role in Firestore
+            if (userData && isTeacherAccount && userData.role !== 'teacher') {
+              try {
+                await updateDoc(doc(db, 'users', user.uid), { role: 'teacher' });
+              } catch (e) {
+                console.warn('Could not fix teacher role:', e);
+              }
             }
-          }
 
-          // Fix missing role field for non-teacher users
-          if (userData && !userData.role && !isTeacherAccount) {
-            try {
-              const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
-              const safeRole = pendingSnap.exists() ? 'teacher' : 'student';
-              await updateDoc(doc(db, 'users', user.uid), { role: safeRole });
-              role = safeRole;
-            } catch (e) {
-              console.warn('Could not update missing role:', e);
+            // Fix missing role field for non-teacher users
+            if (userData && !userData.role && !isTeacherAccount) {
+              try {
+                const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
+                const safeRole = pendingSnap.exists() ? 'teacher' : 'student';
+                await updateDoc(doc(db, 'users', user.uid), { role: safeRole });
+                role = safeRole;
+              } catch (e) {
+                console.warn('Could not update missing role:', e);
+              }
             }
           }
 
