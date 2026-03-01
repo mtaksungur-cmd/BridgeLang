@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
+import { useRouter } from 'next/router';
+import { auth, db } from '../../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import SeoHead from '../../components/SeoHead';
 import AdminBar from '../../components/AdminBar';
@@ -20,9 +22,27 @@ export default function AdminSeo() {
   const [saving, setSaving] = useState(false);
   const [activePage, setActivePage] = useState('/');
   const [message, setMessage] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    loadSeoData();
+    if (!auth) { setLoading(false); return; }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) { router.replace('/login'); return; }
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists() && snap.data().role === 'admin') {
+          setIsAdmin(true);
+          loadSeoData();
+        } else {
+          router.replace('/login');
+        }
+      } catch (e) {
+        console.error('Admin auth check failed:', e);
+        router.replace('/login');
+      }
+    });
+    return () => unsub();
   }, []);
 
   const loadSeoData = async () => {

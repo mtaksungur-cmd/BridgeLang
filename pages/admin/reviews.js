@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
-import { collection, getDocs, updateDoc, deleteDoc, doc, orderBy, query } from 'firebase/firestore';
+import { useRouter } from 'next/router';
+import { auth, db } from '../../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs, updateDoc, deleteDoc, doc, getDoc, orderBy, query } from 'firebase/firestore';
 import SeoHead from '../../components/SeoHead';
 import AdminBar from '../../components/AdminBar';
 
@@ -16,9 +18,27 @@ export default function AdminReviews() {
   const [editing, setEditing] = useState(null);
   const [editText, setEditText] = useState('');
   const [editRating, setEditRating] = useState(5);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    loadReviews();
+    if (!auth) { setLoading(false); return; }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) { router.replace('/login'); return; }
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists() && snap.data().role === 'admin') {
+          setIsAdmin(true);
+          loadReviews();
+        } else {
+          router.replace('/login');
+        }
+      } catch (e) {
+        console.error('Admin auth check failed:', e);
+        router.replace('/login');
+      }
+    });
+    return () => unsub();
   }, []);
 
   const loadReviews = async () => {

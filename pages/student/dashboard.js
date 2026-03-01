@@ -45,6 +45,14 @@ export default function StudentDashboard() {
 
         const userData = userSnap.data();
 
+        // Admin check FIRST — never override admin role
+        if (userData.role === 'admin') {
+          clearTimeout(timeout);
+          setRedirecting(true);
+          router.replace('/admin/teachers');
+          return;
+        }
+
         // Detect teacher by role OR teacher-specific fields (handles role overwritten to 'student' by old bug)
         const isTeacher = userData.role === 'teacher' ||
           userData.approved !== undefined ||
@@ -62,12 +70,6 @@ export default function StudentDashboard() {
           clearTimeout(timeout);
           setRedirecting(true);
           router.replace('/teacher/dashboard');
-          return;
-        }
-        if (userData.role === 'admin') {
-          clearTimeout(timeout);
-          setRedirecting(true);
-          router.replace('/admin/teachers');
           return;
         }
 

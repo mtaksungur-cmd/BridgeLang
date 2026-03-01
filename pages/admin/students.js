@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { useRouter } from 'next/router';
+import { auth, db } from '../../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';
 import SeoHead from '../../components/SeoHead';
 import AdminBar from '../../components/AdminBar';
@@ -10,10 +12,28 @@ import AdminBar from '../../components/AdminBar';
 export default function AdminStudents() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
-    loadStudents();
+    if (!auth) { setLoading(false); return; }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) { router.replace('/login'); return; }
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists() && snap.data().role === 'admin') {
+          setIsAdmin(true);
+          loadStudents();
+        } else {
+          router.replace('/login');
+        }
+      } catch (e) {
+        console.error('Admin auth check failed:', e);
+        router.replace('/login');
+      }
+    });
+    return () => unsub();
   }, []);
 
   const loadStudents = async () => {
