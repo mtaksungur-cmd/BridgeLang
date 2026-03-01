@@ -1,10 +1,5 @@
 import Head from 'next/head';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-
-// Try to load Firestore SEO overrides
-let firestoreSeoCache = null;
-let firestoreSeoLoaded = false;
+import useSeoData from '../lib/useSeoData';
 
 export default function SeoHead({
     title = 'BridgeLang - Connect with Teachers Worldwide',
@@ -13,35 +8,7 @@ export default function SeoHead({
     canonical,
     keywords = 'online tutoring, language teachers, online learning, private lessons'
 }) {
-    const router = useRouter();
-    const [seoOverride, setSeoOverride] = useState(null);
-
-    useEffect(() => {
-        // Load Firestore SEO settings (cached after first load)
-        const loadSeo = async () => {
-            if (firestoreSeoLoaded) {
-                if (firestoreSeoCache?.[router.pathname]) {
-                    setSeoOverride(firestoreSeoCache[router.pathname]);
-                }
-                return;
-            }
-            try {
-                const { getFirestore, doc, getDoc } = await import('firebase/firestore');
-                const { db } = await import('../lib/firebase');
-                const snap = await getDoc(doc(db, 'settings', 'seo'));
-                if (snap.exists()) {
-                    firestoreSeoCache = snap.data().pages || {};
-                    if (firestoreSeoCache[router.pathname]) {
-                        setSeoOverride(firestoreSeoCache[router.pathname]);
-                    }
-                }
-            } catch {
-                // Firestore not available, use defaults
-            }
-            firestoreSeoLoaded = true;
-        };
-        loadSeo();
-    }, [router.pathname]);
+    const seoOverride = useSeoData();
 
     const finalTitle = seoOverride?.title || title;
     const finalDesc = seoOverride?.description || description;

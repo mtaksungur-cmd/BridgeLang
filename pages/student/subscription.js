@@ -3,6 +3,7 @@ import { auth, db } from "../../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { Check, Sparkles, Zap } from 'lucide-react';
 import SeoHead from '../../components/SeoHead';
+import useSeoData from '../../lib/useSeoData';
 
 const PLANS = [
   {
@@ -66,6 +67,7 @@ export default function SubscriptionPage() {
   const [activePlan, setActivePlan] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { h1: seoH1 } = useSeoData();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -152,7 +154,7 @@ export default function SubscriptionPage() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '3rem 1.5rem' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.5rem', letterSpacing: '-0.025em' }}>
-              Choose Your Plan
+              {seoH1 || 'Choose Your Plan'}
             </h1>
             <p style={{ fontSize: '1rem', color: '#64748b' }}>
               Select the perfect plan for your learning journey

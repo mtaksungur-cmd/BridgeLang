@@ -1,5 +1,6 @@
 // pages/student/teachers.js
 import SeoHead from '../../components/SeoHead';
+import useSeoData from '../../lib/useSeoData';
 import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -10,6 +11,7 @@ import { Search, Filter } from 'lucide-react';
 export default function TeachersPage() {
     const [teachers, setTeachers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { h1: seoH1 } = useSeoData();
 
     useEffect(() => {
         const fetchTeachers = async () => {
@@ -39,7 +41,7 @@ export default function TeachersPage() {
             
             <div className={styles.container}>
                 <header className={styles.header}>
-                    <h1>Find Your Teacher</h1>
+                    <h1>{seoH1 || 'Find Your Teacher'}</h1>
                     <p>Browse {teachers.length} qualified teachers</p>
                 </header>
 

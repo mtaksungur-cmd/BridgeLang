@@ -190,6 +190,19 @@ export default function AdminSeo() {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
+                    H2 Subheading
+                  </label>
+                  <input
+                    type="text"
+                    value={current.h2 || ''}
+                    onChange={(e) => handleChange('h2', e.target.value)}
+                    placeholder="Secondary heading on the page"
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.875rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
                     Keywords
                   </label>
                   <input

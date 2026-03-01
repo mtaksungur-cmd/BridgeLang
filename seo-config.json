@@ -2,26 +2,31 @@
     "/": {
         "title": "Find Verified English Tutors in the UK | BridgeLang",
         "description": "Connect with verified tutors for 1-on-1 English lessons. Specializing in British life, work, and culture. Start with a 15-minute intro lesson.",
-        "h1": "Master English for Your Life in the UK"
+        "h1": "Master English for Your Life in the UK",
+        "h2": "Why Learners Trust BridgeLang"
     },
     "/student/teachers": {
         "title": "Browse Our Tutors | BridgeLang",
         "description": "Explore verified English tutors. Filter by location, price, and specialty. Book a 15-minute intro lesson today.",
-        "h1": "Meet Your BridgeLang Tutors"
+        "h1": "Meet Your BridgeLang Tutors",
+        "h2": "Browse Qualified Teachers"
     },
     "/student/subscription": {
         "title": "Pricing & Plans | Start Free, Upgrade Anytime | BridgeLang",
         "description": "Explore BridgeLang's flexible plans: Free access with limited messaging, or Starter/Pro/VIP for more features. All plans include 15-minute intro lessons (£4.99) and unlimited profile views.",
-        "h1": "Choose Your Learning Plan"
+        "h1": "Choose Your Learning Plan",
+        "h2": "Select the Perfect Plan for Your Journey"
     },
     "/how-it-works": {
         "title": "How BridgeLang Works | Find Tutors, Book Lessons, Start Learning",
         "description": "Discover how easy it is to start learning English on BridgeLang. Browse verified UK tutors, book a 15-minute intro lesson for £4.99, join live sessions, and track your progress.",
-        "h1": "See How It Works - From Browsing to Your First Lesson"
+        "h1": "See How It Works - From Browsing to Your First Lesson",
+        "h2": "Step-by-Step Guide"
     },
     "/about": {
         "title": "About Us | BridgeLang",
         "description": "BridgeLang is dedicated to helping newcomers in the UK build confidence through language.",
-        "h1": "Our Mission"
+        "h1": "Our Mission",
+        "h2": "Who We Are"
     }
 }

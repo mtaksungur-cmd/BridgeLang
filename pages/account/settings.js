@@ -3,7 +3,7 @@ import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged, updatePassword, updateEmail } from 'firebase/auth';
 import { useRouter } from 'next/router';
-import { User, Lock, Bell, CreditCard, Globe, Shield, Download, Trash2, Save, PauseCircle, LogOut } from 'lucide-react';
+import { User, Lock, Bell, CreditCard, Shield, Download, Trash2, Save, PauseCircle, LogOut } from 'lucide-react';
 
 export default function Settings() {
     const [user, setUser] = useState(null);
@@ -115,7 +115,6 @@ export default function Settings() {
         try {
             await updateDoc(doc(db, 'users', user.uid), {
                 emailNotifications: formData.emailNotifications,
-                smsNotifications: formData.smsNotifications,
                 pushNotifications: formData.pushNotifications
             });
             setMessage('✓ Notification preferences updated');
@@ -232,7 +231,6 @@ export default function Settings() {
         { id: 'security', label: 'Security', icon: Lock },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'billing', label: 'Billing', icon: CreditCard },
-        { id: 'preferences', label: 'Preferences', icon: Globe },
         { id: 'privacy', label: 'Privacy', icon: Shield }
     ];
 
@@ -515,18 +513,6 @@ export default function Settings() {
                                         </div>
                                     </label>
 
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.smsNotifications}
-                                            onChange={(e) => setFormData({ ...formData, smsNotifications: e.target.checked })}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <div>
-                                            <div style={{ fontSize: '0.875rem', fontWeight: '500', color: '#0f172a' }}>SMS Notifications</div>
-                                            <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>Receive text messages for important updates</div>
-                                        </div>
-                                    </label>
 
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
                                         <input
@@ -584,104 +570,6 @@ export default function Settings() {
                             </div>
                         )}
 
-                        {/* Preferences Tab */}
-                        {activeTab === 'preferences' && (
-                            <div>
-                                <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#0f172a', marginBottom: '1.5rem' }}>
-                                    Preferences
-                                </h2>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
-                                            Language
-                                        </label>
-                                        <select
-                                            value={formData.language}
-                                            onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.625rem 0.875rem',
-                                                border: '1px solid #cbd5e1',
-                                                borderRadius: '6px',
-                                                fontSize: '0.875rem',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <option value="en">English</option>
-                                            <option value="tr">Turkish</option>
-                                            <option value="es">Spanish</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
-                                            Timezone
-                                        </label>
-                                        <select
-                                            value={formData.timezone}
-                                            onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.625rem 0.875rem',
-                                                border: '1px solid #cbd5e1',
-                                                borderRadius: '6px',
-                                                fontSize: '0.875rem',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <option value="Europe/London">London (GMT)</option>
-                                            <option value="Europe/Istanbul">Istanbul (GMT+3)</option>
-                                            <option value="America/New_York">New York (EST)</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>
-                                            Currency
-                                        </label>
-                                        <select
-                                            value={formData.currency}
-                                            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.625rem 0.875rem',
-                                                border: '1px solid #cbd5e1',
-                                                borderRadius: '6px',
-                                                fontSize: '0.875rem',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <option value="GBP">GBP (£)</option>
-                                            <option value="USD">USD ($)</option>
-                                            <option value="EUR">EUR (€)</option>
-                                        </select>
-                                    </div>
-
-                                    <div style={{ paddingTop: '1rem' }}>
-                                        <button
-                                            onClick={handleSavePreferences}
-                                            disabled={saving}
-                                            style={{
-                                                padding: '0.625rem 1.5rem',
-                                                background: '#3b82f6',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                fontSize: '0.875rem',
-                                                fontWeight: '600',
-                                                cursor: saving ? 'not-allowed' : 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem'
-                                            }}
-                                        >
-                                            <Save style={{ width: '16px', height: '16px' }} />
-                                            {saving ? 'Saving...' : 'Save Changes'}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Privacy Tab */}
                         {activeTab === 'privacy' && (

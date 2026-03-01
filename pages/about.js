@@ -1,22 +1,21 @@
-import Head from "next/head";
 import styles from "../scss/About.module.scss";
+import SeoHead from "../components/SeoHead";
+import useSeoData from "../lib/useSeoData";
 
 export default function About() {
+  const { h1: seoH1 } = useSeoData();
+
   return (
     <>
-      <Head>
-        <title>About Us | BridgeLang Ltd.</title>
-        <meta
-          name="description"
-          content="About BridgeLang Ltd. – Who we are, our mission, vision, values, and company details."
-        />
-        <meta name="robots" content="index,follow" />
-      </Head>
+      <SeoHead
+        title="About Us | BridgeLang Ltd."
+        description="About BridgeLang Ltd. – Who we are, our mission, vision, values, and company details."
+      />
 
       <main className={`container py-4 ${styles.page}`} style={{ '--nav-height': '64px' }}>
         {/* Header */}
         <header className={styles.header}>
-          <h1>About Us – BridgeLang Ltd.</h1>
+          <h1>{seoH1 || 'About Us – BridgeLang Ltd.'}</h1>
         </header>
 
         <article className={styles.article}>

@@ -9,9 +9,6 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
-            // TEMPORARY: OTP temporarily disabled — remove this line to re-enable
-            return res.status(200).json({ otpEnabled: false });
-
             const settingsDoc = await adminDb.collection('platformSettings').doc('auth').get();
             const settings = settingsDoc.exists ? settingsDoc.data() : { otpEnabled: false };
 

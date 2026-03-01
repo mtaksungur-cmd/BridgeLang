@@ -3,8 +3,11 @@ import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import styles from './DefaultNavbar.module.scss';
 import Image from "next/image";
+import UserDropdown from './UserDropdown';
+import { signOut } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 
-export default function DefaultNavbar() {
+export default function DefaultNavbar({ authUser }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const closeTimeout = useRef(null);
@@ -76,43 +79,53 @@ export default function DefaultNavbar() {
             </Link>
           </li>
 
-          <li
-            className={styles.dropdown}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <button
-              type="button"
-              className={styles.dropdownToggle}
-              onClick={handleToggleClick}
-              aria-haspopup="true"
-              aria-expanded={dropdownOpen ? 'true' : 'false'}
-            >
-              Sign Up
-              <span className={styles.caret}>▾</span>
-            </button>
-
-            <ul
-              className={`${styles.dropdownMenu} ${dropdownOpen ? styles.show : ''}`}
+          {!authUser && (
+            <li
+              className={styles.dropdown}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              <li>
-                <Link className={styles.dropdownItem} href="/student/register" onClick={() => { setMobileMenuOpen(false); setDropdownOpen(false); }}>
-                  Join as a Student
-                </Link>
-              </li>
-              <li>
-                <Link className={styles.dropdownItem} href="/teacher/apply" onClick={() => { setMobileMenuOpen(false); setDropdownOpen(false); }}>
-                  Join as a Tutor
-                </Link>
-              </li>
-            </ul>
-          </li>
+              <button
+                type="button"
+                className={styles.dropdownToggle}
+                onClick={handleToggleClick}
+                aria-haspopup="true"
+                aria-expanded={dropdownOpen ? 'true' : 'false'}
+              >
+                Sign Up
+                <span className={styles.caret}>▾</span>
+              </button>
 
-          <li>
-            <Link href="/login" className={styles.loginBtn}>Login</Link>
-          </li>
+              <ul
+                className={`${styles.dropdownMenu} ${dropdownOpen ? styles.show : ''}`}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                <li>
+                  <Link className={styles.dropdownItem} href="/student/register" onClick={() => { setMobileMenuOpen(false); setDropdownOpen(false); }}>
+                    Join as a Student
+                  </Link>
+                </li>
+                <li>
+                  <Link className={styles.dropdownItem} href="/teacher/apply" onClick={() => { setMobileMenuOpen(false); setDropdownOpen(false); }}>
+                    Join as a Tutor
+                  </Link>
+                </li>
+              </ul>
+            </li>
+          )}
+
+          {!authUser && (
+            <li>
+              <Link href="/login" className={styles.loginBtn}>Login</Link>
+            </li>
+          )}
+
+          {authUser && (
+            <li style={{ marginLeft: '0.5rem' }}>
+              <UserDropdown user={authUser} />
+            </li>
+          )}
         </ul>
       </div>
     </nav>

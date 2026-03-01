@@ -1,19 +1,29 @@
 import React from 'react';
-import { Star, CheckCircle2, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import styles from '../scss/TutorsPagePremium.module.scss';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function TeacherCard({ teacher }) {
     return (
         <div className={styles.tutorCard}>
             <div className={styles.cardTop}>
-                <div style={{ width: 48, height: 48, background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: '700', color: '#475569' }}>
-                    {teacher.name?.charAt(0)}
-                </div>
+                {teacher.profilePhotoUrl ? (
+                    <Image
+                        src={teacher.profilePhotoUrl}
+                        alt={teacher.name || 'Teacher'}
+                        width={48}
+                        height={48}
+                        style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                ) : (
+                    <div style={{ width: 48, height: 48, background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: '700', color: '#475569' }}>
+                        {teacher.name?.charAt(0)}
+                    </div>
+                )}
                 <div className={styles.nameBox}>
                     <h3>
                         {teacher.name} 
-                        <CheckCircle2 size={16} className={styles.verified} fill="currentColor" />
                         <span className={styles.flag}>🇬🇧</span>
                     </h3>
                 </div>
@@ -42,15 +52,6 @@ export default function TeacherCard({ teacher }) {
                     {teacher.specialties?.[0] || 'English Teacher'} · IELTS Prep Specialist
                 </div>
 
-                <div className={styles.ratingRow}>
-                    <div className={styles.stars}>
-                        {[...Array(5)].map((_, i) => (
-                            <Star key={i} size={14} fill={i < 4 ? "#fbbf24" : "none"} color="#fbbf24" />
-                        ))}
-                    </div>
-                    <span className={styles.ratingText}>4.8</span>
-                    <span className={styles.reviewCount}>108 reviews</span>
-                </div>
 
                 <p className={styles.bio}>
                     {teacher.bio || "Friendly, experienced tutor helping students achieve their English goals."}

@@ -13,6 +13,7 @@ import AdminPageHeader from './AdminPageHeader';
 
 export default function NavbarSwitcher() {
   const [role, setRole] = useState(null);
+  const [authUser, setAuthUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const isAdminRoute = router.pathname.startsWith('/admin');
@@ -26,9 +27,11 @@ export default function NavbarSwitcher() {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         setRole(null);
+        setAuthUser(null);
         setLoading(false);
         return;
       }
+      setAuthUser(user);
 
       const loadRole = async (tries = 3) => {
         try {
@@ -71,9 +74,9 @@ export default function NavbarSwitcher() {
   }
 
   if (loading) return <DefaultNavbar />;
-  if (!role) return <DefaultNavbar />;
+  if (!role) return <DefaultNavbar authUser={authUser} />;
   if (role === 'student') return <StudentNavbar />;
   if (role === 'teacher') return <TeacherNavbar />;
   if (role === 'admin') return <AdminPageHeader />;
-  return <DefaultNavbar />;
+  return <DefaultNavbar authUser={authUser} />;
 }
