@@ -37,15 +37,16 @@ export default async function handler(req, res) {
 
     const data = teacherDoc.data ? teacherDoc.data() : teacherDoc.data;
 
-    // Default weekly availability (Mon-Fri 9AM-5PM, Sat 10AM-2PM)
-    const defaultAvailability = {
-      Monday: [{ start: '09:00', end: '17:00' }],
-      Tuesday: [{ start: '09:00', end: '17:00' }],
-      Wednesday: [{ start: '09:00', end: '17:00' }],
-      Thursday: [{ start: '09:00', end: '17:00' }],
-      Friday: [{ start: '09:00', end: '17:00' }],
-      Saturday: [{ start: '10:00', end: '14:00' }],
-      Sunday: [],
+    // Use custom availability if provided, otherwise default to full day every day
+    const customAvailability = req.body.availability;
+    const defaultAvailability = customAvailability || {
+      Monday: [{ start: '00:00', end: '00:00' }],
+      Tuesday: [{ start: '00:00', end: '00:00' }],
+      Wednesday: [{ start: '00:00', end: '00:00' }],
+      Thursday: [{ start: '00:00', end: '00:00' }],
+      Friday: [{ start: '00:00', end: '00:00' }],
+      Saturday: [{ start: '00:00', end: '00:00' }],
+      Sunday: [{ start: '00:00', end: '00:00' }],
     };
 
     // Also fix role if needed
