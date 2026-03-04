@@ -12,47 +12,52 @@ import TeacherOnboardingVideo from "../components/videos/TeacherOnboardingVideo"
 /* ————— SCREENSHOTS ————— */
 const SHOTS_STUDENT = [
   {
-    src: "/screenshots/student/step-1.png?v=4",
+    src: "/screenshots/student/step-1.png?v=5",
     caption: "Step 1 – Start with Free Access",
     description: "No subscription. No upfront cost. Browse tutors, view profiles, and message tutors before booking. Start for free or try a 15-min intro lesson for £4.99."
   },
   {
-    src: "/screenshots/student/step-2.png?v=4",
+    src: "/screenshots/student/step-2.png?v=5",
     caption: "Step 2 – Find the Tutor That Fits You",
     description: "Browse verified UK-based tutors. No commitment. You can switch tutors anytime — even on the Free Plan."
   },
   {
-    src: "/screenshots/student/step-3.png?v=4",
-    caption: "Step 3 – Book your first lesson in minutes",
+    src: "/screenshots/student/step-3.png?v=5",
+    caption: "Step 3 – Chat with Your Teacher",
+    description: "Introduce yourself or ask about lesson availability. Most tutors reply within 24 hours. All messages stay within the platform."
+  },
+  {
+    src: "/screenshots/student/step-4.png?v=5",
+    caption: "Step 4 – Book Your First Lesson in Minutes",
     description: "Choose 15/30/45/60-minute lessons. Pay only for the lesson you book — no membership fees. Intro lesson credit applies to your next booking."
   },
   {
-    src: "/screenshots/student/step-4.png?v=4",
-    caption: "Step 4 – Join Your Live Lesson",
+    src: "/screenshots/student/step-5.png?v=5",
+    caption: "Step 5 – Join Your Live Lesson",
     description: "Check your camera and microphone before joining. No downloads needed. Runs directly in your browser."
-  },
-  {
-    src: "/screenshots/student/step-5.png?v=4",
-    caption: "Step 5 – Chat with Your Teacher",
-    description: "Introduce yourself or ask about lesson availability. Most tutors reply within 24 hours. All messages stay within the platform."
   }
 ];
 
 const SHOTS_TEACHER = [
   {
-    src: "/screenshots/teacher/step-1.png?v=4",
+    src: "/screenshots/teacher/step-1.png?v=5",
     caption: "Step 1 – Create Your Teaching Profile",
     description: "Start by creating your profile. Our team reviews applications within 1 business day. UK-focused learners, fair pricing, Stripe Connect secure payments."
   },
   {
-    src: "/screenshots/teacher/step-2.png?v=4",
+    src: "/screenshots/teacher/step-2.png?v=5",
     caption: "Step 2 – Complete Your Profile & Set Your Lesson Details",
     description: "Set your availability, lesson durations, and prices to start teaching. Actual dashboards may vary based on user role and settings."
   },
   {
-    src: "/screenshots/teacher/step-3.png?v=4",
+    src: "/screenshots/teacher/step-3.png?v=5",
     caption: "Step 3 – Connect Your Payments Securely",
     description: "Payments are handled securely via Stripe Connect. Your earnings are paid directly to your bank account. BridgeLang never holds your money."
+  },
+  {
+    src: "/screenshots/teacher/step-4.png?v=5",
+    caption: "Step 4 – Start Teaching Learners Across the UK",
+    description: "Teach online or in person. Flexible schedule, secure payments, and a platform built for professionals. Start teaching today."
   }
 ];
 
