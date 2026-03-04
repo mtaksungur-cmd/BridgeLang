@@ -58,6 +58,14 @@ export default function TeacherApply() {
       setError('Please set your lesson prices');
       return false;
     }
+    if (step === 4 && !form.cvUrl) {
+      setError('Please upload your CV before submitting');
+      return false;
+    }
+    if (step === 4 && (!form.certificationUrls || form.certificationUrls.length === 0)) {
+      setError('Please upload at least one certification before submitting');
+      return false;
+    }
     return true;
   };
 
@@ -274,7 +282,7 @@ export default function TeacherApply() {
               <div className={styles.formGrid}>
                 {/* CV & Certifications - shown first in Uploads step */}
                 <div className={`${styles.inputGroup} ${styles.fullWidth}`} style={{ padding: '1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', marginBottom: '0.5rem' }}>
-                  <label style={{ color: '#166534', fontWeight: '700' }}>📄 Upload CV (Optional)</label>
+                  <label style={{ color: '#166534', fontWeight: '700' }}>📄 Upload CV *</label>
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx"
@@ -297,7 +305,7 @@ export default function TeacherApply() {
                   <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.375rem' }}>PDF, DOC or DOCX (max 5MB)</p>
                 </div>
                 <div className={`${styles.inputGroup} ${styles.fullWidth}`} style={{ padding: '1.25rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', marginBottom: '0.5rem' }}>
-                  <label style={{ color: '#166534', fontWeight: '700' }}>📜 Upload Certifications (Optional)</label>
+                  <label style={{ color: '#166534', fontWeight: '700' }}>📜 Upload Certifications *</label>
                   <input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"

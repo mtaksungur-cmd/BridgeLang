@@ -255,6 +255,7 @@ export default function TeacherProfilePage() {
             <strong>Lesson Pricing:</strong>
             <table>
               <tbody>
+                <tr><td>15 min <span style={{ fontSize: '0.7rem', color: '#ca8a04', fontWeight: '700' }}>INTRO</span></td><td>£4.99</td></tr>
                 <tr><td>30 min</td><td>£{teacher.pricing30}</td></tr>
                 <tr><td>45 min</td><td>£{teacher.pricing45}</td></tr>
                 <tr><td>60 min</td><td>£{teacher.pricing60}</td></tr>

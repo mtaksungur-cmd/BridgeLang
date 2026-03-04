@@ -104,6 +104,16 @@ export default function TeacherRegister() {
                 return false;
             }
         }
+        if (step === 4) {
+            if (!form.cvUrl) {
+                setError('Please upload your CV before submitting');
+                return false;
+            }
+            if (!form.certificationUrls || form.certificationUrls.length === 0) {
+                setError('Please upload at least one certification before submitting');
+                return false;
+            }
+        }
         return true;
     };
 
@@ -446,7 +456,7 @@ export default function TeacherRegister() {
 
                             {/* CV Upload */}
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>Upload CV (Optional)</label>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>Upload CV *</label>
                                 <input
                                     type="file"
                                     accept=".pdf,.doc,.docx"
@@ -471,7 +481,7 @@ export default function TeacherRegister() {
 
                             {/* Certification Upload */}
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>Upload Certifications (Optional)</label>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#475569', marginBottom: '0.5rem' }}>Upload Certifications *</label>
                                 <input
                                     type="file"
                                     accept=".pdf,.jpg,.jpeg,.png"

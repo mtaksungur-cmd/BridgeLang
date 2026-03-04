@@ -390,7 +390,7 @@ export default function TeacherProfile() {
                             </div>
 
                             {/* Student Reviews */}
-                            {reviews.length > 0 && (
+                            {reviews.filter(r => !r.hidden).length > 0 && (
                                 <div style={{
                                     background: 'white',
                                     border: '1px solid #e2e8f0',
@@ -399,11 +399,14 @@ export default function TeacherProfile() {
                                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                                 }}>
                                     <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#0f172a', marginBottom: '1.5rem' }}>
-                                        Student Reviews ({reviews.length})
+                                        Student Reviews ({reviews.filter(r => !r.hidden).length})
                                     </h2>
 
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                        {reviews.slice(0, 5).map(review => (
+                                        {reviews.filter(r => !r.hidden).slice(0, 5).map(review => {
+                                            const reviewName = review.display_name || review.student?.name || 'Anonymous Student';
+                                            const reviewPhoto = review.display_photo || (review.user_consented !== false ? review.student?.profilePhotoUrl : null);
+                                            return (
                                             <div key={review.id} style={{
                                                 paddingBottom: '1.5rem',
                                                 borderBottom: '1px solid #f1f5f9'
@@ -413,8 +416,8 @@ export default function TeacherProfile() {
                                                         width: '40px',
                                                         height: '40px',
                                                         borderRadius: '50%',
-                                                        background: review.student?.profilePhotoUrl
-                                                            ? `url(${review.student.profilePhotoUrl}) center/cover`
+                                                        background: reviewPhoto
+                                                            ? `url(${reviewPhoto}) center/cover`
                                                             : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                                                         flexShrink: 0,
                                                         display: 'flex',
@@ -424,11 +427,11 @@ export default function TeacherProfile() {
                                                         fontWeight: '600',
                                                         fontSize: '0.875rem'
                                                     }}>
-                                                        {!review.student?.profilePhotoUrl && (review.student?.name || 'S')[0].toUpperCase()}
+                                                        {!reviewPhoto && (reviewName || 'S')[0].toUpperCase()}
                                                     </div>
                                                     <div style={{ flex: 1 }}>
                                                         <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
-                                                            {review.student?.name || 'Anonymous Student'}
+                                                            {reviewName}
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                                                             {[1, 2, 3, 4, 5].map(i => (
@@ -457,7 +460,8 @@ export default function TeacherProfile() {
                                                     </p>
                                                 )}
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -478,6 +482,31 @@ export default function TeacherProfile() {
 
                                 {/* Pricing Options */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                    {/* 15-min Intro Lesson - always visible */}
+                                    <div style={{
+                                        padding: '0.875rem 1rem',
+                                        background: '#fefce8',
+                                        borderRadius: '8px',
+                                        border: '1px solid #fde047',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                15 minutes
+                                                <span style={{ fontSize: '0.625rem', fontWeight: '700', color: '#ca8a04', background: '#fef9c3', padding: '0.125rem 0.375rem', borderRadius: '4px' }}>
+                                                    INTRO
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                                Intro lesson
+                                            </div>
+                                        </div>
+                                        <div style={{ fontSize: '1.125rem', fontWeight: '700', color: '#ca8a04' }}>
+                                            £4.99
+                                        </div>
+                                    </div>
                                     {teacher.pricing30 && (
                                         <div style={{
                                             padding: '0.875rem 1rem',
@@ -619,24 +648,6 @@ export default function TeacherProfile() {
                                     Send Message
                                 </button>
 
-                                {/* Info Box */}
-                                <div style={{
-                                    marginTop: '1.5rem',
-                                    padding: '1rem',
-                                    background: '#f0fdf4',
-                                    borderRadius: '8px',
-                                    border: '1px solid #bbf7d0'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                        <Clock style={{ width: '16px', height: '16px', color: '#22c55e' }} />
-                                        <span style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#166534' }}>
-                                            Fast Response
-                                        </span>
-                                    </div>
-                                    <p style={{ fontSize: '0.8125rem', color: '#166534', margin: 0, lineHeight: '1.5' }}>
-                                        This teacher typically responds within 24 hours
-                                    </p>
-                                </div>
                             </div>
                         </div>
                     </div>

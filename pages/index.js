@@ -109,7 +109,7 @@ const steps = [
 ];
 
 export default function Home() {
-  const [learnerCount, setLearnerCount] = useState(142);
+  const [learnerCount, setLearnerCount] = useState(25);
   const [activeStep, setActiveStep] = useState(null);
   const { h1: seoH1 } = useSeoData();
   const [userRole, setUserRole] = useState(null);
@@ -117,8 +117,8 @@ export default function Home() {
 
   useEffect(() => {
     // Social Proof - randomized count for the session
-    const randomBoost = Math.floor(Math.random() * 21); // 0 to 20
-    setLearnerCount(140 + randomBoost);
+    const randomBoost = Math.floor(Math.random() * 51); // 0 to 50
+    setLearnerCount(randomBoost);
   }, []);
 
   useEffect(() => {

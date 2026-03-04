@@ -345,6 +345,27 @@ export default function AdminTeachers() {
                       <InfoRow label="Avg Rating" value={t.avgRating ? `${t.avgRating.toFixed(1)} ⭐` : '—'} />
                     </div>
 
+                    {/* CV & Certifications */}
+                    {(t.cvUrl || (t.certificationUrls && t.certificationUrls.length > 0)) && (
+                      <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe' }}>
+                        <div style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem' }}>
+                          📁 Documents
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          {t.cvUrl && (
+                            <a href={t.cvUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '0.375rem 0.75rem', background: 'white', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '0.75rem', color: '#1e40af', textDecoration: 'none', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                              📄 View CV
+                            </a>
+                          )}
+                          {t.certificationUrls?.map((url, i) => (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" style={{ padding: '0.375rem 0.75rem', background: 'white', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '0.75rem', color: '#166534', textDecoration: 'none', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                              📜 Certificate {i + 1}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Intro Video Consent History */}
                     {t.intro_video_history && t.intro_video_history.length > 0 && (
                       <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fefce8', borderRadius: '6px', border: '1px solid #fef08a' }}>
