@@ -264,8 +264,8 @@ export default function TeacherApply() {
                 <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                   <label>Teaching Method *</label>
                   <select name="deliveryMethod" value={form.deliveryMethod} onChange={handleChange} required>
-                    <option value="Online">Online Only</option>
-                    <option value="In-Person">In-Person Only</option>
+                    <option value="Online Only">Online Only</option>
+                    <option value="In-Person Only">In-Person Only</option>
                     <option value="Both">Both Online & In-Person</option>
                   </select>
                 </div>

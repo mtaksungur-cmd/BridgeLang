@@ -33,11 +33,15 @@ export default function BookLessonPage() {
     let allowedLocations = teacher.teachingLocations;
 
     if (!allowedLocations || allowedLocations.length === 0) {
-      const dm = teacher.deliveryMethod;
-      if (dm === 'Both') {
+      const dm = (teacher.deliveryMethod || '').toLowerCase();
+      const hasOnline = dm.includes('online');
+      const hasInPerson = dm.includes('person') || dm.includes('face');
+      const isBoth = dm.includes('both') || (hasOnline && hasInPerson);
+
+      if (isBoth) {
         allowedLocations = ['Online', "Teacher's Home"];
         if (teacher.willingToTravel) allowedLocations.push("Student's Home");
-      } else if (dm === 'In-Person') {
+      } else if (hasInPerson) {
         allowedLocations = ["Teacher's Home"];
         if (teacher.willingToTravel) allowedLocations.push("Student's Home");
       } else {

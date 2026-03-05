@@ -183,30 +183,15 @@ export default function LoginPage() {
       if (!res.ok) {
         const errCode = data.error || 'send-code-failed';
 
-        // If OTP infrastructure is broken (SMTP or Firebase Admin), fall back to
-        // direct server-side authentication so the system doesn't lock everyone out.
-        if (errCode === 'email-send-failed' || errCode === 'server-config-error') {
-          console.warn('OTP unavailable (' + errCode + '), falling back to direct auth');
-          const { role, status } = await getUserFromServer(user);
+        await safeSignOut();
+        loginInProgressRef.current = false;
 
-          if (status === 'paused') {
-            await safeSignOut();
-            loginInProgressRef.current = false;
-            setStage('login');
-            setMessage('⏸️ Your account is paused. Please contact support.');
-            return;
-          }
-
-          if (status === 'pending_consent') {
-            await safeSignOut();
-            loginInProgressRef.current = false;
-            setStage('login');
-            setMessage('⏳ Your account is awaiting parental consent.');
-            return;
-          }
-
-          loginInProgressRef.current = false;
-          redirectByRole(role, router);
+        if (errCode === 'email-send-failed') {
+          setMessage('❌ Verification email could not be sent. Please try again or contact support at contact@bridgelang.co.uk');
+          return;
+        }
+        if (errCode === 'server-config-error') {
+          setMessage('❌ Server configuration error. Please contact support at contact@bridgelang.co.uk');
           return;
         }
 
