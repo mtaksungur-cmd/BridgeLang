@@ -47,10 +47,12 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [resending, setResending] = useState(false);
   const router = useRouter();
 
   // Prevents onAuthStateChanged from redirecting mid-login
   const loginInProgressRef = useRef(false);
+  const pendingUidRef = useRef(null);
 
   useEffect(() => {
     if (!auth) {
@@ -182,19 +184,12 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const errCode = data.error || 'send-code-failed';
-
-        await safeSignOut();
-        loginInProgressRef.current = false;
-
-        if (errCode === 'email-send-failed') {
-          setMessage('❌ Verification email could not be sent. Please try again or contact support at contact@bridgelang.co.uk');
-          return;
-        }
         if (errCode === 'server-config-error') {
+          await safeSignOut();
+          loginInProgressRef.current = false;
           setMessage('❌ Server configuration error. Please contact support at contact@bridgelang.co.uk');
           return;
         }
-
         throw new Error(errCode);
       }
 
@@ -206,10 +201,16 @@ export default function LoginPage() {
         return;
       }
 
+      pendingUidRef.current = user.uid;
       await safeSignOut();
       loginInProgressRef.current = false;
       setStage('verify');
-      setMessage('✅ A 6-digit verification code has been sent to your email.');
+
+      if (data.emailSent === false) {
+        setMessage('⚠️ Verification code was generated but the email may not have been delivered. Please click "Resend Code" to try again.');
+      } else {
+        setMessage('✅ A 6-digit verification code has been sent to your email.');
+      }
     } catch (err) {
       console.error(err);
       // Always sign out on error — prevents limbo state where auth succeeded but flow failed
@@ -218,6 +219,39 @@ export default function LoginPage() {
       setMessage('❌ ' + getErrorMessage(getErrorCode(err)));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resending) return;
+    setResending(true);
+    setMessage('');
+
+    try {
+      const email = form.email.trim().toLowerCase();
+      const uid = pendingUidRef.current;
+      if (!uid || !email) {
+        setMessage('⚠️ Session expired. Please go back and sign in again.');
+        return;
+      }
+
+      const res = await fetch('/api/auth/send-login-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, email }),
+      });
+      const data = await res.json();
+
+      if (data.emailSent === false) {
+        setMessage('⚠️ Email delivery failed. Please check your spam folder or try again in a moment.');
+      } else {
+        setMessage('✅ A new verification code has been sent to your email.');
+      }
+    } catch (err) {
+      console.error('Resend error:', err);
+      setMessage('❌ Could not resend code. Please try again.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -448,7 +482,27 @@ export default function LoginPage() {
 
                 <button
                   type="button"
-                  onClick={() => { setStage('login'); setOtp(''); setMessage(''); }}
+                  onClick={handleResendCode}
+                  disabled={resending}
+                  style={{
+                    width: '100%',
+                    height: '44px',
+                    background: 'transparent',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    color: resending ? '#94a3b8' : '#3b82f6',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: resending ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {resending ? 'Sending...' : 'Resend Code'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setStage('login'); setOtp(''); setMessage(''); pendingUidRef.current = null; }}
                   style={{
                     background: 'transparent',
                     border: 'none',

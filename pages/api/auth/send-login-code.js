@@ -72,19 +72,18 @@ export default async function handler(req, res) {
   }
 
   // --- Email sending (SMTP check) ---
+  let emailSent = false;
   try {
     await sendLoginCode({
       to: email,
       userName: userData?.name || '',
       code,
     });
+    emailSent = true;
   } catch (emailErr) {
     console.error('send-login-code email error:', emailErr.message);
-    // Clean up the stored code since email wasn't delivered
-    try { await adminDb.collection('loginCodes').doc(uid).delete(); } catch (_) {}
-    return res.status(500).json({ error: 'email-send-failed' });
   }
 
   const isAdmin = userData?.role === 'admin';
-  return res.json({ ok: true, paused: false, requiresCode: isAdmin || undefined });
+  return res.json({ ok: true, paused: false, emailSent, requiresCode: isAdmin || undefined });
 }
