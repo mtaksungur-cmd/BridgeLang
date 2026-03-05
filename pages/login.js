@@ -7,17 +7,38 @@ import { auth } from '../lib/firebase';
 import {
   signInWithEmailAndPassword,
   signOut,
-  reload,
   signInWithCustomToken,
   setPersistence,
   browserLocalPersistence,
   onAuthStateChanged,
 } from 'firebase/auth';
 import { getErrorMessage, getErrorCode } from '../utils/firebaseErrors';
-import { getDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 
 import OTPInput from '../components/OTPInput';
+
+async function getUserFromServer(user) {
+  const idToken = await user.getIdToken();
+  const res = await fetch('/api/auth/me', {
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'server-error');
+  return data; // { uid, role, status }
+}
+
+function redirectByRole(role, router) {
+  if (role === 'teacher') router.push('/teacher/dashboard');
+  else if (role === 'student') router.push('/student/dashboard');
+  else if (role === 'admin') router.push('/admin/teachers');
+  else if (role === 'pending_teacher') router.push('/teacher/pending-approval');
+  else router.push('/');
+}
+
+async function safeSignOut() {
+  try {
+    if (auth?.currentUser) await signOut(auth);
+  } catch (_) {}
+}
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -28,7 +49,7 @@ export default function LoginPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
 
-  // Ref to prevent onAuthStateChanged from redirecting during active login/verify
+  // Prevents onAuthStateChanged from redirecting mid-login
   const loginInProgressRef = useRef(false);
 
   useEffect(() => {
@@ -39,57 +60,22 @@ export default function LoginPage() {
     let cancelled = false;
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (cancelled) return;
-      // Don't redirect if login/verify is actively in progress
       if (loginInProgressRef.current) {
         setCheckingAuth(false);
         return;
       }
       if (user) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const { role, status } = await getUserFromServer(user);
           if (cancelled || loginInProgressRef.current) return;
-          const userData = userDoc.data();
-
-          if (!userData) {
-            const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
-            if (cancelled || loginInProgressRef.current) return;
-            if (pendingDoc.exists()) {
-              await signOut(auth);
-              router.push('/teacher/pending-approval');
-              return;
-            }
+          if (status === 'paused') {
+            await safeSignOut();
             setCheckingAuth(false);
             return;
           }
-
-          // Admin check first — never override admin role
-          let role = userData?.role || null;
-          if (role !== 'admin') {
-            // Detect teacher by role OR teacher-specific fields (handles role overwritten by old bug)
-            const isTeacher = userData?.role === 'teacher' ||
-              userData?.approved !== undefined ||
-              userData?.pricing30 !== undefined ||
-              userData?.stripeOnboarded !== undefined ||
-              userData?.specialties !== undefined;
-
-            role = isTeacher ? 'teacher' : (userData?.role || null);
-          }
-
-          // If still no role, check pendingTeachers
-          if (!role) {
-            try {
-              const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
-              if (cancelled || loginInProgressRef.current) return;
-              if (pendingDoc.exists()) role = 'teacher';
-            } catch (e) { /* ignore */ }
-          }
-
-          if (role === 'teacher') router.push('/teacher/dashboard');
-          else if (role === 'student') router.push('/student/dashboard');
-          else if (role === 'admin') router.push('/admin/teachers');
-          else router.push('/');
+          redirectByRole(role, router);
         } catch (err) {
-          console.error('Error fetching user role:', err);
+          console.error('Error fetching user role on auth change:', err);
           if (!cancelled) setCheckingAuth(false);
         }
       } else {
@@ -108,20 +94,14 @@ export default function LoginPage() {
     if (!email) return setMessage('⚠️ Please enter your email address to reset your password.');
 
     setLoading(true);
-
     try {
       const res = await fetch('/api/auth/request-password-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to send reset email');
-      }
-
+      if (!res.ok) throw new Error(data.error || 'Failed to send reset email');
       setMessage('📩 Password reset link has been sent to your email. Please check your inbox and spam folder.');
     } catch (err) {
       console.error(err);
@@ -141,8 +121,8 @@ export default function LoginPage() {
       await setPersistence(auth, browserLocalPersistence);
       const email = form.email.trim().toLowerCase();
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
-      await reload(user);
 
+      // Check if OTP is enabled
       let otpEnabled = false;
       try {
         const settingsRes = await fetch('/api/admin/settings/auth');
@@ -155,91 +135,38 @@ export default function LoginPage() {
       }
 
       if (!otpEnabled) {
-        let userData = null;
-        let role = 'student';
-        let status = 'active';
-
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          userData = userDoc.data();
-          status = userData?.status || 'active';
-
-          // Admin check first — never override admin role
-          if (userData?.role === 'admin') {
-            role = 'admin';
-          } else {
-            // Detect teacher by role OR teacher-specific fields (handles role overwritten by old bug)
-            const isTeacherAccount = userData?.role === 'teacher' ||
-              userData?.approved !== undefined ||
-              userData?.pricing30 !== undefined ||
-              userData?.stripeOnboarded !== undefined ||
-              userData?.specialties !== undefined;
-
-            role = isTeacherAccount ? 'teacher' : (userData?.role || 'student');
-
-            // Auto-fix wrong role in Firestore
-            if (userData && isTeacherAccount && userData.role !== 'teacher') {
-              try {
-                await updateDoc(doc(db, 'users', user.uid), { role: 'teacher' });
-              } catch (e) {
-                console.warn('Could not fix teacher role:', e);
-              }
-            }
-
-            // Fix missing role field for non-teacher users
-            if (userData && !userData.role && !isTeacherAccount) {
-              try {
-                const pendingSnap = await getDoc(doc(db, 'pendingTeachers', user.uid));
-                const safeRole = pendingSnap.exists() ? 'teacher' : 'student';
-                await updateDoc(doc(db, 'users', user.uid), { role: safeRole });
-                role = safeRole;
-              } catch (e) {
-                console.warn('Could not update missing role:', e);
-              }
-            }
-          }
-
-          // Task 3.1 & 3.2: If user not found in users, check pendingTeachers
-          if (!userData) {
-            const pendingDoc = await getDoc(doc(db, 'pendingTeachers', user.uid));
-            if (pendingDoc.exists()) {
-              await signOut(auth);
-              router.push('/teacher/pending-approval');
-              return;
-            }
-          }
-        } catch (permError) {
-          console.warn('Permission error during login check:', permError.message);
-          // If we get a permission error, it's very likely a paused/restricted account
-          // We should check via an unauthenticated API route if possible, or just assume pause
-          await signOut(auth);
-          setMessage('⏸️ Your account is restricted or paused. Please check your email for a reactivation link.');
-          return;
-        }
+        // Get user role/status from server (avoids client-side Firestore reads)
+        const { role, status } = await getUserFromServer(user);
 
         if (status === 'paused') {
-          await signOut(auth);
+          await safeSignOut();
+          loginInProgressRef.current = false;
           setStage('login');
           setMessage('⏸️ Your account is paused. Please contact support.');
           return;
         }
 
         if (status === 'pending_consent') {
-          await signOut(auth);
+          await safeSignOut();
+          loginInProgressRef.current = false;
           setStage('login');
           setMessage('⏳ Your account is awaiting parental consent. A confirmation link has been sent to your parent/guardian\'s email. You can log in once they approve.');
           return;
         }
 
-        loginInProgressRef.current = false;
-        if (role === 'teacher') router.push('/teacher/dashboard');
-        else if (role === 'student') router.push('/student/dashboard');
-        else if (role === 'admin') router.push('/admin/teachers');
-        else router.push('/');
+        if (role === 'pending_teacher') {
+          await safeSignOut();
+          loginInProgressRef.current = false;
+          router.push('/teacher/pending-approval');
+          return;
+        }
 
+        loginInProgressRef.current = false;
+        redirectByRole(role, router);
         return;
       }
 
+      // OTP path: send verification code
       const res = await fetch('/api/auth/send-login-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -250,17 +177,22 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.error || 'send-code-failed');
 
       if (data.paused) {
-        await signOut(auth);
+        await safeSignOut();
+        loginInProgressRef.current = false;
         setStage('login');
         setMessage('⏸️ Your account is paused. A reactivation link has been sent to your email.');
         return;
       }
 
-      await signOut(auth);
+      await safeSignOut();
+      loginInProgressRef.current = false;
       setStage('verify');
       setMessage('✅ A 6-digit verification code has been sent to your email.');
     } catch (err) {
       console.error(err);
+      // Always sign out on error — prevents limbo state where auth succeeded but flow failed
+      await safeSignOut();
+      loginInProgressRef.current = false;
       setMessage('❌ ' + getErrorMessage(getErrorCode(err)));
     } finally {
       setLoading(false);
@@ -290,19 +222,13 @@ export default function LoginPage() {
       }
 
       if (data.status === 'paused') {
-        await signOut(auth);
         setStage('login');
         setMessage('⏸️ Your account is paused. A reactivation link has been sent to your email.');
         return;
       }
 
       await signInWithCustomToken(auth, data.token);
-
-      if (data.role === 'teacher') router.push('/teacher/dashboard');
-      else if (data.role === 'student') router.push('/student/dashboard');
-      else if (data.role === 'admin') router.push('/admin/teachers');
-      else router.push('/');
-
+      redirectByRole(data.role, router);
     } catch (err) {
       console.error(err);
       setMessage('❌ ' + getErrorMessage(getErrorCode(err)));
