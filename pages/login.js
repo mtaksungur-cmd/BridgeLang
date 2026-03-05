@@ -122,45 +122,50 @@ export default function LoginPage() {
       const email = form.email.trim().toLowerCase();
       const { user } = await signInWithEmailAndPassword(auth, email, form.password);
 
-      // Check if OTP is enabled
-      let otpEnabled = false;
-      try {
-        const settingsRes = await fetch('/api/admin/settings/auth');
-        if (settingsRes.ok) {
-          const settingsData = await settingsRes.json();
-          otpEnabled = settingsData.otpEnabled || false;
+      // Get user role/status from server first (needed for admin OTP check)
+      const { role, status } = await getUserFromServer(user);
+
+      if (status === 'paused') {
+        await safeSignOut();
+        loginInProgressRef.current = false;
+        setStage('login');
+        setMessage('⏸️ Your account is paused. Please contact support.');
+        return;
+      }
+
+      if (status === 'pending_consent') {
+        await safeSignOut();
+        loginInProgressRef.current = false;
+        setStage('login');
+        setMessage('⏳ Your account is awaiting parental consent. A confirmation link has been sent to your parent/guardian\'s email. You can log in once they approve.');
+        return;
+      }
+
+      if (role === 'pending_teacher') {
+        await safeSignOut();
+        loginInProgressRef.current = false;
+        router.push('/teacher/pending-approval');
+        return;
+      }
+
+      // Admin accounts ALWAYS require OTP for security
+      const isAdmin = role === 'admin';
+
+      // Check global OTP setting for non-admin users
+      let otpEnabled = isAdmin;
+      if (!isAdmin) {
+        try {
+          const settingsRes = await fetch('/api/admin/settings/auth');
+          if (settingsRes.ok) {
+            const settingsData = await settingsRes.json();
+            otpEnabled = settingsData.otpEnabled || false;
+          }
+        } catch (e) {
+          console.warn('Failed to fetch auth settings, defaulting OTP to disabled:', e);
         }
-      } catch (e) {
-        console.warn('Failed to fetch auth settings, defaulting OTP to disabled:', e);
       }
 
       if (!otpEnabled) {
-        // Get user role/status from server (avoids client-side Firestore reads)
-        const { role, status } = await getUserFromServer(user);
-
-        if (status === 'paused') {
-          await safeSignOut();
-          loginInProgressRef.current = false;
-          setStage('login');
-          setMessage('⏸️ Your account is paused. Please contact support.');
-          return;
-        }
-
-        if (status === 'pending_consent') {
-          await safeSignOut();
-          loginInProgressRef.current = false;
-          setStage('login');
-          setMessage('⏳ Your account is awaiting parental consent. A confirmation link has been sent to your parent/guardian\'s email. You can log in once they approve.');
-          return;
-        }
-
-        if (role === 'pending_teacher') {
-          await safeSignOut();
-          loginInProgressRef.current = false;
-          router.push('/teacher/pending-approval');
-          return;
-        }
-
         loginInProgressRef.current = false;
         redirectByRole(role, router);
         return;

@@ -29,8 +29,21 @@ export default function BookLessonPage() {
   const getLocationOptions = () => {
     if (!teacher) return [];
 
-    // Default to online only if teachingLocations not set (for backward compatibility)
-    const allowedLocations = teacher.teachingLocations || ['Online'];
+    // Support both new `teachingLocations` array and legacy `deliveryMethod` field
+    let allowedLocations = teacher.teachingLocations;
+
+    if (!allowedLocations || allowedLocations.length === 0) {
+      const dm = teacher.deliveryMethod;
+      if (dm === 'Both') {
+        allowedLocations = ['Online', "Teacher's Home"];
+        if (teacher.willingToTravel) allowedLocations.push("Student's Home");
+      } else if (dm === 'In-Person') {
+        allowedLocations = ["Teacher's Home"];
+        if (teacher.willingToTravel) allowedLocations.push("Student's Home");
+      } else {
+        allowedLocations = ['Online'];
+      }
+    }
 
     const allOptions = [
       { value: 'Online', label: 'Online', sublabel: 'Video Call', icon: Video },
@@ -39,7 +52,6 @@ export default function BookLessonPage() {
       { value: 'Other', label: 'Other Location', sublabel: 'Custom', icon: Navigation }
     ];
 
-    // Filter to only show teacher's supported locations
     return allOptions.filter(opt => allowedLocations.includes(opt.value));
   };
 
