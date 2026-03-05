@@ -27,6 +27,7 @@ export const getErrorMessage = (errorCode) => {
         'User not found': 'No account found with this email address.',
         'Missing email or code': 'Please provide both email and verification code.',
         'send-code-failed': 'Failed to send verification code. Please try again.',
+        'email-send-failed': 'Verification email could not be sent. The email service may not be configured on this server.',
         'server-config-error': 'Server authentication is not configured correctly. Please contact support.',
         'account-paused': 'Your account has been paused. A reactivation link has been sent to your email.',
 

@@ -174,7 +174,39 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'send-code-failed');
+
+      if (!res.ok) {
+        const errCode = data.error || 'send-code-failed';
+
+        // If OTP infrastructure is broken (SMTP or Firebase Admin), fall back to
+        // direct server-side authentication so the system doesn't lock everyone out.
+        if (errCode === 'email-send-failed' || errCode === 'server-config-error') {
+          console.warn('OTP unavailable (' + errCode + '), falling back to direct auth');
+          const { role, status } = await getUserFromServer(user);
+
+          if (status === 'paused') {
+            await safeSignOut();
+            loginInProgressRef.current = false;
+            setStage('login');
+            setMessage('⏸️ Your account is paused. Please contact support.');
+            return;
+          }
+
+          if (status === 'pending_consent') {
+            await safeSignOut();
+            loginInProgressRef.current = false;
+            setStage('login');
+            setMessage('⏳ Your account is awaiting parental consent.');
+            return;
+          }
+
+          loginInProgressRef.current = false;
+          redirectByRole(role, router);
+          return;
+        }
+
+        throw new Error(errCode);
+      }
 
       if (data.paused) {
         await safeSignOut();
