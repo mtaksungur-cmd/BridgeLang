@@ -22,27 +22,17 @@ export default async function handler(req, res) {
 
     let event;
 
+    if (!sig || !webhookSecret) {
+        console.error('❌ Webhook: Missing Stripe-Signature header or STRIPE_WEBHOOK_SECRET env var');
+        return res.status(400).send('Webhook Error: Missing signature or webhook secret');
+    }
+
     try {
-        if (!sig || !webhookSecret) {
-            throw new Error('Missing signature or webhook secret');
-        }
         event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
         console.log('✅ Webhook Signature Verified. Event:', event.type);
     } catch (err) {
-        console.error(`❌ Webhook Error: ${err.message}`);
-        
-        // 🛠️ EMERGENCY BYPASS FOR TEST MODE ONLY (if signature verification is failing due to proxy)
-        if (process.env.STRIPE_SECRET_KEY?.startsWith('sk_test')) {
-            console.warn('⚠️ Test Mode: Attempting to process event without signature verification...');
-            try {
-                event = JSON.parse(buf.toString());
-                console.log('⚠️ Processed raw event (Unverified):', event.type);
-            } catch (jsonErr) {
-                return res.status(400).send(`Webhook Error: ${err.message}`);
-            }
-        } else {
-            return res.status(400).send(`Webhook Error: ${err.message}`);
-        }
+        console.error(`❌ Webhook signature verification failed: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
     // Handle the event

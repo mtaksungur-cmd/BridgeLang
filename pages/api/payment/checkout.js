@@ -244,20 +244,15 @@ export default async function handler(req, res) {
 
     let validStripeAccount = false;
 
-    // Bypass validation for test accounts
-    if (stripeAccountId === 'acct_1test') {
-       validStripeAccount = false; // Just take payment to platform for test teachers
-    } else {
-      // Validate that Stripe account actually exists
-      try {
-        console.log('🔍 Validating Stripe account...');
-        const account = await stripe.accounts.retrieve(stripeAccountId);
-        validStripeAccount = account && account.id === stripeAccountId;
-        console.log('✅ Stripe account validated:', stripeAccountId);
-      } catch (accountErr) {
-        console.error('❌ Stripe account validation failed:', accountErr.message);
-        validStripeAccount = false;
-      }
+    // Validate that Stripe account actually exists and is active
+    try {
+      console.log('🔍 Validating Stripe account...');
+      const account = await stripe.accounts.retrieve(stripeAccountId);
+      validStripeAccount = account && account.id === stripeAccountId;
+      console.log('✅ Stripe account validated:', stripeAccountId);
+    } catch (accountErr) {
+      console.error('❌ Stripe account validation failed:', accountErr.message);
+      validStripeAccount = false;
     }
 
     // Prepare payment_intent_data - only add transfer and fee if account is valid

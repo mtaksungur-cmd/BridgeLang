@@ -20,21 +20,17 @@ export default async function handler(req, res) {
 
     let event;
 
+    if (!sig || !webhookSecret) {
+        console.error('❌ V1 Webhook: Missing Stripe-Signature header or STRIPE_WEBHOOK_SECRET env var');
+        return res.status(400).send('Webhook Error: Missing signature or webhook secret');
+    }
+
     try {
-        if (!sig || !webhookSecret) {
-            throw new Error('Missing signature or webhook secret');
-        }
         event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
+        console.log('✅ V1 Webhook Signature Verified. Event:', event.type);
     } catch (err) {
-        if (process.env.STRIPE_SECRET_KEY?.startsWith('sk_test')) {
-            try {
-                event = JSON.parse(buf.toString());
-            } catch (jsonErr) {
-                return res.status(400).send(`Webhook Error: ${err.message}`);
-            }
-        } else {
-            return res.status(400).send(`Webhook Error: ${err.message}`);
-        }
+        console.error(`❌ V1 Webhook signature verification failed: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
     if (event.type === 'checkout.session.completed') {

@@ -1,8 +1,14 @@
+// This endpoint is disabled in production.
+// Remove the CRON_SECRET check or the entire file in a public deployment.
 export default function handler(req, res) {
-  res.status(200).json({
-    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY?.substring(0, 10) + '...',
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.substring(0, 10) + '...',
-    FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
-    PROJECT_ID_ALT: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  const secret = req.headers['x-cron-secret'] || req.query.secret;
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  return res.status(200).json({
+    stripe_mode: process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'LIVE' : 'TEST',
+    firebase_project: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'unknown',
+    base_url: process.env.NEXT_PUBLIC_BASE_URL || 'not set',
   });
 }
