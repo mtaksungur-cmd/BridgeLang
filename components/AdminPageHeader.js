@@ -39,6 +39,8 @@ export default function AdminPageHeader() {
   };
 
   return (
+    <>
+    <style>{`@media (max-width: 1023px) { .admin-header-actions { display: none !important; } }`}</style>
     <header
       style={{
         background: '#102c57',
@@ -68,7 +70,7 @@ export default function AdminPageHeader() {
           <Link href="/admin/reports" style={linkStyle}>Reports</Link>
         </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} className="admin-header-actions">
           <Link
             href="/account/settings"
             style={linkStyle}
@@ -89,5 +91,6 @@ export default function AdminPageHeader() {
         </div>
       </div>
     </header>
+    </>
   );
 }
