@@ -34,8 +34,18 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 
-# Firebase Admin
+# Firebase Admin (use ONE of the following methods)
+# Method A (recommended in Vercel): base64 encoded service account JSON
+FIREBASE_SERVICE_ACCOUNT_BASE64=
+
+# Method B (legacy): raw JSON string
 FIREBASE_SERVICE_ACCOUNT_JSON=
+
+# Method C: split credentials
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+FIREBASE_PRIVATE_KEY_BASE64=
 
 # Stripe
 STRIPE_SECRET_KEY=

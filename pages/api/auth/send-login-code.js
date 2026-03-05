@@ -6,6 +6,11 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
+    if (!adminDb) {
+      console.error('send-login-code error: Firebase Admin is not initialized');
+      return res.status(500).json({ error: 'server-config-error' });
+    }
+
     const { uid, email } = req.body;
     if (!uid || !email) return res.status(400).json({ error: 'Missing data' });
 
@@ -87,6 +92,6 @@ export default async function handler(req, res) {
     return res.json({ ok: true, paused: false });
   } catch (err) {
     console.error('send-login-code error:', err);
-    return res.status(500).json({ error: 'Failed to send code' });
+    return res.status(500).json({ error: 'send-code-failed' });
   }
 }

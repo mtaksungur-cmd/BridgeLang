@@ -12,6 +12,11 @@ export const getErrorMessage = (errorCode) => {
         'auth/network-request-failed': 'Network error. Please check your internet connection.',
         'auth/requires-recent-login': 'Please log in again to perform this action.',
         'auth/invalid-credential': 'Invalid credentials. Please check your information.',
+        'auth/invalid-api-key': 'Firebase API key is invalid or missing. Check Vercel environment variables.',
+        'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'Firebase API key is invalid. Check Vercel environment variables.',
+        'auth/app-not-authorized': 'This domain is not authorized in Firebase Authentication settings.',
+        'auth/configuration-not-found': 'Firebase Authentication configuration is missing for this project.',
+        'auth/internal-error': 'Authentication service is temporarily unavailable. Please try again.',
         'auth/operation-not-allowed': 'This operation is not currently supported.',
         'auth/account-exists-with-different-credential': 'An account with this email already exists using a different sign-in method.',
 
@@ -22,6 +27,7 @@ export const getErrorMessage = (errorCode) => {
         'User not found': 'No account found with this email address.',
         'Missing email or code': 'Please provide both email and verification code.',
         'send-code-failed': 'Failed to send verification code. Please try again.',
+        'server-config-error': 'Server authentication is not configured correctly. Please contact support.',
         'account-paused': 'Your account has been paused. A reactivation link has been sent to your email.',
 
         // Generic

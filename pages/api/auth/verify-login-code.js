@@ -7,6 +7,11 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
+    if (!adminDb || !adminAuth) {
+      console.error('verify-login-code error: Firebase Admin is not initialized');
+      return res.status(500).json({ error: 'server-config-error' });
+    }
+
     const { email, code } = req.body;
     if (!email || !code) return res.status(400).json({ error: 'Missing email or code' });
 
