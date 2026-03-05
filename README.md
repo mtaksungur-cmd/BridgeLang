@@ -1,41 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with `create-next-app`.
+# BridgeLang
+
+A Next.js-based language learning platform connecting students with teachers.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (Pages Router)
+- **Database**: Firebase Firestore
+- **Auth**: Firebase Authentication
+- **Storage**: Firebase Storage
+- **Payments**: Stripe
+- **Email**: Nodemailer (SMTP via Brevo)
+- **Styling**: SCSS Modules + Bootstrap 5 + Tailwind CSS
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env.local` file with the following variables:
 
-## Learn More
+```env
+# Firebase (Client)
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
 
-To learn more about Next.js, take a look at the following resources:
+# Firebase Admin
+FIREBASE_SERVICE_ACCOUNT_JSON=
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Stripe
+STRIPE_SECRET_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
 
-You can check out the Next.js repository for feedback and contributions.
+# Email (SMTP)
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+ADMIN_NOTIFY_EMAIL=
+MAIL_FROM=
+
+# App
+NEXT_PUBLIC_BASE_URL=
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
+```
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Connect the repository to [Vercel](https://vercel.com) and add the environment variables above in the Vercel dashboard.
 
-**E-posta bildirimleri (öğretmen başvurusu vb.) için Vercel’de şu env değişkenlerini tanımlayın:**
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` — Brevo veya kullandığınız SMTP
-- `ADMIN_NOTIFY_EMAIL` (opsiyonel) — Yeni öğretmen bildiriminin gideceği adres; yoksa `contact@bridgelang.co.uk` kullanılır
-- `MAIL_FROM` (opsiyonel) — Gönderen adı, örn. `BridgeLang <contact@bridgelang.co.uk>`
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The `vercel.json` file includes cron jobs for lesson reminders, notifications, and cleanup tasks.
