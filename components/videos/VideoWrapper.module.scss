@@ -1,0 +1,24 @@
+.videoWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  margin: 30px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+
+  iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 16:9 Ratio */
+  &::before {
+    content: "";
+    display: block;
+    padding-top: 56.25%;
+  }
+}

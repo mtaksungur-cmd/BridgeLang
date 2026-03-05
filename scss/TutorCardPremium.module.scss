@@ -1,0 +1,141 @@
+@use '../styles/variables' as v;
+
+.tutorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  padding: 2rem 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr; // Single column on mobile to prevent squishing
+    gap: 1.5rem;
+    padding: 1rem 0;
+  }
+}
+
+.tutorCard {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  @media (max-width: 480px) {
+    padding: 1.5rem;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+  }
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+
+  .avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .nameBox {
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .verified { color: #22c55e; flex-shrink: 0; }
+    .flag { font-size: 1.25rem; }
+  }
+}
+
+.pricingInfo {
+  margin-bottom: 1rem;
+  .priceRow {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    .amount { font-size: 1.25rem; font-weight: 800; color: #1e293b; }
+    .unit { font-size: 0.875rem; color: #64748b; font-weight: 500; }
+  }
+  .durations {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: #64748b;
+    font-weight: 600;
+    flex-wrap: wrap;
+  }
+}
+
+.specialty {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.75rem;
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  .stars { color: #fbbf24; display: flex; }
+  .ratingText { font-size: 0.875rem; font-weight: 700; color: #1e293b; }
+  .reviewCount { font-size: 0.875rem; color: #94a3b8; }
+}
+
+.bio {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.btnBook {
+  width: 100%;
+  padding: 0.875rem;
+  background: #4a6fbd;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+  transition: background 0.2s;
+  &:hover { background: #3c5aa0; }
+}
+
+.btnProfile {
+  width: 100%;
+  padding: 0.75rem;
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { 
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+}

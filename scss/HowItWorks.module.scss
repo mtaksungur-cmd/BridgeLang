@@ -1,0 +1,185 @@
+.page {
+  background: #f8f9fb;
+}
+
+/* Basit içerik kartı */
+.card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, .08);
+  border-radius: 14px;
+  padding: 1rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .04);
+
+  @media (min-width: 768px) {
+    padding: 1.25rem 1.25rem;
+  }
+}
+
+.h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0 0 .35rem 0;
+  color: #0f172a;
+}
+
+.h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: .25rem 0 .5rem 0;
+  color: #111827;
+}
+
+/* Liste – okunaklı, rahat satır aralığı */
+.list {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li {
+    margin: .35rem 0;
+    line-height: 1.65;
+    color: #374151;
+  }
+}
+
+/* Carousel */
+.carouselWrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  z-index: 1; // Base z-index
+}
+
+// Ensure the role switch is above everything and clickable
+.page {
+  position: relative;
+  z-index: 1;
+}
+
+.carouselInner {
+  overflow: hidden;
+}
+
+/* 
+  shotBox: Görsel konteyneri
+*/
+.shotBox {
+  position: relative;
+  width: 100%;
+  background: #f1f5f9;
+  overflow: hidden;
+
+  /* Default (mobile): 16:9 kutu */
+  aspect-ratio: 16 / 9;
+
+  @media (min-width: 768px) {
+    /* Tablet ve üstü: 21:9 benzeri geniş oran */
+    aspect-ratio: 21 / 9;
+  }
+
+  @media (min-width: 992px) {
+    aspect-ratio: auto;
+    height: clamp(420px, 45vw, 760px);
+    max-height: 760px;
+  }
+}
+
+/* 
+  shotImg: Görselin kendisi
+*/
+.shotImg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Caption Area */
+.captionAlways {
+  display: block !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  padding: 1rem !important;
+  text-align: center;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+  z-index: 10;
+}
+
+.captionHeader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.captionText {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #1e293b;
+  background: transparent;
+  padding: 0;
+}
+
+.infoBtn {
+  background: #4a6fbd;
+  color: white;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #3c5aa0;
+    transform: scale(1.1);
+  }
+}
+
+.infoCollapse {
+  max-height: 0;
+  opacity: 0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+
+  &.show {
+    max-height: 150px;
+    margin-top: 0.75rem;
+    opacity: 1;
+  }
+}
+
+.captionDescription {
+  display: block;
+  margin: 0 auto;
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #64748b;
+  background: transparent;
+  padding: 0;
+  line-height: 1.5;
+  max-width: 700px;
+}
+
+.slideDisclaimer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0.5rem 0 0 0;
+  padding: 0 1rem 0.5rem;
+  line-height: 1.4;
+  position: relative;
+  z-index: 10;
+}

@@ -1,0 +1,153 @@
+.page {
+  padding: 28px;
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #f7f8fb;
+}
+
+.header {
+  margin-bottom: 14px;
+
+  h1 {
+    margin: 0 0 4px 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .sub {
+    margin: 0;
+    color: #6b7280;
+    font-size: .95rem;
+  }
+}
+
+.loading {
+  padding: 20px 4px;
+  color: #374151;
+}
+
+.empty {
+  background: #fff;
+  border: 1px dashed rgba(0,0,0,.12);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+/* Kart */
+.card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.04);
+  padding: 14px;
+}
+
+/* TÜM BLOKLAR ALT ALTA */
+.row {
+  display: grid;
+  grid-template-columns: 1fr; /* ← tek sütun */
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.kv,
+.kvWide {
+  background: #fafbff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* geniş varyant tek sütun olarak kalsın */
+.kvWide { grid-column: span 1; }
+
+.k {
+  display: block;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.v {
+  font-size: .98rem;
+  color: #0f172a;
+  overflow-wrap: anywhere;   /* uzun id/linkler taşmasın */
+  word-break: break-word;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: .9em;
+}
+
+.badgeRole {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: .75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
+/* Status rozetleri */
+.badge {
+  display: inline-block;
+  font-size: .78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.status--open {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fed7aa;
+}
+.status--pending {
+  background: #f0f9ff;
+  color: #075985;
+  border-color: #bae6fd;
+}
+.status--resolved,
+.status--closed {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.block {
+  margin-top: 8px;
+}
+
+.kBlock {
+  @extend .k;
+  margin-bottom: 6px;
+}
+
+.desc {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  color: #374151;
+  background: #f9fafb;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 10px;
+  padding: 10px;
+}

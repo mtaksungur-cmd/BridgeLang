@@ -1,0 +1,292 @@
+@use '../styles/variables' as v;
+
+// ==========================================
+// Pricing Table - Reference Design
+// Navy header, clean rows, green checkmarks
+// ==========================================
+
+.section {
+    padding: 4rem 0;
+    background: transparent;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+
+    h2 {
+        font-size: 32px;
+        font-weight: 700;
+        color: v.$text-dark;
+        margin-bottom: 1rem;
+        letter-spacing: -0.5px;
+    }
+
+    p {
+        font-size: 16px;
+        color: v.$text-medium;
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+}
+
+// Table Container (White card from reference)
+.tableContainer {
+    background: v.$card-white;
+    border-radius: v.$radius-card;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+// Table (Exact reference match)
+.table {
+    width: 100%;
+    border-collapse: collapse;
+
+    // Navy Header (From reference: #3d5a99)
+    thead {
+        background: linear-gradient(135deg, #3d5a99 0%, #2d4479 100%);
+        color: white;
+
+        th {
+            padding: 1.5rem 1.25rem;
+            font-weight: 600;
+            text-align: center;
+            font-size: 16px;
+            letter-spacing: 0.3px;
+
+            &.featureCol {
+                text-align: left;
+                padding-left: 2rem;
+            }
+
+            &.vipCol {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+    }
+
+    tbody {
+        tr {
+            border-bottom: 1px solid #e2e8f0;
+
+            &:nth-child(even) {
+                background: #f8fafc;
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            td {
+                padding: 1.5rem 1.25rem;
+                text-align: center;
+                font-size: 15px;
+                color: v.$text-medium;
+                vertical-align: middle;
+
+                &:first-child {
+                    text-align: left;
+                    font-weight: 600;
+                    color: v.$text-dark;
+                    padding-left: 2rem;
+                }
+
+                &.vipCol {
+                    background: rgba(61, 90, 153, 0.03);
+                }
+
+                &.vipCell {
+                    font-weight: 600;
+                    color: #3d5a99;
+                }
+
+                &.vipLast {
+                    border-bottom-right-radius: v.$radius-card;
+                }
+            }
+        }
+    }
+}
+
+// Price Styling
+.price {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 18px;
+    color: v.$text-dark;
+
+    small {
+        font-weight: 400;
+        font-size: 13px;
+        color: v.$text-medium;
+        display: block;
+        margin-top: 0.25rem;
+    }
+}
+
+// Plan Descriptions (below price)
+.planDesc {
+    font-size: 13px;
+    color: v.$text-light;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+    font-style: italic;
+    max-width: 180px;
+    margin-left: auto;
+    margin-right: auto;
+
+    @media (max-width: 768px) {
+        font-size: 12px;
+        max-width: 140px;
+    }
+}
+
+// Fair-use policy note
+.fairUse {
+    font-size: 12px;
+    color: v.$text-light;
+    margin-top: 0.375rem;
+    font-style: italic;
+}
+
+// Tooltip Icon
+.tooltipIcon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.5rem;
+    color: v.$text-light;
+    cursor: help;
+    transition: v.$transition-base;
+
+    &:hover {
+        color: v.$primary-blue;
+    }
+
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+// "All Plans Include" Section
+.includes {
+    padding: 2.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-top: 2px solid #e2e8f0;
+
+    h4 {
+        font-size: 20px;
+        font-weight: 700;
+        color: v.$text-dark;
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.3px;
+    }
+}
+
+.featuresGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.featureItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 15px;
+    color: v.$text-medium;
+    line-height: 1.5;
+
+    svg {
+        width: 24px;
+        height: 24px;
+        color: #22c55e; // Green from reference
+        flex-shrink: 0;
+    }
+}
+
+// Footer Note
+.footerNote {
+    text-align: center;
+    font-size: 14px;
+    color: v.$text-light;
+    margin-top: 2rem;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+    .table {
+        font-size: 14px;
+
+        thead th,
+        tbody td {
+            padding: 1rem 0.75rem;
+        }
+
+        thead th.featureCol,
+        tbody td:first-child {
+            padding-left: 1.5rem;
+        }
+    }
+
+    .price {
+        font-size: 16px;
+
+        small {
+            font-size: 12px;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .header h2 {
+        font-size: 26px;
+    }
+
+    .table {
+        display: block;
+        overflow-x: auto;
+
+        thead th,
+        tbody td {
+            padding: 0.75rem 0.5rem;
+            font-size: 13px;
+        }
+
+        thead th.featureCol,
+        tbody td:first-child {
+            padding-left: 1rem;
+            font-size: 13px;
+        }
+    }
+
+    .includes {
+        padding: 1.5rem;
+
+        h4 {
+            font-size: 18px;
+        }
+    }
+
+    .featuresGrid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .featureItem {
+        font-size: 14px;
+    }
+
+    .price {
+        font-size: 15px;
+    }
+}

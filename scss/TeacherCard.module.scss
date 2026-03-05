@@ -1,0 +1,172 @@
+@use '../styles/variables' as v;
+
+// ==========================================
+// Teacher Card - Reference Design
+// White card with verified badge & soft shadow
+// ==========================================
+
+.card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(31, 45, 85, 0.12);
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 24px 70px rgba(31, 45, 85, 0.16);
+    }
+}
+
+.header {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.name {
+    font-size: 22px;
+    font-weight: 700;
+    color: v.$text-dark;
+    margin-bottom: 0.5rem;
+}
+
+.verifiedBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #d1fae5;
+    color: #059669;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.checkIcon {
+    width: 18px;
+    height: 18px;
+}
+
+.avatarWrapper {
+    width: 180px;
+    height: 180px;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 8px 24px rgba(31, 45, 85, 0.15);
+}
+
+.info {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.infoRow {
+    display: flex;
+    justify-content: flex-start;
+    padding: 0.5rem 0;
+    font-size: 14px;
+    gap: 8px;
+}
+
+.label {
+    font-weight: 700;
+    color: v.$text-dark;
+}
+
+.value {
+    color: v.$text-medium;
+}
+
+.pricing {
+    font-size: 20px;
+    font-weight: 700;
+    color: v.$text-dark;
+    margin-bottom: 0.75rem;
+}
+
+.priceLabel {
+    font-size: 14px;
+    font-weight: 400;
+    color: v.$text-medium;
+    margin-right: 4px;
+}
+
+.priceValue {
+    font-size: 24px;
+    color: v.$primary-blue;
+}
+
+.duration {
+    font-size: 14px;
+    font-weight: 400;
+    color: v.$text-medium;
+    margin-left: 4px;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+    font-size: 14px;
+}
+
+.stars {
+    color: #fbbf24;
+}
+
+.ratingValue {
+    font-weight: 700;
+    color: v.$text-dark;
+}
+
+.reviewCount {
+    color: v.$text-light;
+}
+
+.availability {
+    font-size: 13px;
+    color: v.$text-light;
+    margin-bottom: 1.5rem;
+}
+
+.viewButton {
+    width: 100%;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, v.$primary-blue 0%, v.$primary-blue-dark 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(74, 111, 189, 0.4);
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(74, 111, 189, 0.5);
+    }
+}
+
+.footnote {
+    font-size: 12px;
+    color: v.$text-light;
+    margin-top: 1rem;
+    font-style: italic;
+}

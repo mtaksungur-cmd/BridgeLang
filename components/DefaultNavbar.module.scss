@@ -1,0 +1,312 @@
+.navbar {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 12px rgba(31, 45, 85, 0.06), 0 1px 4px rgba(31, 45, 85, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 16px rgba(31, 45, 85, 0.08), 0 2px 8px rgba(31, 45, 85, 0.06);
+  }
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+
+  @media (min-width: 640px) {
+    padding: 0 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 0 2rem;
+  }
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.logoText {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #1e293b;
+}
+
+.trademark {
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 2px;
+  color: #64748b;
+}
+
+.mobileToggle {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
+.hamburger {
+  width: 24px;
+  height: 2px;
+  background: #1f2937;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.menu {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  gap: 1.25rem;
+
+  @media (max-width: 1023px) {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    background: white;
+    flex-direction: column;
+    padding: 1.5rem;
+    gap: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+  }
+}
+
+.menuOpen {
+  @media (max-width: 1023px) {
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.link {
+  color: #475569;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    color: #2563eb;
+  }
+}
+
+.dropdown {
+  position: relative;
+
+  &:hover .dropdownMenu {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.dropdownToggle {
+  background: transparent;
+  border: none;
+  color: #475569;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #2563eb;
+  }
+}
+
+.caret {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  padding: 8px 0;
+  min-width: 220px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s;
+
+  @media (max-width: 1023px) {
+    position: static;
+    box-shadow: none;
+    border: none;
+    padding: 8px 16px;
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.show {
+  opacity: 1;
+  visibility: visible;
+
+}
+
+.dropdownItem {
+  display: block;
+  padding: 10px 16px;
+  color: #374151;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #2563eb;
+  }
+}
+
+.loginBtn {
+  padding: 8px 20px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #1d4ed8;
+
+  }
+}
+
+.logoutBtn {
+  padding: 8px 20px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #b91c1c;
+
+  }
+}
+
+/* Admin: mobilde her zaman görünür Settings ve Log Out */
+.mobileActions {
+  display: none;
+
+  @media (max-width: 1023px) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.mobileActionBtn {
+  display: none;
+
+  @media (max-width: 1023px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #f8fafc;
+      color: #2563eb;
+    }
+  }
+}
+
+.mobileLogoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
+/* Admin: mobilde logo metni kısa */
+.logoTextDesktop {
+  @media (max-width: 1023px) {
+    display: none !important;
+  }
+}
+
+.logoTextMobile {
+  display: none !important;
+
+  @media (max-width: 1023px) {
+    display: inline !important;
+  }
+}
